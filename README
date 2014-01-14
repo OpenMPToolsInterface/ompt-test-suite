@@ -1,0 +1,13 @@
+To build the tests, make sure that your built GCC 4.8.2 is in your path(s):
+
+export GCC_HOME=$HOME/install/gcc-4.8.2
+export PATH=$GCC_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GCC_HOME/lib64:$GCC_HOME/lib
+
+# and if necessary...
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/install/mpc-1.0.1/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/install/mpfr-3.1.1/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/install/gmp-5.1.0/lib
+
+...then just "make" and run the tests.

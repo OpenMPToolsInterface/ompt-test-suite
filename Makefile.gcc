@@ -1,0 +1,95 @@
+HOST:= $(shell hostname -s)
+
+ifeq ($(opt),2)
+LEVEL=2
+else
+LEVEL=0
+endif
+
+# where is GCC installed?
+ROOT =$(HOME)/install/gcc-4.8.2
+
+LIBDIR =$(ROOT)/lib64
+LIB =$(LIBDIR)/libgomp.so
+#LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
+
+INCLUDES=-I..
+HEADERS=${wildcard *.h}
+
+FC = gfortran -gdwarf-3 $(BITS)
+CC = gcc -gdwarf-3 $(BITS)
+CXX = g++ -gdwarf-3 $(BITS)
+
+EXECS = \
+	critical \
+	main \
+	nest1 \
+	imbalance\
+	nest1-unit \
+	level1-unit \
+	LULESH_OMP \
+	main \
+	atomic \
+	atomic-2 \
+	atomic-3 \
+	critical \
+	critical-cpp \
+	enumerate-states \
+	parloop-for-sampling \
+	parregion-for-sampling \
+	parregion2-for-sampling \
+	parregion4-for-sampling \
+	parregion5-for-sampling \
+	parregion3-for-sampling-uneven-waiting \
+	fib \
+	imbalance \
+	lateinit \
+	locktest \
+	locktest-2 \
+	level-1 \
+	level-2 \
+	level-3 \
+	level-2-sampling \
+	level-4 \
+	level-5 \
+	master \
+	matmult \
+	ordered \
+	parallelfor \
+	single \
+ 	task3 \
+ 	task4 \
+	task-1 lateinitf
+
+#EXECS = nest1-unit
+
+all: $(EXECS)
+
+clean:
+	/bin/rm -f $(EXECS)
+
+$(EXECS) : $(HEADERS) Makefile $(LIB)
+
+fib: fib.c 
+	$(CC) $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ $<
+
+luleshMPI_OMP: luleshMPI_OMP.cc
+	mpicxx $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
+
+%: %.c 
+	$(CC) $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
+
+%: %.cpp 
+	$(CXX) $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
+
+%: %.f 
+	$(FC) $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
+
+test: $(EXECS)
+	@set -e; 
+	$(foreach app,$(EXECS), \
+	  echo $(app) ;\
+	  ./$(app)) ;
+	@echo 
+	@echo -----  SUCCESS! -----
+	@echo 

@@ -1,0 +1,103 @@
+HOST:= $(shell hostname -s)
+
+ifeq ($(opt),2)
+LEVEL=2
+else
+LEVEL=0
+endif
+
+
+ifeq ($(type),rel)
+VER=rel
+else
+VER=deb
+endif
+
+ifeq ($(strip),yes)
+STRIP=stripped
+else
+STRIP=unstripped
+endif
+
+ifeq ($(arch),mic)
+ARCH=.knc.lin.off
+OPT=-mmic
+PREF=lrb
+SUFFIX=mic
+else
+PREF=lin
+SUFFIX=host
+endif
+
+LIBDIR =../itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
+
+LIB =$(LIBDIR)/libiomp5.so
+
+LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
+
+INCLUDES=-I../itt/libomp_oss/src
+HEADERS=${wildcard *.h}
+
+FC = ifort
+EXEC = \
+	nest1 \
+	nest1-unit \
+	level1-unit \
+	LULESH_OMP \
+	main \
+	atomic \
+	atomic-2 \
+	atomic-3 \
+	critical \
+	critical-cpp \
+	enumerate-states \
+	enumerate-ompd-dll \
+	parloop-for-sampling \
+	parregion-for-sampling \
+	parregion2-for-sampling \
+	parregion4-for-sampling \
+	parregion5-for-sampling \
+	parregion3-for-sampling-uneven-waiting \
+	fib \
+	imbalance \
+	lateinit \
+	locktest \
+	locktest-2 \
+	level-1 \
+	level-2 \
+	level-3 \
+	level-2-sampling \
+	level-4 \
+	level-5 \
+	master \
+	matmult \
+	ordered \
+	parallelfor \
+	single \
+	task-1 lateinitf
+
+# EXEC = nest1-unit
+
+EXECS=$(addsuffix .$(SUFFIX),$(EXEC))
+
+all: $(EXECS)
+
+clean:
+	/bin/rm -f $(EXECS)
+
+$(EXECS) : $(HEADERS) Makefile $(LIB)
+
+fib.$(SUFFIX): fib.c 
+	icc $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ $<
+
+luleshMPI_OMP.host: luleshMPI_OMP.cc
+	mpicxx $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -openmp $< $(LIBS)
+
+%.$(SUFFIX): %.c 
+	icc $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -openmp $< $(LIBS)
+
+%.$(SUFFIX): %.cpp 
+	icpc $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -openmp $< $(LIBS)
+
+%.$(SUFFIX): %.f 
+	ifort $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -openmp $< $(LIBS)

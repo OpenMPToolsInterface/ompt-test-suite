@@ -6,19 +6,11 @@ else
 LEVEL=0
 endif
 
-# where is GCC installed?
-ROOT =$(HOME)/install/gcc-4.8.2
-
-LIBDIR =$(ROOT)/lib64
-LIB =$(LIBDIR)/libgomp.so
-#LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
-
-INCLUDES=-I..
 HEADERS=${wildcard *.h}
 
-FC = gfortran -gdwarf-3 $(BITS)
-CC = gcc -gdwarf-3 $(BITS)
-CXX = g++ -gdwarf-3 $(BITS)
+FC = gfortran -gdwarf-3
+CC = gcc -gdwarf-3
+CXX = g++ -gdwarf-3
 
 EXECS = \
 	critical \
@@ -71,19 +63,19 @@ clean:
 $(EXECS) : $(HEADERS) Makefile $(LIB)
 
 fib: fib.c 
-	$(CC) $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ $<
+	$(CC) -O$(LEVEL) -g -o $@ $<
 
 luleshMPI_OMP: luleshMPI_OMP.cc
-	mpicxx $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
+	mpicxx -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
 
 %: %.c 
-	$(CC) $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
+	$(CC) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
 
 %: %.cpp 
-	$(CXX) $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
+	$(CXX) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
 
 %: %.f 
-	$(FC) $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
+	$(FC) -O$(LEVEL) -g -o $@ -fopenmp $< $(LIBS)
 
 test: $(EXECS)
 	@set -e; 

@@ -1,6 +1,5 @@
 #include <omp.h>
 #include <stdio.h>
-//#include "callback.h"
 
 #include "fib.h"
 

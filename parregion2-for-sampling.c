@@ -1,5 +1,4 @@
 #include <omp.h>
-#include "stdio.h"
 
 #define MAX (1LL << 22)
 

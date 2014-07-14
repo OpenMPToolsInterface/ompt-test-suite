@@ -1,5 +1,6 @@
 #include <omp.h>
 #include <stdio.h>
+
 #include "callback.h"
 
 int region=0;
@@ -29,6 +30,51 @@ printf("max thread num is %d\n", omp_get_max_threads());
     {
         fib(N+3);
         report_num_threads(omp_get_level());
+        #pragma omp parallel num_threads(2)
+        {
+            fib(N+3);
+            report_num_threads(omp_get_level());
+            #pragma omp parallel num_threads(2)
+            {
+                fib(N+3);
+                report_num_threads(omp_get_level());
+            }
+            fib(N+3);
+            #pragma omp parallel num_threads(2)
+            {
+                fib(N+3);
+                report_num_threads(omp_get_level());
+            }
+        }
+        fib(N+3);
+        #pragma omp parallel num_threads(2)
+        {
+                fib(N+3);
+                report_num_threads(omp_get_level());
+        }
+    }
+    region=2;
+    #pragma omp parallel num_threads(2)
+    {
+        fib(N+3);
+        report_num_threads(omp_get_level());
+        #pragma omp parallel num_threads(2)
+        {
+            fib(N+3);
+            report_num_threads(omp_get_level());
+            #pragma omp parallel num_threads(2)
+            {
+                fib(N+3);
+                report_num_threads(omp_get_level());
+            }
+            fib(N+3);
+            #pragma omp parallel num_threads(2)
+            {
+                fib(N+3);
+                report_num_threads(omp_get_level());
+            }
+        }
+        fib(N+3);
         #pragma omp parallel num_threads(2)
         {
                 fib(N+3);

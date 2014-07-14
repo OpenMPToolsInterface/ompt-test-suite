@@ -6,13 +6,35 @@
  * relevant information.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ompt.h>
 
 /*
  * Macros to help generate test functions for each event
  */
+
+#define TEST_THREAD_CALLBACK(EVENT) \
+void my_##EVENT(ompt_thread_id_t thread_id) \
+{ \
+  printf("%lld (%d): %s\n", thread_id, omp_get_thread_num(), #EVENT); \
+  fflush(stdout); \
+}
+
+#define TEST_THREAD_TYPE_CALLBACK(EVENT) \
+void my_##EVENT(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id) \
+{ \
+  printf("%lld (Type: %d) (%d): %s\n", thread_id, thread_type, omp_get_thread_num(), #EVENT); \
+  fflush(stdout); \
+}
+
+#define TEST_WAIT_CALLBACK(EVENT) \
+void my_##EVENT ( \
+  ompt_wait_id_t waitid)            /* address of wait obj */ \
+{ \
+  printf("%d: %s: waid_id=0x%llx\n", omp_get_thread_num(), #EVENT, waitid); \
+  fflush(stdout); \
+}
 
 #define TEST_PARALLEL_CALLBACK(EVENT) \
 void my_##EVENT ( \
@@ -33,7 +55,6 @@ void *workshare_function)           /* ptr to outlined function  */ \
   fflush(stdout); \
 }
 
-
 #define TEST_NEW_PARALLEL_CALLBACK(EVENT) \
 void my_##EVENT ( \
   ompt_task_id_t  parent_task_id,   /* tool data for parent task   */ \
@@ -47,35 +68,11 @@ void my_##EVENT ( \
 
 #define TEST_TASK_CALLBACK(EVENT) \
 void my_##EVENT ( \
-ompt_task_id_t parent_task_id, ompt_frame_t *parent_frame, ompt_task_id_t task_id)            /* tool data for task          */ \
+ompt_task_id_t task_id)            /* tool data for task          */ \
 { \
   printf("%d: %s: task_id=0x%llx\n", omp_get_thread_num(), #EVENT, task_id); \
   fflush(stdout); \
 } \
-
-#define TEST_CONTROL_CALLBACK(EVENT) \
-void my_##EVENT( \
-uint64_t command,                /* command of control call      */ \
-uint64_t modifier)                /* modifier of control call     */ \
-{ \
-  printf("%d: %s: cmd=0x%llx, mod=0x%llx\n", omp_get_thread_num(), #EVENT, command, modifier); \
-  fflush(stdout); \
-}
-
-#define TEST_CALLBACK(EVENT) \
-void my_##EVENT() \
-{ \
-  printf("%d: %s\n", omp_get_thread_num(), #EVENT); \
-  fflush(stdout); \
-}
-
-#define TEST_WAIT_CALLBACK(EVENT) \
-void my_##EVENT ( \
-  ompt_wait_id_t waitid)            /* address of wait obj */ \
-{ \
-  printf("%d: %s: waid_id=0x%llx\n", omp_get_thread_num(), #EVENT, waitid); \
-  fflush(stdout); \
-}
 
 #define TEST_TASK_SWITCH_CALLBACK(EVENT) \
 void my_##EVENT ( \
@@ -86,15 +83,58 @@ void my_##EVENT ( \
   fflush(stdout); \
 }
 
+#define TEST_NEW_TASK_CALLBACK(EVENT) \
+void my_##EVENT ( \
+  ompt_task_id_t  parent_task_id,   /* tool data for parent task   */ \
+  ompt_frame_t *parent_task_frame,  /* frame data of parent task   */ \
+  ompt_task_id_t new_task_id,   /* id of parallel region       */ \
+  void *new_task_function)          /* outlined function           */ \
+{ \
+  printf("%d: %s: par_id=0x%llx task_id=0x%llx par_fn=%p\n", omp_get_thread_num(), #EVENT, new_task_id, parent_task_id, new_task_function); \
+  fflush(stdout); \
+}
+
+#define TEST_CONTROL_CALLBACK(EVENT) \
+void my_##EVENT( \
+uint64_t command,                /* command of control call      */ \
+uint64_t modifier)                /* modifier of control call     */ \
+{ \
+  printf("%d: %s: cmd=0x%llx, mod=0x%llx\n", omp_get_thread_num(), #EVENT, command, modifier); \
+  fflush(stdout); \
+}
+
+
+#define TEST_CALLBACK(EVENT) \
+void my_##EVENT() \
+{ \
+  printf("%d: %s\n", omp_get_thread_num(), #EVENT); \
+  fflush(stdout); \
+}
+
+/*******************************************************************
+ * Function declaration
+ *******************************************************************/
+
+#define OMPT_FN_TYPE(fn) fn ## _t 
+#define OMPT_FN_LOOKUP(lookup,fn) fn = (OMPT_FN_TYPE(fn)) lookup(#fn)
+#define OMPT_FN_DECL(fn) OMPT_FN_TYPE(fn) fn
+
+OMPT_FN_DECL(ompt_get_task_frame);
+OMPT_FN_DECL(ompt_set_callback);
+OMPT_FN_DECL(ompt_get_task_id);
+OMPT_FN_DECL(ompt_get_parallel_id);
+OMPT_FN_DECL(ompt_get_thread_id);
+
 /*******************************************************************
  * required events 
  *******************************************************************/
+
+TEST_THREAD_TYPE_CALLBACK(ompt_event_thread_begin)
+TEST_THREAD_TYPE_CALLBACK(ompt_event_thread_end)
 TEST_NEW_PARALLEL_CALLBACK(ompt_event_parallel_begin)
-TEST_PARALLEL_CALLBACK(ompt_event_parallel_end)
-TEST_TASK_CALLBACK(ompt_event_task_begin)
-TEST_TASK_CALLBACK(ompt_event_task_end)
-TEST_CALLBACK(ompt_event_thread_begin)
-TEST_CALLBACK(ompt_event_thread_end)
+TEST_NEW_PARALLEL_CALLBACK(ompt_event_parallel_end)
+TEST_NEW_TASK_CALLBACK(ompt_event_task_begin)
+TEST_NEW_TASK_CALLBACK(ompt_event_task_end)
 TEST_CONTROL_CALLBACK(ompt_event_control)
 TEST_CALLBACK(ompt_event_runtime_shutdown)
 
@@ -103,8 +143,8 @@ TEST_CALLBACK(ompt_event_runtime_shutdown)
  *******************************************************************/
 
 /* Blameshifting events */
-TEST_CALLBACK(ompt_event_idle_begin)
-TEST_CALLBACK(ompt_event_idle_end)
+TEST_THREAD_CALLBACK(ompt_event_idle_begin)
+TEST_THREAD_CALLBACK(ompt_event_idle_end)
 TEST_PARALLEL_CALLBACK(ompt_event_wait_barrier_begin);
 TEST_PARALLEL_CALLBACK(ompt_event_wait_barrier_end);
 TEST_PARALLEL_CALLBACK(ompt_event_wait_taskwait_begin);
@@ -120,40 +160,44 @@ TEST_WAIT_CALLBACK(ompt_event_release_atomic)
 /* synchronous events */
 TEST_PARALLEL_CALLBACK(ompt_event_implicit_task_begin);
 TEST_PARALLEL_CALLBACK(ompt_event_implicit_task_end);
-TEST_PARALLEL_CALLBACK(ompt_event_barrier_begin)
-TEST_PARALLEL_CALLBACK(ompt_event_barrier_end)
-TEST_PARALLEL_CALLBACK(ompt_event_master_begin)
-TEST_PARALLEL_CALLBACK(ompt_event_master_end)
+TEST_PARALLEL_CALLBACK(ompt_event_initial_task_begin);
+TEST_PARALLEL_CALLBACK(ompt_event_initial_task_end);
 TEST_TASK_SWITCH_CALLBACK(ompt_event_task_switch);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_loop_begin);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_loop_end);
-TEST_PARALLEL_CALLBACK(ompt_event_section_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_section_end);
-TEST_PARALLEL_CALLBACK(ompt_event_single_in_block_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_single_in_block_end);
-TEST_PARALLEL_CALLBACK(ompt_event_single_others_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_single_others_end);
-TEST_PARALLEL_CALLBACK(ompt_event_taskwait_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_taskwait_end);
-TEST_PARALLEL_CALLBACK(ompt_event_taskgroup_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_taskgroup_end);
-TEST_PARALLEL_CALLBACK(ompt_event_release_nest_lock_prev);
-TEST_WAIT_CALLBACK(ompt_event_wait_lock);
-TEST_WAIT_CALLBACK(ompt_event_wait_nest_lock);
-TEST_WAIT_CALLBACK(ompt_event_wait_critical);
-TEST_WAIT_CALLBACK(ompt_event_wait_atomic)
-TEST_WAIT_CALLBACK(ompt_event_wait_ordered)
-TEST_WAIT_CALLBACK(ompt_event_acquired_lock);
-TEST_WAIT_CALLBACK(ompt_event_acquired_nest_lock_first);
-TEST_PARALLEL_CALLBACK(ompt_event_acquired_nest_lock_next);
-TEST_WAIT_CALLBACK(ompt_event_acquired_critical);
-TEST_WAIT_CALLBACK(ompt_event_acquired_atomic);
-TEST_WAIT_CALLBACK(ompt_event_acquired_ordered)
 TEST_WAIT_CALLBACK(ompt_event_init_lock);
 TEST_WAIT_CALLBACK(ompt_event_init_nest_lock);
 TEST_WAIT_CALLBACK(ompt_event_destroy_lock);
 TEST_WAIT_CALLBACK(ompt_event_destroy_nest_lock);
-TEST_CALLBACK(ompt_event_flush);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_loop_begin);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_loop_end);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_section_begin);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_section_end);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_single_in_block_begin);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_single_in_block_end);
+TEST_PARALLEL_CALLBACK(ompt_event_single_others_begin);
+TEST_PARALLEL_CALLBACK(ompt_event_single_others_end);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_workshare_begin);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_workshare_end);
+TEST_PARALLEL_CALLBACK(ompt_event_master_begin);
+TEST_PARALLEL_CALLBACK(ompt_event_master_end);
+TEST_PARALLEL_CALLBACK(ompt_event_barrier_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_barrier_end)
+TEST_PARALLEL_CALLBACK(ompt_event_taskwait_begin);
+TEST_PARALLEL_CALLBACK(ompt_event_taskwait_end);
+TEST_PARALLEL_CALLBACK(ompt_event_taskgroup_begin);
+TEST_PARALLEL_CALLBACK(ompt_event_taskgroup_end);
+TEST_WAIT_CALLBACK(ompt_event_wait_lock);
+TEST_WAIT_CALLBACK(ompt_event_acquired_lock);
+TEST_WAIT_CALLBACK(ompt_event_wait_nest_lock);
+TEST_WAIT_CALLBACK(ompt_event_acquired_nest_lock_first);
+TEST_PARALLEL_CALLBACK(ompt_event_release_nest_lock_prev);
+TEST_PARALLEL_CALLBACK(ompt_event_acquired_nest_lock_next);
+TEST_WAIT_CALLBACK(ompt_event_wait_critical);
+TEST_WAIT_CALLBACK(ompt_event_acquired_critical);
+TEST_WAIT_CALLBACK(ompt_event_wait_ordered)
+TEST_WAIT_CALLBACK(ompt_event_acquired_ordered)
+TEST_WAIT_CALLBACK(ompt_event_wait_atomic)
+TEST_WAIT_CALLBACK(ompt_event_acquired_atomic);
+TEST_THREAD_CALLBACK(ompt_event_flush);
 
 /*******************************************************************
  * Register the events
@@ -164,13 +208,17 @@ if (ompt_set_callback(EVENT, (ompt_callback_t) my_##EVENT) == 0) { \
   fprintf(stderr,"Failed to register OMPT callback %s!\n",#EVENT);  \
 }
 
-ompt_get_task_frame_t ompt_get_task_frame;
-ompt_set_callback_t ompt_set_callback;
-
 int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, int ompt_version) {
   printf("Init: %s ver %i\n",runtime_version,ompt_version);
-  ompt_get_task_frame = (ompt_get_task_frame_t) lookup("ompt_get_task_frame");
-  ompt_set_callback = (ompt_set_callback_t) lookup("ompt_set_callback");
+
+  /* look up and bind OMPT API functions */
+
+  OMPT_FN_LOOKUP(lookup,ompt_set_callback);
+  OMPT_FN_LOOKUP(lookup,ompt_get_task_frame);
+  OMPT_FN_LOOKUP(lookup,ompt_get_task_id);
+  OMPT_FN_LOOKUP(lookup,ompt_get_parallel_id);
+  OMPT_FN_LOOKUP(lookup,ompt_get_thread_id);
+
   /* required events */
 
   CHECK(ompt_event_parallel_begin);
@@ -184,37 +232,37 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
 
   /* optional events, "blameshifting" */
 
-  //CHECK(ompt_event_idle_begin);
-  //CHECK(ompt_event_idle_end);
+  CHECK(ompt_event_idle_begin);
+  CHECK(ompt_event_idle_end);
   //CHECK(ompt_event_wait_barrier_begin);
   //CHECK(ompt_event_wait_barrier_end);
   //CHECK(ompt_event_wait_taskwait_begin);
   //CHECK(ompt_event_wait_taskwait_end);
   //CHECK(ompt_event_wait_taskgroup_begin);
   //CHECK(ompt_event_wait_taskgroup_end);
-  //CHECK(ompt_event_release_lock);
+  CHECK(ompt_event_release_lock);
   //CHECK(ompt_event_release_nest_lock_last);
-  //CHECK(ompt_event_release_critical);
-  //CHECK(ompt_event_release_atomic);
-  //CHECK(ompt_event_release_ordered);
+  CHECK(ompt_event_release_critical);
+  CHECK(ompt_event_release_atomic);
+  CHECK(ompt_event_release_ordered);
 
   /* optional events, synchronous */
 
   //CHECK(ompt_event_implicit_task_create);
   //CHECK(ompt_event_implicit_task_exit);
-  //CHECK(ompt_event_master_begin);
-  //CHECK(ompt_event_master_end);
-  //CHECK(ompt_event_barrier_begin);
-  //CHECK(ompt_event_barrier_end);
+  CHECK(ompt_event_master_begin);
+  CHECK(ompt_event_master_end);
+  CHECK(ompt_event_barrier_begin);
+  CHECK(ompt_event_barrier_end);
   //CHECK(ompt_event_task_switch);
-  //CHECK(ompt_event_loop_begin);
-  //CHECK(ompt_event_loop_end);
+  CHECK(ompt_event_loop_begin);
+  CHECK(ompt_event_loop_end);
   //CHECK(ompt_event_section_begin);
   //CHECK(ompt_event_section_end);
-  //CHECK(ompt_event_single_in_block_begin);
-  //CHECK(ompt_event_single_in_block_end);
-  //CHECK(ompt_event_single_others_begin);
-  //CHECK(ompt_event_single_others_end);
+  CHECK(ompt_event_single_in_block_begin);
+  CHECK(ompt_event_single_in_block_end);
+  CHECK(ompt_event_single_others_begin);
+  CHECK(ompt_event_single_others_end);
   //CHECK(ompt_event_taskwait_begin);
   //CHECK(ompt_event_taskwait_end);
   //CHECK(ompt_event_taskgroup_begin);
@@ -223,13 +271,13 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
   //CHECK(ompt_event_wait_lock);
   //CHECK(ompt_event_wait_nest_lock);
   //CHECK(ompt_event_wait_critical);
-  //CHECK(ompt_event_wait_atomic);
+  CHECK(ompt_event_wait_atomic);
   //CHECK(ompt_event_wait_ordered);
   //CHECK(ompt_event_acquired_lock);
   //CHECK(ompt_event_acquired_nest_lock_first);
   //CHECK(ompt_event_acquired_nest_lock_next);
   //CHECK(ompt_event_acquired_critical);
-  //CHECK(ompt_event_acquired_atomic);
+  CHECK(ompt_event_acquired_atomic);
   //CHECK(ompt_event_acquired_ordered);
   //CHECK(ompt_event_init_lock);
   //CHECK(ompt_event_init_nest_lock);
@@ -238,6 +286,5 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
   //CHECK(ompt_event_flush);
   return 1;
 }
-
 
 #endif

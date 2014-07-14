@@ -1,6 +1,5 @@
 #include <omp.h>
 #include "fib.h"
-#include "callback.h"
 void g()
 {
   int i;
@@ -11,10 +10,10 @@ void g()
     #pragma omp master
     {
       #pragma omp critical (it)
-      { fib(20); }
+      { fib(40); }
     }
     #pragma omp for
-    for(i = 0; i<10; i++) {
+    for(i = 0; i<100; i++) {
       #pragma omp critical (it)
       { fib(10); }
     }

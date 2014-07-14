@@ -13,6 +13,7 @@ main()
     #pragma omp parallel 
     {
       for(j = 0; j < MAX; j++);
+      fib(40);
     }
   }
 }

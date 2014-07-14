@@ -6,10 +6,6 @@ void dobreak()
 {
 }
 
-ompt_get_task_frame_t ompt_get_task_frame;
-ompt_get_parallel_id_t ompt_get_parallel_id;
-ompt_get_task_id_t ompt_get_task_id;
-
 void dump_frames(int rank, int level)
 {
 	char *env = getenv("OMP_RANK");

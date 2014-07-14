@@ -2,7 +2,12 @@
 #include <ompt.h>
 #include <stdio.h>
 
-ompt_get_parallel_id_t ompt_get_parallel_id_fn;
+#define OMPT_API_DECLARE(fn) fn ## _t fn
+
+#define LOOKUP(lookup, fn) fn = (fn ## _t) lookup(#fn)
+
+OMPT_API_DECLARE(ompt_get_parallel_id);
+OMPT_API_DECLARE(ompt_set_callback);
 
 #define OMPT_EVENT_DETAIL 0
 
@@ -106,7 +111,7 @@ void ompt_event_parallel_begin_fn (
           parallel_function);
 #else
   printf("%d region %8lx: create %*s[level=%d, parent_parallel_id=%8lx]\n",
-          omp_get_thread_num(), parallel_id, level << 1, "", level, ompt_get_parallel_id_fn(0));
+          omp_get_thread_num(), parallel_id, level << 1, "", level, ompt_get_parallel_id(0));
 #endif
 
   fflush(stdout); 
@@ -130,7 +135,7 @@ void ompt_event_parallel_end_fn (
           parallel_function);
 #else
   printf("%d region %8lx: end    %*s[level=%d, parent_parallel_id=%8lx]\n",
-          omp_get_thread_num(), parallel_id, level << 1, "", level,  ompt_get_parallel_id_fn(0));
+          omp_get_thread_num(), parallel_id, level << 1, "", level,  ompt_get_parallel_id(0));
 #endif
 
   fflush(stdout); 
@@ -141,11 +146,11 @@ if (ompt_set_callback(EVENT, (ompt_callback_t) EVENT ## _fn) == 0) { \
   fprintf(stderr,"Failed to register OMPT callback %s!\n", #EVENT); return 0; \
 }
 
-ompt_set_callback_t ompt_set_callback;
 
 int ompt_initialize(ompt_function_lookup_t lookup, const char *version, int ompt_version) {
+  LOOKUP(lookup,ompt_get_parallel_id);
+  LOOKUP(lookup,ompt_set_callback);
   REGISTER(ompt_event_parallel_begin);
   REGISTER(ompt_event_parallel_end);
-  ompt_get_parallel_id_fn = (ompt_get_parallel_id_t) lookup("ompt_get_parallel_id");
   return 1;
 }

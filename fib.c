@@ -1,5 +1,4 @@
 #include <omp.h>
-#include <stdlib.h>
 #include <stdio.h>
 
 #include "fib.h"
@@ -8,7 +7,7 @@ void
 usage()
 {
     printf("usage: fib n, n >= 0\n");
-    exit(1);
+    exit(-1);
 }
 
 

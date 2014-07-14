@@ -7,10 +7,10 @@ LEVEL=0
 endif
 
 
-ifeq ($(type),rel)
-VER=rel
-else
+ifeq ($(mode),debug)
 VER=deb
+else
+VER=rel
 endif
 
 ifeq ($(strip),yes)
@@ -29,13 +29,13 @@ PREF=lin
 SUFFIX=host
 endif
 
-LIBDIR =../itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
+LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
 
 LIB =$(LIBDIR)/libiomp5.so
 
 LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
 
-INCLUDES=-I../itt/libomp_oss/src
+INCLUDES=-I$(INTEL_OMP_ROOT)itt/libomp_oss/src
 HEADERS=${wildcard *.h}
 
 FC = ifort
@@ -51,7 +51,6 @@ EXEC = \
 	critical \
 	critical-cpp \
 	enumerate-states \
-	enumerate-ompd-dll \
 	parloop-for-sampling \
 	parregion-for-sampling \
 	parregion2-for-sampling \
@@ -85,7 +84,7 @@ all: $(EXECS)
 clean:
 	/bin/rm -f $(EXECS)
 
-$(EXECS) : $(HEADERS) Makefile $(LIB)
+$(EXECS) : $(HEADERS) $(LIB)
 
 fib.$(SUFFIX): fib.c 
 	icc $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ $<

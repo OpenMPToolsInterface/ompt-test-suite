@@ -35,7 +35,7 @@ LIB =$(LIBDIR)/libiomp5.so
 
 LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
 
-INCLUDES=-I$(INTEL_OMP_ROOT)itt/libomp_oss/src
+INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/src
 HEADERS=${wildcard *.h}
 
 FC = ifort

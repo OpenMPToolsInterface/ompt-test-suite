@@ -17,14 +17,15 @@
 #define TEST_THREAD_CALLBACK(EVENT) \
 void my_##EVENT(ompt_thread_id_t thread_id) \
 { \
-  printf("%lld (%d): %s\n", thread_id, omp_get_thread_num(), #EVENT); \
+  printf("%d: %s: thread_id=%lu\n", omp_get_thread_num(), #EVENT, thread_id); \
   fflush(stdout); \
 }
 
 #define TEST_THREAD_TYPE_CALLBACK(EVENT) \
 void my_##EVENT(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id) \
 { \
-  printf("%lld (Type: %d) (%d): %s\n", thread_id, thread_type, omp_get_thread_num(), #EVENT); \
+  const char * type_strings[] = {"initial", "worker", "other"}; \
+  printf("%d: %s: thread_id=%lu thread_type=%lu type_string='%s'\n", omp_get_thread_num(), #EVENT, thread_id, thread_type, type_strings[thread_type]); \
   fflush(stdout); \
 }
 
@@ -32,7 +33,7 @@ void my_##EVENT(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id) \
 void my_##EVENT ( \
   ompt_wait_id_t waitid)            /* address of wait obj */ \
 { \
-  printf("%d: %s: waid_id=0x%llx\n", omp_get_thread_num(), #EVENT, waitid); \
+  printf("%d: %s: waid_id=%lu\n", omp_get_thread_num(), #EVENT, waitid); \
   fflush(stdout); \
 }
 
@@ -41,7 +42,7 @@ void my_##EVENT ( \
 ompt_parallel_id_t parallel_id,   /* id of parallel region       */ \
 ompt_task_id_t task_id)           /* id for task                 */ \
 { \
-  printf("%d: %s: par_id=0x%llx task_id=0x%llx\n", omp_get_thread_num(), #EVENT, parallel_id, task_id); \
+  printf("%d: %s: parallel_id=%lu task_id=%lu\n", omp_get_thread_num(), #EVENT, parallel_id, task_id); \
   fflush(stdout); \
 }
 
@@ -51,18 +52,19 @@ ompt_parallel_id_t parallel_id,   /* id of parallel region       */ \
 ompt_task_id_t task_id,           /* id for task                 */ \
 void *workshare_function)           /* ptr to outlined function  */ \
 { \
-  printf("%d: %s: par_id=0x%llx task_id=0x%llx\n", omp_get_thread_num(), #EVENT, parallel_id, task_id); \
+  printf("%d: %s: parallel_id=%lu task_id=%lu workshare_function=%p\n", omp_get_thread_num(), #EVENT, parallel_id, task_id, workshare_function); \
   fflush(stdout); \
 }
 
 #define TEST_NEW_PARALLEL_CALLBACK(EVENT) \
 void my_##EVENT ( \
-  ompt_task_id_t  parent_task_id,   /* tool data for parent task   */ \
-  ompt_frame_t *parent_task_frame,  /* frame data of parent task   */ \
-  ompt_parallel_id_t parallel_id,   /* id of parallel region       */ \
-  void *parallel_function)          /* outlined function           */ \
+  ompt_task_id_t  parent_task_id,   /* tool data for parent task    */ \
+  ompt_frame_t *parent_task_frame,  /* frame data of parent task    */ \
+  ompt_parallel_id_t parallel_id,   /* id of parallel region        */ \
+  uint32_t requested_team_size,     /* # threads requested for team */ \
+  void *parallel_function)          /* outlined function            */ \
 { \
-  printf("%d: %s: par_id=0x%llx task_id=0x%llx par_fn=%p\n", omp_get_thread_num(), #EVENT, parallel_id, parent_task_id, parallel_function); \
+  printf("%d: %s: parent_task_id=%lu parent_task_frame=%p\n\tparallel_id=%lu team_size=%lu parallel_function=%p\n", omp_get_thread_num(), #EVENT, parent_task_id, parent_task_frame, parallel_id, parent_task_id, parallel_function); \
   fflush(stdout); \
 }
 
@@ -70,7 +72,7 @@ void my_##EVENT ( \
 void my_##EVENT ( \
 ompt_task_id_t task_id)            /* tool data for task          */ \
 { \
-  printf("%d: %s: task_id=0x%llx\n", omp_get_thread_num(), #EVENT, task_id); \
+  printf("%d: %s: task_id=%lu\n", omp_get_thread_num(), #EVENT, task_id); \
   fflush(stdout); \
 } \
 
@@ -79,7 +81,7 @@ void my_##EVENT ( \
   ompt_task_id_t suspended_task_id, /* tool data for suspended task */ \
   ompt_task_id_t resumed_task_id)   /* tool data for resumed task   */ \
 { \
-  printf("%d: %s: susp_task=0x%llx res_task=0x%llx\n", omp_get_thread_num(), #EVENT, suspended_task_id, resumed_task_id); \
+  printf("%d: %s: suspended_task_id=%lu resumed_task_id=%lu\n", omp_get_thread_num(), #EVENT, suspended_task_id, resumed_task_id); \
   fflush(stdout); \
 }
 
@@ -90,7 +92,7 @@ void my_##EVENT ( \
   ompt_task_id_t new_task_id,   /* id of parallel region       */ \
   void *new_task_function)          /* outlined function           */ \
 { \
-  printf("%d: %s: par_id=0x%llx task_id=0x%llx par_fn=%p\n", omp_get_thread_num(), #EVENT, new_task_id, parent_task_id, new_task_function); \
+  printf("%d: %s: parent_task_id=%lu parent_task_frame-=%p new_task_id=%lu parallel_function=%p\n", omp_get_thread_num(), #EVENT, parent_task_id, parent_task_frame, new_task_id, new_task_function); \
   fflush(stdout); \
 }
 
@@ -99,7 +101,7 @@ void my_##EVENT( \
 uint64_t command,                /* command of control call      */ \
 uint64_t modifier)                /* modifier of control call     */ \
 { \
-  printf("%d: %s: cmd=0x%llx, mod=0x%llx\n", omp_get_thread_num(), #EVENT, command, modifier); \
+  printf("%d: %s: command=%lu, modifier=%lu\n", omp_get_thread_num(), #EVENT, command, modifier); \
   fflush(stdout); \
 }
 
@@ -132,7 +134,7 @@ OMPT_FN_DECL(ompt_get_thread_id);
 TEST_THREAD_TYPE_CALLBACK(ompt_event_thread_begin)
 TEST_THREAD_TYPE_CALLBACK(ompt_event_thread_end)
 TEST_NEW_PARALLEL_CALLBACK(ompt_event_parallel_begin)
-TEST_NEW_PARALLEL_CALLBACK(ompt_event_parallel_end)
+TEST_PARALLEL_CALLBACK(ompt_event_parallel_end)
 TEST_NEW_TASK_CALLBACK(ompt_event_task_begin)
 TEST_NEW_TASK_CALLBACK(ompt_event_task_end)
 TEST_CONTROL_CALLBACK(ompt_event_control)
@@ -168,15 +170,15 @@ TEST_WAIT_CALLBACK(ompt_event_init_nest_lock);
 TEST_WAIT_CALLBACK(ompt_event_destroy_lock);
 TEST_WAIT_CALLBACK(ompt_event_destroy_nest_lock);
 TEST_NEW_WORKSHARE_CALLBACK(ompt_event_loop_begin);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_loop_end);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_section_begin);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_section_end);
+TEST_PARALLEL_CALLBACK(ompt_event_loop_end);
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_sections_begin);
+TEST_PARALLEL_CALLBACK(ompt_event_sections_end);
 TEST_NEW_WORKSHARE_CALLBACK(ompt_event_single_in_block_begin);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_single_in_block_end);
+TEST_PARALLEL_CALLBACK(ompt_event_single_in_block_end);
 TEST_PARALLEL_CALLBACK(ompt_event_single_others_begin);
 TEST_PARALLEL_CALLBACK(ompt_event_single_others_end);
 TEST_NEW_WORKSHARE_CALLBACK(ompt_event_workshare_begin);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_workshare_end);
+TEST_PARALLEL_CALLBACK(ompt_event_workshare_end);
 TEST_PARALLEL_CALLBACK(ompt_event_master_begin);
 TEST_PARALLEL_CALLBACK(ompt_event_master_end);
 TEST_PARALLEL_CALLBACK(ompt_event_barrier_begin)

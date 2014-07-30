@@ -355,54 +355,75 @@ int locktest(void) {
 
 int main (int argc, char *argv[]) 
 {
-  printf("Running with OMP_NUM_THREADS=%s threads\n", getenv("OMP_NUM_THREADS")); fflush(stdout);
+  const char * num_threads_env = getenv("OMP_NUM_THREADS");
+  if (num_threads_env == NULL) {
+    printf("Running with OMP_NUM_THREADS=%d threads\n", omp_get_max_threads()); fflush(stdout);
+  } else {
+    printf("Running with OMP_NUM_THREADS=%s threads\n", num_threads_env); fflush(stdout);
+  }
 #ifdef ATOMIC
-  printf ("\n\nDoing atomic: %d\n\n", atomic()); fflush(stdout);
+  printf ("\n\nDoing atomic: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", atomic()); fflush(stdout);
 #endif
 #ifdef BARRIER
-  printf ("\n\nDoing barrier: %d\n\n", barrier()); fflush(stdout);
+  printf ("\n\nDoing barrier: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", barrier()); fflush(stdout);
 #endif
 #ifdef MASTER
-  printf ("\n\nDoing master: %d\n\n", master()); fflush(stdout);
+  printf ("\n\nDoing master: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", master()); fflush(stdout);
 #endif
 #ifdef ORDERED
-  printf ("\n\nDoing ordered: %d\n\n", ordered()); fflush(stdout);
+  printf ("\n\nDoing ordered: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", ordered()); fflush(stdout);
 #endif
 #ifdef CRITICAL
-  printf ("\n\nDoing critical: %d\n\n", critical()); fflush(stdout);
+  printf ("\n\nDoing critical: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", critical()); fflush(stdout);
 #endif
 #ifdef FORTEST
-  printf ("\n\nDoing fortest: %d\n\n", fortest()); fflush(stdout);
+  printf ("\n\nDoing fortest: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", fortest()); fflush(stdout);
 #endif
 #ifdef FLUSH
-  printf ("\n\nDoing flush: %d\n\n", flush()); fflush(stdout);
+  printf ("\n\nDoing flush: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", flush()); fflush(stdout);
 #endif
 #ifdef SECTIONS
-  printf ("\n\nDoing sections: %d\n\n", sections()); fflush(stdout);
+  printf ("\n\nDoing sections: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", sections()); fflush(stdout);
 #endif
 #ifdef SINGLE
-  printf ("\n\nDoing single: %d\n\n", single()); fflush(stdout);
+  printf ("\n\nDoing single: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", single()); fflush(stdout);
 #endif
 #ifdef CRITICAL_NAMED
-  printf ("\n\nDoing critical named: %d\n\n", critical_named()); fflush(stdout);
+  printf ("\n\nDoing critical named: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", critical_named()); fflush(stdout);
 #endif
 #ifdef PARALLELFOR
-  printf ("\n\nDoing parallelfor: %d\n\n", parallelfor()); fflush(stdout);
+  printf ("\n\nDoing parallelfor: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", parallelfor()); fflush(stdout);
 #endif
 #ifdef PARALLELFOR_STATIC
-  printf ("\n\nDoing parallelfor_static: %d\n\n", parallelfor_static()); fflush(stdout);
+  printf ("\n\nDoing parallelfor_static: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", parallelfor_static()); fflush(stdout);
 #endif
 #ifdef PARALLELFOR_DYNAMIC
-  printf ("\n\nDoing parallelfor_dynamic: %d\n\n", parallelfor_dynamic()); fflush(stdout);
+  printf ("\n\nDoing parallelfor_dynamic: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", parallelfor_dynamic()); fflush(stdout);
 #endif
 #ifdef PARALLELFOR_RUNTIME
-  printf ("\n\nDoing parallelfor_runtime: %d\n\n", parallelfor_runtime()); fflush(stdout);
+  printf ("\n\nDoing parallelfor_runtime: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", parallelfor_runtime()); fflush(stdout);
 #endif
 #ifdef LOCKTEST
-  printf ("\n\nDoing locktest: %d\n\n", locktest()); fflush(stdout);
+  printf ("\n\nDoing locktest: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", locktest()); fflush(stdout);
 #endif
 #ifdef TASKS
-  printf ("\n\nDoing tasks: %d\n\n", fibouter(20)); fflush(stdout);
+  printf ("\n\nDoing tasks: \n"); fflush(stdout);
+  printf ("Result: %d\n\n", fibouter(20)); fflush(stdout);
 #endif
 
   printf ("Done.\n"); fflush(stdout);

@@ -213,7 +213,7 @@ if (ompt_set_callback(EVENT, (ompt_callback_t) my_##EVENT) == 0) { \
   fprintf(stderr,"Failed to register OMPT callback %s!\n",#EVENT);  \
 }
 #else
-#define CHECK(EVENT) ompt_set_callback(EVENT, (ompt_callback_t) my_##EVENT) == 0; 
+#define CHECK(EVENT) ompt_set_callback(EVENT, (ompt_callback_t) my_##EVENT); 
 #endif
 
 

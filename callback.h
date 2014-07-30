@@ -25,7 +25,7 @@ void my_##EVENT(ompt_thread_id_t thread_id) \
 void my_##EVENT(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id) \
 { \
   const char * type_strings[] = {"initial", "worker", "other"}; \
-  printf("%d: %s: thread_id=%lu thread_type=%lu type_string='%s'\n", omp_get_thread_num(), #EVENT, thread_id, thread_type, type_strings[thread_type]); \
+  printf("%d: %s: thread_id=%lu thread_type=%d type_string='%s'\n", omp_get_thread_num(), #EVENT, thread_id, thread_type, type_strings[thread_type]); \
   fflush(stdout); \
 }
 
@@ -147,59 +147,59 @@ TEST_CALLBACK(ompt_event_runtime_shutdown)
 /* Blameshifting events */
 TEST_THREAD_CALLBACK(ompt_event_idle_begin)
 TEST_THREAD_CALLBACK(ompt_event_idle_end)
-TEST_PARALLEL_CALLBACK(ompt_event_wait_barrier_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_wait_barrier_end);
-TEST_PARALLEL_CALLBACK(ompt_event_wait_taskwait_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_wait_taskwait_end);
-TEST_PARALLEL_CALLBACK(ompt_event_wait_taskgroup_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_wait_taskgroup_end);
-TEST_WAIT_CALLBACK(ompt_event_release_lock);
-TEST_WAIT_CALLBACK(ompt_event_release_nest_lock_last);
-TEST_WAIT_CALLBACK(ompt_event_release_critical);
+TEST_PARALLEL_CALLBACK(ompt_event_wait_barrier_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_wait_barrier_end)
+TEST_PARALLEL_CALLBACK(ompt_event_wait_taskwait_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_wait_taskwait_end)
+TEST_PARALLEL_CALLBACK(ompt_event_wait_taskgroup_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_wait_taskgroup_end)
+TEST_WAIT_CALLBACK(ompt_event_release_lock)
+TEST_WAIT_CALLBACK(ompt_event_release_nest_lock_last)
+TEST_WAIT_CALLBACK(ompt_event_release_critical)
 TEST_WAIT_CALLBACK(ompt_event_release_ordered)
 TEST_WAIT_CALLBACK(ompt_event_release_atomic)
 
 /* synchronous events */
-TEST_PARALLEL_CALLBACK(ompt_event_implicit_task_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_implicit_task_end);
-TEST_PARALLEL_CALLBACK(ompt_event_initial_task_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_initial_task_end);
-TEST_TASK_SWITCH_CALLBACK(ompt_event_task_switch);
-TEST_WAIT_CALLBACK(ompt_event_init_lock);
-TEST_WAIT_CALLBACK(ompt_event_init_nest_lock);
-TEST_WAIT_CALLBACK(ompt_event_destroy_lock);
-TEST_WAIT_CALLBACK(ompt_event_destroy_nest_lock);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_loop_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_loop_end);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_sections_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_sections_end);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_single_in_block_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_single_in_block_end);
-TEST_PARALLEL_CALLBACK(ompt_event_single_others_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_single_others_end);
-TEST_NEW_WORKSHARE_CALLBACK(ompt_event_workshare_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_workshare_end);
-TEST_PARALLEL_CALLBACK(ompt_event_master_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_master_end);
+TEST_PARALLEL_CALLBACK(ompt_event_implicit_task_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_implicit_task_end)
+TEST_PARALLEL_CALLBACK(ompt_event_initial_task_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_initial_task_end)
+TEST_TASK_SWITCH_CALLBACK(ompt_event_task_switch)
+TEST_WAIT_CALLBACK(ompt_event_init_lock)
+TEST_WAIT_CALLBACK(ompt_event_init_nest_lock)
+TEST_WAIT_CALLBACK(ompt_event_destroy_lock)
+TEST_WAIT_CALLBACK(ompt_event_destroy_nest_lock)
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_loop_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_loop_end)
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_sections_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_sections_end)
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_single_in_block_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_single_in_block_end)
+TEST_PARALLEL_CALLBACK(ompt_event_single_others_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_single_others_end)
+TEST_NEW_WORKSHARE_CALLBACK(ompt_event_workshare_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_workshare_end)
+TEST_PARALLEL_CALLBACK(ompt_event_master_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_master_end)
 TEST_PARALLEL_CALLBACK(ompt_event_barrier_begin)
 TEST_PARALLEL_CALLBACK(ompt_event_barrier_end)
-TEST_PARALLEL_CALLBACK(ompt_event_taskwait_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_taskwait_end);
-TEST_PARALLEL_CALLBACK(ompt_event_taskgroup_begin);
-TEST_PARALLEL_CALLBACK(ompt_event_taskgroup_end);
-TEST_WAIT_CALLBACK(ompt_event_wait_lock);
-TEST_WAIT_CALLBACK(ompt_event_acquired_lock);
-TEST_WAIT_CALLBACK(ompt_event_wait_nest_lock);
-TEST_WAIT_CALLBACK(ompt_event_acquired_nest_lock_first);
-TEST_PARALLEL_CALLBACK(ompt_event_release_nest_lock_prev);
-TEST_PARALLEL_CALLBACK(ompt_event_acquired_nest_lock_next);
-TEST_WAIT_CALLBACK(ompt_event_wait_critical);
-TEST_WAIT_CALLBACK(ompt_event_acquired_critical);
+TEST_PARALLEL_CALLBACK(ompt_event_taskwait_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_taskwait_end)
+TEST_PARALLEL_CALLBACK(ompt_event_taskgroup_begin)
+TEST_PARALLEL_CALLBACK(ompt_event_taskgroup_end)
+TEST_WAIT_CALLBACK(ompt_event_wait_lock)
+TEST_WAIT_CALLBACK(ompt_event_acquired_lock)
+TEST_WAIT_CALLBACK(ompt_event_wait_nest_lock)
+TEST_WAIT_CALLBACK(ompt_event_acquired_nest_lock_first)
+TEST_PARALLEL_CALLBACK(ompt_event_release_nest_lock_prev)
+TEST_PARALLEL_CALLBACK(ompt_event_acquired_nest_lock_next)
+TEST_WAIT_CALLBACK(ompt_event_wait_critical)
+TEST_WAIT_CALLBACK(ompt_event_acquired_critical)
 TEST_WAIT_CALLBACK(ompt_event_wait_ordered)
 TEST_WAIT_CALLBACK(ompt_event_acquired_ordered)
 TEST_WAIT_CALLBACK(ompt_event_wait_atomic)
-TEST_WAIT_CALLBACK(ompt_event_acquired_atomic);
-TEST_THREAD_CALLBACK(ompt_event_flush);
+TEST_WAIT_CALLBACK(ompt_event_acquired_atomic)
+TEST_THREAD_CALLBACK(ompt_event_flush)
 
 /*******************************************************************
  * Register the events

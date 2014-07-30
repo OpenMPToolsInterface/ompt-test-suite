@@ -25,7 +25,7 @@ void my_##EVENT(ompt_thread_id_t thread_id) \
 void my_##EVENT(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id) \
 { \
   const char * type_strings[] = {"initial", "worker", "other"}; \
-  printf("%d: %s: thread_id=%lu thread_type=%d type_string='%s'\n", omp_get_thread_num(), #EVENT, thread_id, thread_type, type_strings[thread_type]); \
+  printf("%d: %s: thread_id=%lu thread_type=%d type_string='%s'\n", omp_get_thread_num(), #EVENT, thread_id, thread_type, type_strings[thread_type-1]); \
   fflush(stdout); \
 }
 
@@ -205,10 +205,17 @@ TEST_THREAD_CALLBACK(ompt_event_flush)
  * Register the events
  *******************************************************************/
 
+#define OMPT_CHECK_VERBOSE
+
+#ifdef OMPT_CHECK_VERBOSE
 #define CHECK(EVENT) \
 if (ompt_set_callback(EVENT, (ompt_callback_t) my_##EVENT) == 0) { \
   fprintf(stderr,"Failed to register OMPT callback %s!\n",#EVENT);  \
 }
+#else
+#define CHECK(EVENT) ompt_set_callback(EVENT, (ompt_callback_t) my_##EVENT) == 0; 
+#endif
+
 
 int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, int ompt_version) {
   printf("Init: %s ver %i\n",runtime_version,ompt_version);
@@ -236,56 +243,56 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
 
   CHECK(ompt_event_idle_begin);
   CHECK(ompt_event_idle_end);
-  //CHECK(ompt_event_wait_barrier_begin);
-  //CHECK(ompt_event_wait_barrier_end);
-  //CHECK(ompt_event_wait_taskwait_begin);
-  //CHECK(ompt_event_wait_taskwait_end);
-  //CHECK(ompt_event_wait_taskgroup_begin);
-  //CHECK(ompt_event_wait_taskgroup_end);
+  CHECK(ompt_event_wait_barrier_begin);
+  CHECK(ompt_event_wait_barrier_end);
+  CHECK(ompt_event_wait_taskwait_begin);
+  CHECK(ompt_event_wait_taskwait_end);
+  CHECK(ompt_event_wait_taskgroup_begin);
+  CHECK(ompt_event_wait_taskgroup_end);
   CHECK(ompt_event_release_lock);
-  //CHECK(ompt_event_release_nest_lock_last);
+  CHECK(ompt_event_release_nest_lock_last);
   CHECK(ompt_event_release_critical);
   CHECK(ompt_event_release_atomic);
   CHECK(ompt_event_release_ordered);
 
   /* optional events, synchronous */
 
-  //CHECK(ompt_event_implicit_task_create);
-  //CHECK(ompt_event_implicit_task_exit);
+  CHECK(ompt_event_implicit_task_begin);
+  CHECK(ompt_event_implicit_task_end);
   CHECK(ompt_event_master_begin);
   CHECK(ompt_event_master_end);
   CHECK(ompt_event_barrier_begin);
   CHECK(ompt_event_barrier_end);
-  //CHECK(ompt_event_task_switch);
+  CHECK(ompt_event_task_switch);
   CHECK(ompt_event_loop_begin);
   CHECK(ompt_event_loop_end);
-  //CHECK(ompt_event_section_begin);
-  //CHECK(ompt_event_section_end);
+  CHECK(ompt_event_sections_begin);
+  CHECK(ompt_event_sections_end);
   CHECK(ompt_event_single_in_block_begin);
   CHECK(ompt_event_single_in_block_end);
   CHECK(ompt_event_single_others_begin);
   CHECK(ompt_event_single_others_end);
-  //CHECK(ompt_event_taskwait_begin);
-  //CHECK(ompt_event_taskwait_end);
-  //CHECK(ompt_event_taskgroup_begin);
-  //CHECK(ompt_event_taskgroup_end);
-  //CHECK(ompt_event_release_nest_lock_prev);
-  //CHECK(ompt_event_wait_lock);
-  //CHECK(ompt_event_wait_nest_lock);
-  //CHECK(ompt_event_wait_critical);
+  CHECK(ompt_event_taskwait_begin);
+  CHECK(ompt_event_taskwait_end);
+  CHECK(ompt_event_taskgroup_begin);
+  CHECK(ompt_event_taskgroup_end);
+  CHECK(ompt_event_release_nest_lock_prev);
+  CHECK(ompt_event_wait_lock);
+  CHECK(ompt_event_wait_nest_lock);
+  CHECK(ompt_event_wait_critical);
   CHECK(ompt_event_wait_atomic);
-  //CHECK(ompt_event_wait_ordered);
-  //CHECK(ompt_event_acquired_lock);
-  //CHECK(ompt_event_acquired_nest_lock_first);
-  //CHECK(ompt_event_acquired_nest_lock_next);
-  //CHECK(ompt_event_acquired_critical);
+  CHECK(ompt_event_wait_ordered);
+  CHECK(ompt_event_acquired_lock);
+  CHECK(ompt_event_acquired_nest_lock_first);
+  CHECK(ompt_event_acquired_nest_lock_next);
+  CHECK(ompt_event_acquired_critical);
   CHECK(ompt_event_acquired_atomic);
-  //CHECK(ompt_event_acquired_ordered);
-  //CHECK(ompt_event_init_lock);
-  //CHECK(ompt_event_init_nest_lock);
-  //CHECK(ompt_event_destroy_lock);
-  //CHECK(ompt_event_destroy_nest_lock);
-  //CHECK(ompt_event_flush);
+  CHECK(ompt_event_acquired_ordered);
+  CHECK(ompt_event_init_lock);
+  CHECK(ompt_event_init_nest_lock);
+  CHECK(ompt_event_destroy_lock);
+  CHECK(ompt_event_destroy_nest_lock);
+  CHECK(ompt_event_flush);
   return 1;
 }
 

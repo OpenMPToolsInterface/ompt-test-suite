@@ -1,4 +1,4 @@
-#ifndef TAU_OPENMP
+#ifndef OMPT_NO_INSTROPECTION
 /* 
  * This header file implements a dummy tool which will execute all
  * of the implemented callbacks in the OMPT framework. When a supported

@@ -29,9 +29,11 @@ PREF=lin
 SUFFIX=host
 endif
 
+OPT += -DOMPT_DEBUG -g
+
 LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
 
-LIB =$(LIBDIR)/libiomp5.so
+LIB =$(LIBDIR)/libiomp5.so -lm
 
 LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
 
@@ -73,7 +75,9 @@ EXEC = \
 	ordered \
 	parallelfor \
 	single \
-	task-1 lateinitf
+	task-1 lateinitf \
+	test_task_id \
+	test_task_id-simple
 
 # EXEC = nest1-unit
 

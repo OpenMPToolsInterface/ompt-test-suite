@@ -63,6 +63,7 @@ task_push(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
   {
     task_list[id] = parent;
   }
+  return true;
 }
 
 
@@ -76,8 +77,6 @@ task_match(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
         if  (it->second != parent) {
 	  std::cout <<" siblings don't have the same parent: " << it->second << " vs. " << parent  << std::endl;
 	  assert(false);
-        } else {
-          return true;
        }
     }
   }
@@ -85,6 +84,7 @@ task_match(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
   {
     task_list[id] = parent;
   }
+  return true;
 }
 
 void test_parallel(int nested, int max_threads, int n_threads)
@@ -123,12 +123,15 @@ void test_parallel(int nested, int max_threads, int n_threads)
         task_match(map_siblings, my_outer_task, ompt_get_task_id(1));
     }
   }
+  // clear the maps
+  map_taskID.clear();
+  map_siblings.clear();
 
-  std::cout << "(before second region) serial_thread_task_id=" << ompt_get_task_id(0) << std::endl; 
+  std::cout << std::endl << "(before second region) serial_thread_task_id=" 
+	    << ompt_get_task_id(0) << std::endl; 
 
   omp_set_num_threads(max_threads);
-  #pragma omp parallel for
-  for(int i=0; i<4; i++)
+  #pragma omp parallel 
   {
     task_push( map_taskID, ompt_get_task_id(0), ompt_get_task_id(1));
     task_match(map_siblings, 2, ompt_get_task_id(1));

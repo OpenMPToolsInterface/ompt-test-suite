@@ -34,6 +34,7 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
 
   /* look up and bind OMPT API functions */
   OMPT_FN_LOOKUP(lookup,ompt_get_task_id);
+  return 1;
 }
 
 

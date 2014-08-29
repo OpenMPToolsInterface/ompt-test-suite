@@ -43,6 +43,7 @@ HEADERS=${wildcard *.h}
 FC = ifort
 EXEC = \
 	degenerate-parallel-region \
+	degenerate-parallel-region-nested \
 	nest1 \
 	nest1-unit \
 	level1-unit \
@@ -77,6 +78,7 @@ EXEC = \
 	parallelfor \
 	single \
 	task-1 lateinitf \
+	test_omp_task \
 	test_task_id \
 	test_task_id-simple
 

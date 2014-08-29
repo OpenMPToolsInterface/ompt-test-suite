@@ -1,7 +1,4 @@
-#include <math.h>
 #include <iostream>
-#include <map>
-#include <vector>
 #include <assert.h>
 
 #include <omp.h>

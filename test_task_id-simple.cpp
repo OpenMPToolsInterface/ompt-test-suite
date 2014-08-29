@@ -90,16 +90,20 @@ task_match(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
 
 void test_parallel(int nested, int max_threads, int n_threads)
 {
+#ifdef OMPT_DEBUG
   std::cout << "(before first region) serial_thread_task_id=" << ompt_get_task_id(0) << std::endl; 
+#endif
 
   omp_set_nested(nested);
   #pragma omp parallel num_threads(n_threads) 
   {
-   	  #pragma omp critical
-          {
+#ifdef OMPT_DEBUG
+    #pragma omp critical
+    {
 	  std::cout <<"(outer region) implicit_task=" << ompt_get_task_id(0) << 
 	  	" enclosing_task=" << ompt_get_task_id(1) << std::endl;
-          }
+    }
+#endif
     task_push( map_taskID, ompt_get_task_id(0), ompt_get_task_id(1));
     task_match(map_siblings, 1, ompt_get_task_id(1));
 
@@ -128,8 +132,10 @@ void test_parallel(int nested, int max_threads, int n_threads)
   map_taskID.clear();
   map_siblings.clear();
 
+#ifdef OMPT_DEBUG
   std::cout << std::endl << "(before second region) serial_thread_task_id=" 
 	    << ompt_get_task_id(0) << std::endl; 
+#endif
 
   omp_set_num_threads(max_threads);
   #pragma omp parallel 
@@ -138,9 +144,9 @@ void test_parallel(int nested, int max_threads, int n_threads)
     task_match(map_siblings, 2, ompt_get_task_id(1));
   }
 
-  std::cout << "(after second region) serial_thread_task_id=" << ompt_get_task_id(0) << std::endl; 
 
 #ifdef OMPT_DEBUG
+  std::cout << "(after second region) serial_thread_task_id=" << ompt_get_task_id(0) << std::endl; 
   print_tasks(map_taskID);
 #endif
 }

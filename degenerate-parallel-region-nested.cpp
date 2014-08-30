@@ -62,8 +62,13 @@ void test_parallel()
     	ompt_task_id_t nested_task_id = ompt_get_task_id(0);
     	ompt_task_id_t parent_nested_task_id = ompt_get_task_id(1);
 
-    	check_task_id( 	nested_task_id, parent_nested_task_id, 
-			implicit_task_id, "inner nested region");
+    	check_task_id( nested_task_id, parent_nested_task_id, 
+		       implicit_task_id, "inner nested vs outer region");
+
+	ompt_task_id_t grand_parent_nested_task_id = ompt_get_task_id(2);
+
+    	check_task_id( nested_task_id, serial_task_id, 
+		       grand_parent_nested_task_id, "inner nested vs serial region");
     }
   }
 }

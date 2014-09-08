@@ -77,9 +77,8 @@ EXEC = \
 	ordered \
 	parallelfor \
 	single \
-	task-1 lateinitf \
-	test_omp_task \
-	test_task_id \
+	task-1 \
+	lateinitf \
 	test_task_id-simple
 
 # EXEC = nest1-unit

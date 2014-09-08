@@ -15,6 +15,7 @@
  *******************************************************************/
 
 int WAIT_FOR_TASK_ID = 0;
+bool error = false;
 
 #define OMPT_FN_TYPE(fn) fn ## _t 
 #define OMPT_FN_LOOKUP(lookup,fn) fn = (OMPT_FN_TYPE(fn)) lookup(#fn)
@@ -28,7 +29,7 @@ typedef std::vector<ompt_task_id_t> TaskVector;
 typedef std::map<ompt_task_id_t, ompt_task_id_t> MapTaskID;
 
 // list of parent task IDs
-static MapTaskID map_taskID, map_siblings;
+static MapTaskID map_taskID;
 
 int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, int ompt_version) {
 
@@ -56,99 +57,103 @@ task_push(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
     MapTaskID::const_iterator it = task_list.find(id);
     // id must be unique
     if ( it != task_list.end() ) {
-	std::cout<<" ID already exist: " << id << " vs. " << it->first << std::endl;
-	assert(false);
+      std::cout<<" ID already exist: " << id << " vs. " << it->first << std::endl;
+      error = true;
+      assert(false);
     }
   }
-  #pragma omp critical
-  {
-    task_list[id] = parent;
-  }
+  task_list[id] = parent;
   return true;
 }
 
 
-static bool
-task_match(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
-{
-  if (task_list.size()>0) {
-    MapTaskID::const_iterator it = task_list.find(id);
-    // id must be unique
-    if ( it != task_list.end()) {
-        if  (it->second != parent) {
-	  std::cout <<" siblings don't have the same parent: " << it->second << " vs. " << parent  << std::endl;
-	  assert(false);
-       }
-    }
-  }
-  #pragma omp critical
-  {
-    task_list[id] = parent;
-  }
-  return true;
-}
-
-void test_parallel(int nested, int max_threads, int n_threads)
-{
+static void assertEqual(ompt_task_id_t ID, ompt_task_id_t expectedID, const char* info){
+  if (ID != expectedID) {
+    error = true;
 #ifdef OMPT_DEBUG
-  std::cout << "(before first region) serial_thread_task_id=" << ompt_get_task_id(0) << std::endl; 
+    std::cout << "task " << ompt_get_task_id(0) << ": " << info << " (IS=" << ID << "; expected=" << expectedID << ")" << std::endl;
+    // wait for debugger 
+    while (WAIT_FOR_TASK_ID == ompt_get_task_id(0)); 
+#else
+    assert(ID == expectedID);
+#endif
+  }
+}
+
+void test_parallel(int nested, int outerThreadNum, int innerThreadNum, int singleThreadNum)
+{
+  std::cout << "nested: " << nested << "; outer Threads: " << outerThreadNum << "; inner Threads: " << innerThreadNum
+            << "; single (non-nested) Threads: " << singleThreadNum << std::endl; 
+
+  ompt_task_id_t serial_taskID = ompt_get_task_id(0); 
+#ifdef OMPT_DEBUG
+  std::cout << "(before first region) serial_thread_task_id=" << serial_taskID << std::endl; 
 #endif
 
   omp_set_nested(nested);
-  #pragma omp parallel num_threads(n_threads) 
+  #pragma omp parallel num_threads(outerThreadNum) 
   {
+    ompt_task_id_t outer_taskID = ompt_get_task_id(0);
+    ompt_task_id_t outer_taskID_parent = ompt_get_task_id(1);
+        
 #ifdef OMPT_DEBUG
     #pragma omp critical
     {
-	  std::cout <<"(outer region) implicit_task=" << ompt_get_task_id(0) << 
-	  	" enclosing_task=" << ompt_get_task_id(1) << std::endl;
+      std::cout <<"(outer region) implicit_task=" << outer_taskID << " enclosing_task=" << outer_taskID_parent << std::endl;
     }
 #endif
-    task_push( map_taskID, ompt_get_task_id(0), ompt_get_task_id(1));
-    task_match(map_siblings, 1, ompt_get_task_id(1));
+    #pragma omp critical
+    {
+      task_push( map_taskID, outer_taskID, outer_taskID_parent);
+      assertEqual(outer_taskID_parent, serial_taskID, "Parent task ID level 1 mismatch");
+    }
 
-    ompt_task_id_t my_outer_task = ompt_get_task_id(0); 
-
-    #pragma omp parallel num_threads(n_threads)
+    #pragma omp parallel num_threads(innerThreadNum)
     {
 #ifdef OMPT_DEBUG
-	if (my_outer_task != ompt_get_task_id(1)) {
-   	  #pragma omp critical
-          {
-	  std::cout <<"task " << ompt_get_task_id(0) <<": my enclosing_task_id=" << my_outer_task << " != ompt_get_task_id(1)=" 
-		<< ompt_get_task_id(1)  << std::endl;
-          }
-	  // wait for debugger 
-	  while (WAIT_FOR_TASK_ID == ompt_get_task_id(0)); 
-        }
-#else
-        assert( my_outer_task == ompt_get_task_id(1));
+      #pragma omp critical
+      {
 #endif
-	task_push( map_taskID, ompt_get_task_id(0), ompt_get_task_id(1));
-        task_match(map_siblings, my_outer_task, ompt_get_task_id(1));
+        ompt_task_id_t inner_taskID = ompt_get_task_id(0); 
+        ompt_task_id_t inner_taskID_parent = ompt_get_task_id(1); 
+        ompt_task_id_t inner_taskID_grandParent = ompt_get_task_id(2); 
+
+#ifdef OMPT_DEBUG
+        std::cout <<"(inner region) implicit_task=" << inner_taskID << " enclosing_task=" << inner_taskID_parent << std::endl;
+#endif
+        task_push( map_taskID, inner_taskID, inner_taskID_parent);
+        
+        assertEqual(inner_taskID_parent, outer_taskID, "Parent task ID level 2 mismatch");
+        assertEqual(inner_taskID_grandParent, serial_taskID, "Grandparent task ID level 2 mismatch");
+#ifdef OMPT_DEBUG
+      }
+#endif
     }
   }
-  // clear the maps
-  map_taskID.clear();
-  map_siblings.clear();
 
 #ifdef OMPT_DEBUG
-  std::cout << std::endl << "(before second region) serial_thread_task_id=" 
-	    << ompt_get_task_id(0) << std::endl; 
+  std::cout << std::endl << "(before second region) serial_thread_task_id=" << ompt_get_task_id(0) << std::endl; 
 #endif
+  assertEqual(ompt_get_task_id(0), serial_taskID, "Serial task id changed after region 1");
 
-  omp_set_num_threads(max_threads);
-  #pragma omp parallel 
+  #pragma omp parallel num_threads(singleThreadNum)
   {
-    task_push( map_taskID, ompt_get_task_id(0), ompt_get_task_id(1));
-    task_match(map_siblings, 2, ompt_get_task_id(1));
+    ompt_task_id_t outer_taskID = ompt_get_task_id(0);
+    ompt_task_id_t outer_taskID_parent = ompt_get_task_id(1);
+    
+    #pragma omp critical
+    {
+      task_push( map_taskID, outer_taskID, outer_taskID_parent);
+      assertEqual(outer_taskID_parent, serial_taskID, "Parent task ID level 1 mismatch");
+    }
   }
 
-
+  assertEqual(ompt_get_task_id(0), serial_taskID, "Serial task id changed after region 2");
 #ifdef OMPT_DEBUG
-  std::cout << "(after second region) serial_thread_task_id=" << ompt_get_task_id(0) << std::endl; 
+  std::cout << "(after second region) serial_thread_task_id=" << serial_taskID << std::endl; 
   print_tasks(map_taskID);
 #endif
+  std::cout << std::endl;
 }
 
 
@@ -157,7 +162,7 @@ main(int argc, char *argv[])
 {
   if (argc > 2) { std::cerr << "usage: " << argv[0] << "task_id to debug" << std::endl; exit(-1); }
   if (argc == 2) {
-	WAIT_FOR_TASK_ID = atoi(argv[1]);
+    WAIT_FOR_TASK_ID = atoi(argv[1]);
   } 
   ompt_task_id_t taskid = ompt_get_task_id(0);
   assert(taskid == 0);
@@ -166,10 +171,22 @@ main(int argc, char *argv[])
   assert(max_threads > 0);
 
   int n_threads = sqrt(max_threads);
-  std::cout << "max threads: " << max_threads << " nth: " << n_threads << std::endl; 
+  assert(n_threads > 0);
   
-  test_parallel(1, max_threads, n_threads);
-  test_parallel(0, max_threads, n_threads);
+  test_parallel(1, 1, 1, 1);
+  test_parallel(1, n_threads, 1, 1);
+  test_parallel(1, 1, n_threads, max_threads);
+  test_parallel(1, n_threads, n_threads, 1);
+
+  test_parallel(0, 1, 1, 1);
+  test_parallel(0, n_threads, 1, 1);
+  test_parallel(0, 1, n_threads, max_threads);
+  test_parallel(0, n_threads, n_threads, 1);
+  
+  if(error)
+    std::cerr << "Test failed!";
+  else
+    std::cout << "Test passed!";
 
   return 0;
 }

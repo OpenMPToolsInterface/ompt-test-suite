@@ -80,7 +80,7 @@ EXEC = \
 	task-1 lateinitf \
 	test_omp_task \
 	test_task_id \
-	test_task_id-simple
+	test_task_id-nested 
 
 # EXEC = nest1-unit
 

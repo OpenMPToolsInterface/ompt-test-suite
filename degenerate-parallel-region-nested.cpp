@@ -9,7 +9,6 @@
  * global variables
  *******************************************************************/
 
-int WAIT_FOR_TASK_ID = 0;
 
 #define OMPT_FN_TYPE(fn) fn ## _t 
 #define OMPT_FN_LOOKUP(lookup,fn) fn = (OMPT_FN_TYPE(fn)) lookup(#fn)
@@ -31,8 +30,8 @@ void check_task_id( ompt_task_id_t current, ompt_task_id_t parent1, ompt_task_id
 		    const char *info )
 {
   if (parent1 != parent2) {
-  #pragma omp critical
-  {
+     #pragma omp critical
+     {
 	std::cout <<"TEST FAILED: parent task IDs are inconsistent  " << std::endl
 		  << "inside parallel region: "<< info << std::endl 
 		  << "\tcurrent task=" << current << std::endl
@@ -49,6 +48,7 @@ void test_parallel()
   ompt_task_id_t serial_task_id = ompt_get_task_id(0); 
   assert(serial_task_id != 0);
 
+  // testing omp parallel region
   #pragma omp parallel num_threads(1) 
   {
     ompt_task_id_t implicit_task_id = ompt_get_task_id(0);
@@ -65,6 +65,7 @@ void test_parallel()
     	check_task_id( nested_task_id, parent_nested_task_id, 
 		       implicit_task_id, "inner nested vs outer region");
 
+	// testing against the serial task id
 	ompt_task_id_t grand_parent_nested_task_id = ompt_get_task_id(2);
 
     	check_task_id( nested_task_id, serial_task_id, 

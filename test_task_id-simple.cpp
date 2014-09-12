@@ -49,8 +49,10 @@ print_tasks(MapTaskID task_list)
 }
 
 
+// Test if the task id was already used
+// Has to be called from inside critical section
 static bool
-task_push(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
+is_task_unique(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
 {
   if (task_list.size()>0)
   {
@@ -66,7 +68,8 @@ task_push(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
   return true;
 }
 
-
+// Checks if the ID matches the expected ID
+// Better to call this from inside critical section
 static void assertEqual(ompt_task_id_t ID, ompt_task_id_t expectedID, const char* info){
   if (ID != expectedID) {
     error = true;
@@ -104,13 +107,14 @@ void test_parallel(int nested, int outerThreadNum, int innerThreadNum, int singl
 #endif
     #pragma omp critical
     {
-      task_push( map_taskID, outer_taskID, outer_taskID_parent);
+      is_task_unique( map_taskID, outer_taskID, outer_taskID_parent);
       assertEqual(outer_taskID_parent, serial_taskID, "Parent task ID level 1 mismatch");
     }
 
     #pragma omp parallel num_threads(innerThreadNum)
     {
 #ifdef OMPT_DEBUG
+      // Critical section also around the get task id for easier debugging
       #pragma omp critical
       {
 #endif
@@ -120,14 +124,15 @@ void test_parallel(int nested, int outerThreadNum, int innerThreadNum, int singl
 
 #ifdef OMPT_DEBUG
         std::cout <<"(inner region) implicit_task=" << inner_taskID << " enclosing_task=" << inner_taskID_parent << std::endl;
+#else
+      #pragma omp critical
+      {
 #endif
-        task_push( map_taskID, inner_taskID, inner_taskID_parent);
+        is_task_unique( map_taskID, inner_taskID, inner_taskID_parent);
         
         assertEqual(inner_taskID_parent, outer_taskID, "Parent task ID level 2 mismatch");
         assertEqual(inner_taskID_grandParent, serial_taskID, "Grandparent task ID level 2 mismatch");
-#ifdef OMPT_DEBUG
       }
-#endif
     }
   }
 
@@ -143,7 +148,7 @@ void test_parallel(int nested, int outerThreadNum, int innerThreadNum, int singl
     
     #pragma omp critical
     {
-      task_push( map_taskID, outer_taskID, outer_taskID_parent);
+      is_task_unique( map_taskID, outer_taskID, outer_taskID_parent);
       assertEqual(outer_taskID_parent, serial_taskID, "Parent task ID level 1 mismatch");
     }
   }
@@ -157,6 +162,7 @@ void test_parallel(int nested, int outerThreadNum, int innerThreadNum, int singl
 }
 
 
+// Tests if nesting of task ids and parents is right for 2 nested sections with different combinations of thread counts
 int 
 main(int argc, char *argv[])
 {
@@ -173,6 +179,7 @@ main(int argc, char *argv[])
   int n_threads = sqrt(max_threads);
   assert(n_threads > 0);
   
+  // Test all possible combinations of nested and inner/outer thread count
   test_parallel(1, 1, 1, 1);
   test_parallel(1, n_threads, 1, 1);
   test_parallel(1, 1, n_threads, max_threads);

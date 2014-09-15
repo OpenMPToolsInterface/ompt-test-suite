@@ -112,16 +112,21 @@ void test_region(int level, int maxLevel, int* threadNums, TaskVector parents){
     }
     if(level<maxLevel){
       // Do not modify outer vector as it is used by other threads!
-      ompt_task_id_t myID = taskIDs[0];
-      taskIDs = parents;
-      taskIDs.push_back(myID);
-      test_region(level+1, maxLevel, threadNums, taskIDs);
+      TaskVector newParents = parents;
+      newParents.push_back(taskIDs[0]);
+      test_region(level+1, maxLevel, threadNums, newParents);
+      // Make sure the task ids did not change
+      for(int i=0; i<=level; i++){
+        std::stringstream sMsg;
+        sMsg << "Task ID level " << level << " -> " << level - i << " changed after nested region";
+        assertEqual(ompt_get_task_id(i), taskIDs[i], sMsg.str().c_str());
+      }
     }
   }
 }
 
 void test_parallel(int nested, int outerThreadNum, int middleThreadNum, int innerThreadNum, int singleThreadNum){
-  std::cout << "nested: " << nested 
+  std::cout << std::endl << "nested: " << nested 
             << "; outer Threads: " << outerThreadNum 
             << "; middle Threads: " << middleThreadNum 
             << "; inner Threads: " << innerThreadNum

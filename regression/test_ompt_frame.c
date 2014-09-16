@@ -1,3 +1,7 @@
+/*******************************************************************
+ * This test will verify the correctness of retrieving frames
+ * from OMPT library
+ *******************************************************************/
 
 #include <stdio.h>
 #include <assert.h>
@@ -119,6 +123,9 @@ main(int argc, char *argv[])
   
   void * idle_frame   = ompt_get_idle_frame();
   // idle_frame is not null at this stage with intel rtl
+  // the TR doesn't say anything what will be the value of idle_frame
+  // at this stage. So anything is possible ?
+  //
   //assert( idle_frame == 0);
 
   ompt_frame_t *frame = ompt_get_task_frame(0);
@@ -133,8 +140,8 @@ main(int argc, char *argv[])
     {
  	if (idle_frame != 0)
 	{
-	   fprintf(stderr, "[%d] idle_frame: %p\n", thread, idle_frame);
-	   //assert( idle_frame == 0);
+	   fprintf(stderr, "[%d] idle_frame is not null: %p\n", thread, idle_frame);
+	   assert( idle_frame == 0);
 	}
     } else
     {

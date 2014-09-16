@@ -2,3 +2,13 @@ All tests in this directory must comply the following requirements:
 
 * If the test succeed, the executable should return 0 without any output
 * If the test doesn't succeed, it should show where the test fails and exit with an assertion which will generate a core dump on Linux platform.
+
+To build the test for intel platform, type:
+
+make comp=intel
+
+or
+
+make comp=gcc
+
+for using gcc compiler

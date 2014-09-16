@@ -1,3 +1,8 @@
+EXEC = \
+	test_ompt_frame \
+	test_task_id-nested \
+	test_task_id-simple
+
 HOST:= $(shell hostname -s)
 
 ifeq ($(opt),2)
@@ -13,51 +18,55 @@ else
 VER=rel
 endif
 
-ifeq ($(strip),yes)
-STRIP=stripped
-else
-STRIP=unstripped
-endif
+#FLAGS += -DOMPT_DEBUG -g
+FLAGS += -g
 
-ifeq ($(arch),mic)
-ARCH=.knc.lin.off
-OPT=-mmic
-PREF=lrb
-SUFFIX=mic
-else
-PREF=lin
-SUFFIX=host
-endif
+ifeq ($(comp),intel)
+  ifndef INTEL_OMP_ROOT
+    $(error Need to define INTEL_OMP_ROOT variable)
+  endif
 
-#OPT += -DOMPT_DEBUG -g
-OPT += -g
+  LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
+  LIB =$(LIBDIR)/libiomp5.so -lm
+  LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
 
-ifdef INTEL
-ifndef INTEL_OMP_ROOT
-$(error Need to define INTEL_OMP_ROOT variable)
-endif
+  INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/src
 
-LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
-LIB =$(LIBDIR)/libiomp5.so -lm
-LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
+  FC = ifort
+  CC = icc
+  CXX = icpc
+  OMPFLAGS = -openmp
 
-INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/src
+  ifeq ($(strip),yes)
+    STRIP=stripped
+  else
+    STRIP=unstripped
+  endif
 
-FC = ifort
+  ifeq ($(arch),mic)
+    ARCH=.knc.lin.off
+    FLAGS=-mmic
+    PREF=lrb
+    SUFFIX=mic
+  else
+    PREF=lin
+    SUFFIX=host
+  endif
 
-else
-FC = gfortran -gdwarf-3
-CC = gcc -gdwarf-3
-CXX = g++ -gdwarf-3
+else 
+ ifeq ($(comp),gcc)
+   FC = gfortran -gdwarf-3
+   CC = gcc -gdwarf-3
+   CXX = g++ -gdwarf-3
+  
+   OMPFLAGS = -fopenmp
 
+  else
+     $(error Need to specify comp argument (either make comp=intel or make comp=gcc $1))
+  endif
 endif
 
 HEADERS=${wildcard *.h}
-
-EXEC = \
-	test_ompt_frame \
-	test_task_id-nested \
-	test_task_id-simple
 
 # EXEC = nest1-unit
 
@@ -70,17 +79,11 @@ clean:
 
 $(EXECS) : $(HEADERS) $(LIB)
 
-fib.$(SUFFIX): fib.c 
-	icc $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ $<
-
-luleshMPI_OMP.host: luleshMPI_OMP.cc
-	mpicxx $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -openmp $< $(LIBS)
-
 %.$(SUFFIX): %.c 
-	icc $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -openmp $< $(LIBS)
+	$(CC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)
 
 %.$(SUFFIX): %.cpp 
-	icpc $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -openmp $< $(LIBS)
+	$(CXX) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)
 
 %.$(SUFFIX): %.f 
-	ifort $(INCLUDES) $(OPT) -O$(LEVEL) -g -o $@ -openmp $< $(LIBS)
+	$(FC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)

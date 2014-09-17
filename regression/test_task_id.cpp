@@ -10,20 +10,11 @@
 #include <ompt.h>
 #include <sstream>
 
+#include "common.h"
 
 /*******************************************************************
  * global variables
  *******************************************************************/
-
-int WAIT_FOR_TASK_ID = 0;
-bool error = false;
-
-#define OMPT_FN_TYPE(fn) fn ## _t 
-#define OMPT_FN_LOOKUP(lookup,fn) fn = (OMPT_FN_TYPE(fn)) lookup(#fn)
-#define OMPT_FN_DECL(fn) OMPT_FN_TYPE(fn) fn
-
-OMPT_FN_DECL(ompt_get_task_id);
-OMPT_FN_DECL(ompt_get_thread_id);
 
 typedef std::vector<ompt_task_id_t> TaskVector;
 
@@ -33,12 +24,8 @@ typedef std::map<ompt_task_id_t, ompt_task_id_t> MapTaskID;
 // list of parent task IDs
 static MapTaskID map_taskID;
 
-int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, int ompt_version) {
-
-  /* look up and bind OMPT API functions */
-  OMPT_FN_LOOKUP(lookup,ompt_get_task_id);
-  OMPT_FN_LOOKUP(lookup,ompt_get_thread_id);
-  return 1;
+void init_test(){
+  //Nothing to do
 }
 
 #ifdef OMPT_DEBUG
@@ -63,7 +50,6 @@ is_task_unique(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
     // id must be unique
     if ( it != task_list.end() ) {
       std::cerr << "ERROR: ID already exist: " << id << " vs. " << it->first << std::endl;
-      error = true;
       assert(false);
     }
   }
@@ -75,14 +61,10 @@ is_task_unique(MapTaskID &task_list, ompt_task_id_t id, ompt_task_id_t parent)
 // Better to call this from inside critical section
 static void assertEqual(ompt_task_id_t ID, ompt_task_id_t expectedID, const char* info){
   if (ID != expectedID) {
-    error = true;
 #ifdef OMPT_DEBUG
     std::cerr << "ERROR: task " << ompt_get_task_id(0) << ": " << info << " (IS=" << ID << "; expected=" << expectedID << ")" << std::endl;
-    // wait for debugger 
-    while (WAIT_FOR_TASK_ID == ompt_get_task_id(0)); 
-#else
-    assert(ID == expectedID);
 #endif
+    assert(ID == expectedID);
   }
 }
 
@@ -156,13 +138,6 @@ void test_parallel(int nested, int outerThreadNum, int middleThreadNum, int inne
 int 
 main(int argc, char *argv[])
 {
-#ifdef OMPT_DEBUG
-  if (argc > 2) { std::cerr << "usage: " << argv[0] << "task_id to debug" << std::endl; exit(-1); }
-  if (argc == 2) {
-    WAIT_FOR_TASK_ID = atoi(argv[1]);
-  } 
-#endif
-
   ompt_task_id_t taskid = ompt_get_task_id(0);
   assert(taskid == 0);
 
@@ -203,10 +178,7 @@ main(int argc, char *argv[])
   test_parallel(0, n_threads, n_threads, n_threads, 1);
   
 #ifdef OMPT_DEBUG  
-  if(error)
-    std::cerr << std::endl << "Test failed!" << std::endl << std::endl;
-  else
-    std::cerr << std::endl << "Test passed!" << std::endl << std::endl;
+  std::cout << std::endl << "Test passed!" << std::endl << std::endl;
 #endif
 
   return 0;

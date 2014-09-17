@@ -1,7 +1,7 @@
 EXEC = \
 	test_ompt_frame \
-	test_task_id-nested \
-	test_task_id-simple
+	test_task_id \
+	test_wait_barrier
 
 HOST:= $(shell hostname -s)
 
@@ -18,7 +18,7 @@ else
 VER=rel
 endif
 
-#FLAGS += -DOMPT_DEBUG -g
+FLAGS += -DOMPT_DEBUG -g
 FLAGS += -g
 
 ifeq ($(comp),intel)
@@ -79,11 +79,11 @@ clean:
 
 $(EXECS) : $(HEADERS) $(LIB)
 
-%.$(SUFFIX): %.c 
+%.$(SUFFIX): %.c
 	$(CC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)
 
-%.$(SUFFIX): %.cpp 
-	$(CXX) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)
+%.$(SUFFIX): %.cpp common.cpp
+	$(CXX) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $^ $(LIBS)
 
-%.$(SUFFIX): %.f 
+%.$(SUFFIX): %.f
 	$(FC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)

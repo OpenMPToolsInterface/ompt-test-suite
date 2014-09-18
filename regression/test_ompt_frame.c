@@ -11,30 +11,24 @@
 #include <omp.h>
 #include <ompt.h>
 
+#include "common.h"
 
 #define MAX_FRAMES 100
 
-/*******************************************************************
- * ompt initialization
- *******************************************************************/
-
-#define OMPT_FN_TYPE(fn) fn ## _t 
-#define OMPT_FN_LOOKUP(lookup,fn) fn = (OMPT_FN_TYPE(fn)) lookup(#fn)
-#define OMPT_FN_DECL(fn) OMPT_FN_TYPE(fn) fn
-
-OMPT_FN_DECL(ompt_get_task_frame);
-OMPT_FN_DECL(ompt_get_idle_frame);
-
-
-int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
-		    int ompt_version) 
-{
-
-  /* look up and bind OMPT API functions */
-  OMPT_FN_LOOKUP(lookup,ompt_get_task_frame);
-  OMPT_FN_LOOKUP(lookup,ompt_get_idle_frame);
-  return 1;
+//
+// We use this macro instead of a for loop in backtrace() because the 
+// documentation says that you have to use a constant, not a variable.
+//
+#define BT(X) {                                                        \
+                if (__builtin_frame_address(X)) {                      \
+		  printf("[%d] frame %d: %p\n", rank, X, __builtin_frame_address(X)); \
+                }                                                       \
 }
+
+void init_test(){
+  //Nothing to do
+}
+
 
 
 /*******************************************************************
@@ -60,18 +54,9 @@ get_backtrace()
     }
   }
  #endif
-  j = 0;
-  while (1){
-    if (__builtin_frame_address(1) != NULL) 
-    {
-      printf("\n[%d] frame %d: %p\n", rank, j, __builtin_frame_address(1));
-      j++;
-    } 
-    else 
-    {
-	break;
-    }
-  } 
+  BT(0);
+  BT(1);
+  BT(2);
 }
 
 /*******************************************************************

@@ -2,14 +2,15 @@
 #define	COMMON_H
 
 #include <ompt.h>
-#include <iostream>
+#include <stdio.h>
 #include <assert.h>
 
 // Macro to set an OMPT callback (input event name e.g. "loop_begin", will set "on_loop_begin" as callback function)
 #define REG_CB( EVENT ) \
     if ( ompt_set_callback( ompt_event_##EVENT, ( ompt_callback_t )on_##EVENT ) != ompt_set_result_event_may_occur_callback_always ) \
     { \
-        std::cerr << "Failed to register OMPT callback " << #EVENT << "!" << std::endl; \
+        fprintf(stderr, "Failed to register OMPT callback %s!\n", #EVENT ); \
+	fflush(stderr); \
         assert(false); \
     }
 

@@ -1,6 +1,6 @@
 EXEC = \
-	test_ompt_frame \
 	test_task_id \
+	test_ompt_frame \
 	test_wait_barrier
 
 HOST:= $(shell hostname -s)
@@ -62,7 +62,7 @@ else
    OMPFLAGS = -fopenmp
 
   else
-     $(error Need to specify comp argument (either make comp=intel or make comp=gcc $1))
+     $(error Need to specify comp argument (either make comp=intel or make comp=gcc))
   endif
 endif
 
@@ -79,10 +79,10 @@ clean:
 
 $(EXECS) : $(HEADERS) $(LIB)
 
-%.$(SUFFIX): %.c
-	$(CC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)
+%.$(SUFFIX): %.c common.c
+	$(CC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $^ $(LIBS)
 
-%.$(SUFFIX): %.cpp common.cpp
+%.$(SUFFIX): %.cpp common.c
 	$(CXX) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $^ $(LIBS)
 
 %.$(SUFFIX): %.f

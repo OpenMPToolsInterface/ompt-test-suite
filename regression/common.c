@@ -3,8 +3,9 @@
 #define LOOKUP( lookup, fn ) fn = ( fn ## _t )lookup( #fn ); \
     if ( !fn ) \
     { \
-        std::cerr << "Could not lookup function " << #fn << "!" << std::endl; \
-        assert(false); \
+        fprintf( stderr, "Could not lookup function %s!\n", #fn); \
+	fflush(stderr); \
+        assert(0); \
     }
 
 /* Declaration of ompt functions */

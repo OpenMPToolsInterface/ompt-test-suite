@@ -67,10 +67,7 @@ void run_loop(int numThreads){
   free(list);
 }
 
-void run_test(int nested){
-  dout << "Run test with nested=" << nested << endl;
-  omp_set_nested(nested);
-  
+void test_loops(){
   dout << "Before 1st loop" << endl;
   run_loop(omp_get_max_threads());
   assert_empty_map();
@@ -84,22 +81,30 @@ void run_test(int nested){
   }
   assert_empty_map();
   dout << "After 2nd loop" << endl;
+}
+
+void run_test(int nested){
+  dout << "Run test with nested=" << nested << endl;
+  omp_set_nested(nested);
   
+  test_loops();
+  
+  int threads = omp_get_max_threads()/2;
   #pragma omp parallel num_threads(2)
   {
     #pragma omp critical
-    dout << "Start in region tid=" << omp_get_thread_num() << endl;
+    dout << "Start in region tid=" << ompt_get_thread_id() << endl;
     #pragma omp master
     {
       #pragma omp task
       {
         run_loop(threads);
-        dout << "End t1" << endl;
+        dout << "End task1 TID=" << ompt_get_thread_id() << endl;
       }
       #pragma omp task
       {
         run_loop(threads);
-        dout << "End t2" << endl;
+        dout << "End task2 TID=" << ompt_get_thread_id() << endl;
       }
     }
   }

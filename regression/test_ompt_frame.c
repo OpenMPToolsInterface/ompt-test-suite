@@ -50,13 +50,14 @@ get_backtrace()
   if (strings != NULL)
   {
     for(j=0; j<nptrs; j++) {
-      printf("\t[%d] %d: %s\n", rank, j, strings[j]);
+      printf("\t[%d] %d: %p -- %s\n", rank, j, buffer[j], strings[j]);
     }
   }
  #endif
   BT(0);
   BT(1);
   BT(2);
+  BT(3);
 }
 
 /*******************************************************************
@@ -111,7 +112,7 @@ main(int argc, char *argv[])
   // the TR doesn't say anything what will be the value of idle_frame
   // at this stage. So anything is possible ?
   //
-  //assert( idle_frame == 0);
+  assert( idle_frame == 0);
 
   ompt_frame_t *frame = ompt_get_task_frame(0);
   assert( frame->exit_runtime_frame == 0 && frame->reenter_runtime_frame == 0);

@@ -1,5 +1,6 @@
 EXEC = \
 	test_task_id \
+	test_event_thread \
 	test_ompt_frame \
 	test_wait_barrier
 

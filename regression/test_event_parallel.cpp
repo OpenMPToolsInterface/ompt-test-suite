@@ -15,6 +15,7 @@ typedef map<ompt_task_id_t, ompt_parallel_id_t> taskParallelIdMap_t;
 
 threadIdMap_t threadIdMap;
 taskParallelIdMap_t taskParallelIdMap;
+omp_lock_t mapLock;
 //
 //Debug output stream
 std::ofstream dout("/dev/null");
@@ -34,7 +35,7 @@ on_thread_begin(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id){
 
     // the thread id must be unique
     assert(threadIdMap.count(thread_id)==0);
-    threadIdMap[thread_id] = 0;
+    threadIdMap[thread_id] = thread_type;
   }
 }
 
@@ -76,7 +77,9 @@ on_parallel_end(ompt_parallel_id_t parallel_id,    /* id of parallel region     
   // check if the parallel id has been defined in the parallel begin event
   assert(taskParallelIdMap.count(parallel_id)==1);
 
+  omp_set_lock(&mapLock);
   taskParallelIdMap.erase(parallel_id);
+  omp_unset_lock(&mapLock);
 }
 
 void init_test(){
@@ -110,6 +113,7 @@ int main(int argc, char** argv) {
   ostream& dout_ref = dout;
   dout_ref.rdbuf(cout.rdbuf());
 #endif
+  omp_init_lock(&mapLock);
   // enable nested parallelism
   omp_set_nested(1);
 
@@ -117,6 +121,7 @@ int main(int argc, char** argv) {
 
   // make sure that all parallel region ID has been checked
   assert(taskParallelIdMap.size()==0);
+  omp_destroy_lock(&mapLock);
 
   return 0;
 }

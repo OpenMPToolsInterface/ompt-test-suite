@@ -76,6 +76,7 @@ EXECS=$(addsuffix .$(SUFFIX),$(EXEC))
 
 all: $(EXECS)
 
+
 clean:
 	/bin/rm -f $(EXECS)
 
@@ -89,3 +90,4 @@ $(EXECS) : $(HEADERS) $(LIB)
 
 %.$(SUFFIX): %.f
 	$(FC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)
+

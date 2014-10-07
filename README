@@ -1,24 +1,4 @@
-1. Building the test suite with GCC
+The test suite comprises of two folders:
 
-To build the tests, make sure that your built GCC 4.8.2 is in your path(s):
-
-export GCC_HOME=$HOME/install/gcc-4.8.2
-export PATH=$GCC_HOME/bin:$PATH
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GCC_HOME/lib64:$GCC_HOME/lib
-
-# and if necessary...
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/install/mpc-1.0.1/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/install/mpfr-3.1.1/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/install/gmp-5.1.0/lib
-
-...then just "make -f Makefile.gcc" and run the tests.
-
-
-2. Building the test suite with Intel compiler
-
-Define INTEL_OMP_ROOT environment variable to point to the location of Intel OpenMP library (not necessarily the location of Intel compiler).
-Then type
-  make -f Makefile.intel
-to build
-
+regression: which contains a bundle of regression tests to check if an implementation of OMPT is valid or not.
+test: a collection of any tests, examples and benchmarks

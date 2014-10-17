@@ -50,7 +50,7 @@ get_backtrace()
   if (strings != NULL)
   {
     for(j=0; j<nptrs; j++) {
-      printf("\t[%d] %d: %p -- %s\n", rank, j, buffer[j], strings[j]);
+      printf("\t[%d] %d: %p  %s\n", rank, j, buffer[j], strings[j]);
     }
   }
  #endif
@@ -98,6 +98,22 @@ get_frames(ompt_frame_t *frame[], int max_frames)
 
 
 /*******************************************************************
+ * inner loop
+ *******************************************************************/
+static void 
+run_loop(int numThreads){
+  const int ct = 100000000;
+  int i;
+  float* list = (float*) malloc(sizeof(float)*ct);
+
+  for(i=0; i<ct; i++)
+    list[i] *= 1.f/i; 
+
+  free(list);
+}
+
+
+/*******************************************************************
  * main program
  *******************************************************************/
 
@@ -117,6 +133,8 @@ main(int argc, char *argv[])
   ompt_frame_t *frame = ompt_get_task_frame(0);
   assert( frame->exit_runtime_frame == 0 && frame->reenter_runtime_frame == 0);
 
+  omp_set_nested(1);
+
   #pragma omp parallel num_threads(2) private(idle_frame)
   {
     idle_frame = ompt_get_idle_frame();
@@ -133,6 +151,9 @@ main(int argc, char *argv[])
     {
 	assert( idle_frame != 0);
     }
+    // --------------------------------------------------------------
+    // verifying the correctness of the first parallel region
+    // --------------------------------------------------------------
     #pragma omp critical
     {
 	ompt_frame_t *frames[MAX_FRAMES];
@@ -154,6 +175,39 @@ main(int argc, char *argv[])
 #ifdef OMPT_DEBUG
 	get_backtrace();
 #endif //OMPT_DEBUG
+    }
+    #pragma omp parallel num_threads(2)
+    {
+	run_loop(2);
+        
+    	// --------------------------------------------------------------
+    	// verifying the correctness of the first parallel region
+    	// --------------------------------------------------------------
+    	#pragma omp critical
+	{
+	  ompt_frame_t *frames[MAX_FRAMES];
+   	  int depth = get_frames( frames, MAX_FRAMES);
+	  // ompt_get_task_frame should return at least 3 frames: 
+	  // one for entering the runtime, another one for exiting,
+	  // and the last one for entering again
+	  // (see tr-2.pdf pp 34)
+	  assert(depth > 1);
+	  //
+	  // tr-2 pp 34: the first frame has no reenter, but has exit
+	  assert(frames[0] != NULL);
+	  assert(frames[0]->reenter_runtime_frame == 0);
+	  assert(frames[0]->exit_runtime_frame  != 0);
+	
+	  // tr2 pp 24: the second frame has reenter, but no exit
+	  assert(frames[1] != NULL);
+	  assert(frames[1]->reenter_runtime_frame  != 0);
+	  assert(frames[1]->exit_runtime_frame  != 0);
+	  //
+	  // tr-2 pp 34: the first frame has no reenter, but has exit
+	  assert(frames[2] != NULL);
+	  assert(frames[2]->reenter_runtime_frame != 0);
+	  assert(frames[2]->exit_runtime_frame  == 0);
+	}
     }
   }
   exit(0);

@@ -198,7 +198,7 @@ main(int argc, char *argv[])
 	  assert(frames[0]->reenter_runtime_frame == 0);
 	  assert(frames[0]->exit_runtime_frame  != 0);
 	
-	  // tr2 pp 24: the second frame has reenter, but no exit
+	  // tr2 pp 24: the second frame has both reenter and exit
 	  assert(frames[1] != NULL);
 	  assert(frames[1]->reenter_runtime_frame  != 0);
 	  assert(frames[1]->exit_runtime_frame  != 0);

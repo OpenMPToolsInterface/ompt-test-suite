@@ -113,6 +113,67 @@ void my_##EVENT() \
   fflush(stdout); \
 }
 
+#define TEST_NEW_TARGET_CALLBACK(event) \
+void my_##event( \
+  ompt_task_id_t task_id,            /* ID of task */ \
+  ompt_target_id_t target_id,        /* ID of target* region */ \
+  ompt_target_device_id_t device_id, /* ID of the device */ \
+  void *target_function              /* pointer to outlined function */ \
+    ) \
+{ \
+  printf("%d: %s, task_id=%llu, target_id=%llu, device_id=%llu, target_function=%llu\n", omp_get_thread_num(), #event, task_id, target_id, device_id, target_function); \
+  fflush(0); \
+} 
+
+
+#define TEST_TARGET_CALLBACK(event) \
+void my_##event( \
+  ompt_task_id_t task_id,            /* ID of task */ \
+  ompt_target_id_t target_id         /* ID of target* region */ \
+    ) \
+{ \
+  printf("%d: %s, task_id=%llu, target_id=%llu\n", omp_get_thread_num(), #event, task_id, target_id); \
+  fflush(0); \
+}
+
+#define TEST_NEW_DATA_MAP_CALLBACK(event) \
+void my_##event( \
+  ompt_task_id_t task_id,            /* ID of task */ \
+  ompt_target_id_t target_id,        /* ID of target* region */ \
+  ompt_data_map_id_t data_map_id,    /* ID of data map operation */ \
+  ompt_target_device_id_t device_id, /* ID of the device */ \
+  ompt_target_sync_t sync_type,      /* synchronous or asynchronus data mapping */ \
+  ompt_data_map_t map_type,          /* type of the data mapping / motion */ \
+  uint64_t bytes                     /* amount of mapped bytes */ \
+    ) \
+{ \
+  printf("%d: %s, task_id=%llu, target_id=%llu, data_map_id=%llu, device_id=%llu, sync_type=%s, map_type=%s, bytes=%llu\n", \
+     omp_get_thread_num(), \
+     #event, \
+     task_id, target_id, \
+     data_map_id, device_id, \
+     sync_type == ompt_data_sync ? "SYNC" : "ASYNC", \
+     map_type == ompt_data_map_IN ? "IN" : "OUT", \
+     bytes); \
+  fflush(0); \
+} 
+
+
+#define TEST_DATA_MAP_CALLBACK(event) \
+void my_##event( \
+  ompt_task_id_t task_id,           /* ID of task */ \
+  ompt_target_id_t target_id,       /* ID of target* region */ \
+  ompt_data_map_id_t data_map_id    /* ID of data map operation */ \
+    ) \
+{ \
+  printf("%d: %s, task_id=%llu, target_id=%llu, data_map_id=%llu\n", \
+     omp_get_thread_num(), \
+     #event, \
+     task_id, target_id, data_map_id); \
+  fflush(0); \
+} 
+
+
 /*******************************************************************
  * Function declaration
  *******************************************************************/
@@ -200,6 +261,22 @@ TEST_WAIT_CALLBACK(ompt_event_acquired_ordered)
 TEST_WAIT_CALLBACK(ompt_event_wait_atomic)
 TEST_WAIT_CALLBACK(ompt_event_acquired_atomic)
 TEST_THREAD_CALLBACK(ompt_event_flush)
+
+/*******************************************************************
+ * target events (not yet in technical report)
+ *******************************************************************/
+TEST_NEW_TARGET_CALLBACK(ompt_event_target_begin)
+TEST_TARGET_CALLBACK(ompt_event_target_end)
+
+TEST_NEW_DATA_MAP_CALLBACK(ompt_event_data_map_begin)
+TEST_DATA_MAP_CALLBACK(ompt_event_data_map_end)
+
+TEST_NEW_TARGET_CALLBACK(ompt_event_target_update_begin)
+TEST_TARGET_CALLBACK(ompt_event_target_update_end)
+
+TEST_NEW_TARGET_CALLBACK(ompt_event_target_invoke_begin)
+TEST_TARGET_CALLBACK(ompt_event_target_invoke_end)
+
 
 /*******************************************************************
  * Register the events
@@ -293,6 +370,17 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
   CHECK(ompt_event_destroy_lock);
   CHECK(ompt_event_destroy_nest_lock);
   CHECK(ompt_event_flush);
+  
+  /* targt* events */
+  CHECK(ompt_event_target_begin);
+  CHECK(ompt_event_target_end);
+  CHECK(ompt_event_data_map_begin);
+  CHECK(ompt_event_data_map_end);
+  CHECK(ompt_event_target_update_begin);
+  CHECK(ompt_event_target_update_end);
+  CHECK(ompt_event_target_invoke_begin);
+  CHECK(ompt_event_target_invoke_end);
+
   return 1;
 }
 

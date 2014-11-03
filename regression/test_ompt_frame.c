@@ -57,7 +57,6 @@ get_backtrace()
   BT(0);
   BT(1);
   BT(2);
-  BT(3);
 }
 
 /*******************************************************************
@@ -102,7 +101,7 @@ get_frames(ompt_frame_t *frame[], int max_frames)
  *******************************************************************/
 static void 
 run_loop(int numThreads){
-  const int ct = 100000000;
+  const int ct = 400000000;
   int i;
   float* list = (float*) malloc(sizeof(float)*ct);
 

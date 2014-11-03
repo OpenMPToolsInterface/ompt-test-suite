@@ -28,22 +28,22 @@ ifeq ($(comp),intel)
     $(error Need to define INTEL_OMP_ROOT variable)
   endif
 
-  LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
-  LIB =$(LIBDIR)/libiomp5.so -lm
-  LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
-
-  INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/src
-
-  FC = ifort
-  CC = icc
-  CXX = icpc
-  OMPFLAGS = -openmp
-
   ifeq ($(strip),yes)
     STRIP=stripped
   else
     STRIP=unstripped
   endif
+
+  LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
+  LIB =$(LIBDIR)/libiomp5.so -lm
+  LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
+
+  INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/exports/common/include
+
+  FC = ifort
+  CC = icc
+  CXX = icpc
+  OMPFLAGS = -openmp
 
   ifeq ($(arch),mic)
     ARCH=.knc.lin.off

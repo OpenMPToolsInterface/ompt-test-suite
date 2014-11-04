@@ -262,6 +262,7 @@ TEST_WAIT_CALLBACK(ompt_event_wait_atomic)
 TEST_WAIT_CALLBACK(ompt_event_acquired_atomic)
 TEST_THREAD_CALLBACK(ompt_event_flush)
 
+#ifdef OMPT_TARGET
 /*******************************************************************
  * target events (not yet in technical report)
  *******************************************************************/
@@ -276,6 +277,7 @@ TEST_TARGET_CALLBACK(ompt_event_target_update_end)
 
 TEST_NEW_TARGET_CALLBACK(ompt_event_target_invoke_begin)
 TEST_TARGET_CALLBACK(ompt_event_target_invoke_end)
+#endif
 
 
 /*******************************************************************
@@ -371,6 +373,7 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
   CHECK(ompt_event_destroy_nest_lock);
   CHECK(ompt_event_flush);
   
+#ifdef OMPT_TARGET
   /* targt* events */
   CHECK(ompt_event_target_begin);
   CHECK(ompt_event_target_end);
@@ -380,6 +383,7 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
   CHECK(ompt_event_target_update_end);
   CHECK(ompt_event_target_invoke_begin);
   CHECK(ompt_event_target_invoke_end);
+#endif
 
   return 1;
 }

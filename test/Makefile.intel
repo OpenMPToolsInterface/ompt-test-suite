@@ -94,7 +94,9 @@ EXEC_TARGET = \
 	target_mulitple_daxpy \
 	target_daxpy_tasks \
 	target_reduction \
-	target_update_data
+	target_update_data \
+	target_update_data2 \
+	target_update_data3
 
 # EXEC = nest1-unit
 

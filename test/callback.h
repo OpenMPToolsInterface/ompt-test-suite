@@ -268,6 +268,9 @@ TEST_THREAD_CALLBACK(ompt_event_flush)
 TEST_NEW_TARGET_CALLBACK(ompt_event_target_begin)
 TEST_TARGET_CALLBACK(ompt_event_target_end)
 
+TEST_NEW_TARGET_CALLBACK(ompt_event_target_data_begin)
+TEST_TARGET_CALLBACK(ompt_event_target_data_end)
+
 TEST_NEW_DATA_MAP_CALLBACK(ompt_event_data_map_begin)
 TEST_DATA_MAP_CALLBACK(ompt_event_data_map_end)
 
@@ -374,6 +377,8 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
   /* targt* events */
   CHECK(ompt_event_target_begin);
   CHECK(ompt_event_target_end);
+  CHECK(ompt_event_target_data_begin);
+  CHECK(ompt_event_target_data_end);
   CHECK(ompt_event_data_map_begin);
   CHECK(ompt_event_data_map_end);
   CHECK(ompt_event_target_update_begin);

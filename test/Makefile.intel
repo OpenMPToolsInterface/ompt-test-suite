@@ -1,10 +1,27 @@
 HOST:= $(shell hostname -s)
 
+ifeq ($(version),15)
 # In Intel 15 "-openmp" is deprecated
 FLAG_OMP ?= -qopenmp
+else
+FLAG_OMP ?= -openmp
+endif
 
 # Turn on / off offloading
-USE_OFFLOAD ?= 1
+ifeq ($(offload),yes)
+USE_OFFLOAD=1
+LIBDIR_OFLD=$(INTEL_OMP_ROOT)/itt/offload/build
+LIBDIR_OFLD_PTH=$(LIBDIR_OFLD)/host
+LIBDIR_OFLD_LIB=$(LIBDIR_OFLD_PTH)/liboffload.so 
+LIBDIR_OFLD_RPTH=-Wl,-rpath=$(LIBDIR_OFLD_PTH) 
+else
+USE_OFFLOAD=0
+endif
+
+# Test target support
+ifeq ($(target),yes)
+OPT += -DOMPT_TARGET 
+endif
 
 ifeq ($(opt),2)
 LEVEL=2
@@ -38,11 +55,9 @@ OPT += -DOMPT_DEBUG -DUSE_OFFLOAD=$(USE_OFFLOAD) -g
 
 LIBDIR_OMP =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
 
-LIBDIR_OFLD =$(INTEL_OMP_ROOT)/itt/offload/build
+LIB =$(LIBDIR_OMP)/libiomp5.so $(LIBDIR_OFLD_LIB) -lm
 
-LIB =$(LIBDIR_OMP)/libiomp5.so $(LIBDIR_OFLD)/host/liboffload.so -lm
-
-LIBS=-Wl,-rpath=$(LIBDIR_OMP) -Wl,-rpath=$(LIBDIR_OFLD)/host $(LIB)
+LIBS=-Wl,-rpath=$(LIBDIR_OMP) $(LIBDIR_OFLD_RPTH) $(LIB)
 
 INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/src
 HEADERS=${wildcard *.h}
@@ -102,7 +117,11 @@ EXEC_TARGET = \
 
 EXECS=$(addsuffix .$(SUFFIX),$(EXEC))
 
+
+ifeq ($(target),yes)
+OPT += -DOMPT_TARGET 
 EXECS_TARGET=$(addsuffix .$(SUFFIX),$(EXEC_TARGET))
+endif
 
 all: $(EXECS) $(EXECS_TARGET)
 

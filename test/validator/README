@@ -1,0 +1,17 @@
+BUILDING
+---------
+Run
+
+make
+
+to compile the validator. You may want to use another compiler by setting CXX=<compiler binary> (tested with icpc and g++).
+
+
+HOW TO RUN
+-----------
+
+Call the executable which should be checked and pipe it to the validator executable.
+
+Example:
+
+./target_daxpy.host | ./validator/validator

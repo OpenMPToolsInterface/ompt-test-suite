@@ -26,14 +26,13 @@ int main() {
 	int elem_per_thread = SIZE / THREAD_NUM;
 	printf("\n*** Values per thread: %d ***\n\n", elem_per_thread);
  
-	int task;
 	#pragma omp target data map(alloc: x[0:SIZE]) device(0)
 	#pragma omp target data map(alloc: x[0:SIZE]) device(1)
 	#pragma omp parallel num_threads(THREAD_NUM)
 	{
-		// decide if this thread has to run on device 0 or 1
 		int thread = omp_get_thread_num();
 
+		// decide if this thread has to run on device 0 or 1
 		int device_id;
 		if (thread < THREAD_NUM/2) {
 			device_id = 0;

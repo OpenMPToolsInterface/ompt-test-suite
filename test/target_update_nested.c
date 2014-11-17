@@ -14,7 +14,6 @@ int main() {
 	
 	int* x = (int*) malloc(SIZE * sizeof(int));
 	int* y = (int*) malloc(SIZE * sizeof(int));
-	int a;
 
 	// initialize both arrays with same value
 	int i;

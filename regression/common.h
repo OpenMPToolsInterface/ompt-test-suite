@@ -19,8 +19,11 @@
 FOREACH_OMPT_FN( macro )
 #undef macro
 
-// Callback function called after OMPT was initialized. E.g. for setting event callbacks
-extern void init_test();
+// Callback function after OMPT was initialized. E.g. for setting event callbacks
+extern int init_test(ompt_function_lookup_t lookup,
+                     const char*            runtime_version,
+                     unsigned int           ompt_version );
+
 
 #endif	/* COMMON_H */
 

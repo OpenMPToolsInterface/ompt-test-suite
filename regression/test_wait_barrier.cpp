@@ -52,10 +52,15 @@ void assert_empty_map(){
   }
 }
 
-void init_test(){
+int init_test(ompt_function_lookup_t lookup,
+	     const char*            runtime_version,
+	     unsigned int           ompt_version ) 
+{
   dout << "Init test" << endl;
   REG_CB(wait_barrier_begin)
   REG_CB(wait_barrier_end)
+
+  return 1; // tool present
 }
 
 void run_loop(int numThreads){

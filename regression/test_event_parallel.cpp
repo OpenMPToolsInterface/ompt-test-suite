@@ -82,11 +82,16 @@ on_parallel_end(ompt_parallel_id_t parallel_id,    /* id of parallel region     
   omp_unset_lock(&mapLock);
 }
 
-void init_test(){
+int init_test(ompt_function_lookup_t lookup,
+	     const char*            runtime_version,
+	     unsigned int           ompt_version ) 
+{
   REG_CB(parallel_begin)
   REG_CB(parallel_end)
   REG_CB(thread_begin)
   REG_CB(thread_end)
+
+  return 1; // tool present
 }
 
 

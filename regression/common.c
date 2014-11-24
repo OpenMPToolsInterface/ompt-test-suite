@@ -16,14 +16,12 @@ FOREACH_OMPT_FN( macro )
 int
 ompt_initialize( ompt_function_lookup_t lookup,
                  const char*            runtime_version,
-                 int                    ompt_version )
+                 unsigned int           ompt_version )
 {
     // lookup functions
     #define macro( fn ) LOOKUP( lookup, fn )
     FOREACH_OMPT_FN( macro )
     #undef macro
 
-    init_test();
-
-    return 1;
+    return init_test(lookup, runtime_version, ompt_version);
 }

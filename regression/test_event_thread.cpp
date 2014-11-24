@@ -33,9 +33,14 @@ void on_thread_end(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id){
 }
 
 
-void init_test(){
+int init_test(ompt_function_lookup_t lookup,
+	     const char*            runtime_version,
+	     unsigned int           ompt_version ) 
+{
   REG_CB(thread_begin)
   REG_CB(thread_end)
+
+  return 1; // tool present
 }
 
 void run_loop(int numThreads){

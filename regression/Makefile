@@ -1,4 +1,5 @@
 EXEC = \
+	testtool \
 	test_task_id \
 	test_event_parallel \
 	test_event_thread \
@@ -28,14 +29,15 @@ ifeq ($(comp),intel)
     $(error Need to define INTEL_OMP_ROOT variable)
   endif
 
-  LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
+  BDIR=$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)
+  LIBDIR=$(BDIR)/$(STRIP)
   LIB =$(LIBDIR)/libiomp5.so -lm
   LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
 
-  INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/src
+  INCLUDES=-I$(BDIR)
 
   FC = ifort
-  CC = icc
+  CC = icc -std=c99
   CXX = icpc
   OMPFLAGS = -openmp
 

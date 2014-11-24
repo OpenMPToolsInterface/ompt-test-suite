@@ -20,10 +20,22 @@
 #define TEST_TASK	   1
 #define TEST_PRINT_STATE   1
 
+#define  _POSIX_C_SOURCE  199309L
+
 #include <stdio.h>
+#include <time.h>
 #include <pthread.h>
-#include "<omp.h>"
+#include <omp.h>
+#include <ompt.h>
 #include <assert.h>
+
+#if __powerpc64__
+#define memory_fence() __lwsync()
+#elif __x86_64__
+#define memory_fence() asm volatile("mfence" ::: "memory")
+#else
+#error "memory_fence() implementation not defined for this architecture"
+#endif
 
 __thread long ctid = -1;
 pthread_mutex_t mutex;
@@ -46,6 +58,8 @@ pthread_mutex_t mutex;
 #define MIN(_x, _y) ((_x)<(_y) ? (_x) : (_y))
 #define MAX(_x, _y) ((_x)>(_y) ? (_x) : (_y))
 
+#if 0
+// these are defined by ompt.h
 typedef enum ompt_set_callback_rc_e { /* non standard */
   ompt_set_callback_error = 0,
   ompt_has_event_no_callback = 1, 
@@ -65,6 +79,8 @@ typedef int (*ompt_enumerate_state_t)(int current_state,
   int *next_state, const char **next_state_name);
 typedef int (*ompt_set_callback_t)(ompt_event_t event, ompt_callback_t callback);
 typedef int (*ompt_get_callback_t)(ompt_event_t event, ompt_callback_t *callback);
+
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // inquiries functions
@@ -420,10 +436,20 @@ void QuickCheckPar()
   ASSERT(ctid>=0, "out of bound ctid %ld, min 0", ctid);
 }
 
+
+int nsleep(int nsec)
+{
+  struct timespec req;
+  req.tv_sec = 0;
+  req.tv_nsec = nsec;
+  nanosleep(&req, NULL);
+}
+
+
 void Wait()
 {
   PRINTF("    start sleeping\n");
-  usleep(10*1000); 
+  nsleep(10*1000); 
   PRINTF("    completed sleeping\n");
 }
 
@@ -543,8 +569,7 @@ void CallbackImplicitEnd(
   // support for explicit tasks
   toolData[ctid].parentTaskId = 0;
   toolData[ctid].childTaskId = 0;
-  // msync
-  __lwsync();
+  memory_fence();
   toolData[ctid].implicitTaskEndCount++;
 }
 
@@ -1391,7 +1416,7 @@ void RegisterCallback(ompt_event_t e, ompt_callback_t c)
   }
 }
 
-extern int ompt_initialize(
+extern int init_test(
   ompt_function_lookup_t lookup, 
   const char *runtime_version_string, 
   unsigned int ompt_version)
@@ -1399,7 +1424,6 @@ extern int ompt_initialize(
   printf("OMPT IS INITIALIZING: lookup functions with runtime version %s and ompt version %d\n", 
     runtime_version_string, ompt_version);
   SetInquiryFunctions(lookup);
-
   initTool = TRUE;
   // init tool data
   InitAllData(TRUE);
@@ -1467,7 +1491,7 @@ extern int ompt_initialize(
   RegisterCallback(ompt_event_task_switch           , (ompt_callback_t) CallbackTaskSwitch); 
   printf("OMPT IS INITIALIZING: done\n");
 
-  return 1;
+  return 1; // tool present
 }
 
 
@@ -1479,11 +1503,15 @@ int main ()
   int t;
   ompt_wait_id_t currWait;
 
+  int max = omp_get_max_threads();
+
+#if 0
   #if HAS_START_SHUTDOWN
     // start runtime
     _lomp_Runtime_Start();
     ASSERT(initTool, "expected tool to be init, it is not; check lib and OMP_TOOL");
   #endif
+#endif
 
   #if TEST_PRINT_STATE
     PrintSupportedStates();
@@ -1537,6 +1565,7 @@ int main ()
     TestTaskRegion();
   #endif
 
+#if 0
   // shutdown
   #if HAS_START_SHUTDOWN
     // stop runtiem
@@ -1550,6 +1579,7 @@ int main ()
       }
     }
   #endif
+#endif
 
   printf("successful test, return 55\n\n\n");
   return 55;

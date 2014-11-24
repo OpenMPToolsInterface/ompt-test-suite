@@ -24,8 +24,11 @@ typedef std::map<ompt_task_id_t, ompt_task_id_t> MapTaskID;
 // list of parent task IDs
 static MapTaskID map_taskID;
 
-void init_test(){
-  //Nothing to do
+int init_test(ompt_function_lookup_t lookup,
+	     const char*            runtime_version,
+	     unsigned int           ompt_version ) 
+{
+  return 1; // tool present
 }
 
 #ifdef OMPT_DEBUG

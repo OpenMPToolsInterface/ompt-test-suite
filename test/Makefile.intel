@@ -77,6 +77,7 @@ EXEC = \
 	critical \
 	critical-cpp \
 	enumerate-states \
+	idle-blame \
 	parloop-for-sampling \
 	parregion-for-sampling \
 	parregion2-for-sampling \

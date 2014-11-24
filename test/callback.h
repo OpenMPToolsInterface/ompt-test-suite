@@ -64,7 +64,7 @@ void my_##EVENT ( \
   uint32_t requested_team_size,     /* # threads requested for team */ \
   void *parallel_function)          /* outlined function            */ \
 { \
-  printf("%d: %s: parent_task_id=%lu parent_task_frame=%p\n\tparallel_id=%lu team_size=%lu parallel_function=%p\n", omp_get_thread_num(), #EVENT, parent_task_id, parent_task_frame, parallel_id, parent_task_id, parallel_function); \
+  printf("%d: %s: parent_task_id=%lu parent_task_frame=%p parallel_id=%lu team_size=%lu parallel_function=%p\n", omp_get_thread_num(), #EVENT, parent_task_id, parent_task_frame, parallel_id, parent_task_id, parallel_function); \
   fflush(stdout); \
 }
 
@@ -101,7 +101,7 @@ void my_##EVENT( \
 uint64_t command,                /* command of control call      */ \
 uint64_t modifier)                /* modifier of control call     */ \
 { \
-  printf("%d: %s: command=%lu, modifier=%lu\n", omp_get_thread_num(), #EVENT, command, modifier); \
+  printf("%d: %s: command=%lu modifier=%lu\n", omp_get_thread_num(), #EVENT, command, modifier); \
   fflush(stdout); \
 }
 
@@ -121,7 +121,7 @@ void my_##event( \
   void *target_function              /* pointer to outlined function */ \
     ) \
 { \
-  printf("%d: %s, task_id=%llu, target_id=%llu, device_id=%llu, target_function=%llu\n", omp_get_thread_num(), #event, task_id, target_id, device_id, target_function); \
+  printf("%d: %s: task_id=%llu target_id=%llu device_id=%llu target_function=%llu\n", omp_get_thread_num(), #event, task_id, target_id, device_id, target_function); \
   fflush(0); \
 } 
 
@@ -132,7 +132,7 @@ void my_##event( \
   ompt_target_id_t target_id         /* ID of target* region */ \
     ) \
 { \
-  printf("%d: %s, task_id=%llu, target_id=%llu\n", omp_get_thread_num(), #event, task_id, target_id); \
+  printf("%d: %s: task_id=%llu target_id=%llu\n", omp_get_thread_num(), #event, task_id, target_id); \
   fflush(0); \
 }
 
@@ -147,7 +147,7 @@ void my_##event( \
   uint64_t bytes                     /* amount of mapped bytes */ \
     ) \
 { \
-  printf("%d: %s, task_id=%llu, target_id=%llu, data_map_id=%llu, device_id=%llu, sync_type=%s, map_type=%s, bytes=%llu\n", \
+  printf("%d: %s: task_id=%llu target_id=%llu data_map_id=%llu device_id=%llu sync_type=%s map_type=%s bytes=%llu\n", \
      omp_get_thread_num(), \
      #event, \
      task_id, target_id, \
@@ -166,7 +166,7 @@ void my_##event( \
   ompt_data_map_id_t data_map_id    /* ID of data map operation */ \
     ) \
 { \
-  printf("%d: %s, task_id=%llu, target_id=%llu, data_map_id=%llu\n", \
+  printf("%d: %s: task_id=%llu target_id=%llu data_map_id=%llu\n", \
      omp_get_thread_num(), \
      #event, \
      task_id, target_id, data_map_id); \
@@ -268,6 +268,9 @@ TEST_THREAD_CALLBACK(ompt_event_flush)
  *******************************************************************/
 TEST_NEW_TARGET_CALLBACK(ompt_event_target_begin)
 TEST_TARGET_CALLBACK(ompt_event_target_end)
+
+TEST_NEW_TARGET_CALLBACK(ompt_event_target_data_begin)
+TEST_TARGET_CALLBACK(ompt_event_target_data_end)
 
 TEST_NEW_DATA_MAP_CALLBACK(ompt_event_data_map_begin)
 TEST_DATA_MAP_CALLBACK(ompt_event_data_map_end)
@@ -377,6 +380,8 @@ int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, 
   /* targt* events */
   CHECK(ompt_event_target_begin);
   CHECK(ompt_event_target_end);
+  CHECK(ompt_event_target_data_begin);
+  CHECK(ompt_event_target_data_end);
   CHECK(ompt_event_data_map_begin);
   CHECK(ompt_event_data_map_end);
   CHECK(ompt_event_target_update_begin);

@@ -299,7 +299,7 @@ if (ompt_set_callback(EVENT, (ompt_callback_t) my_##EVENT) == 0) { \
 #endif
 
 
-int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, int ompt_version) {
+int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, unsigned int ompt_version) {
   printf("Init: %s ver %i\n",runtime_version,ompt_version);
 
   /* look up and bind OMPT API functions */

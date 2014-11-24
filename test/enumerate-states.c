@@ -13,7 +13,7 @@ main()
 sleep(1);
 }
 
-int ompt_initialize(ompt_function_lookup_t lookup, const char *version, int ompt_version) {
+int ompt_initialize(ompt_function_lookup_t lookup, const char *version, unsigned int ompt_version) {
   int state;
   const char *state_name;
   int ok;

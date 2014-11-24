@@ -147,7 +147,7 @@ if (ompt_set_callback(EVENT, (ompt_callback_t) EVENT ## _fn) == 0) { \
 }
 
 
-int ompt_initialize(ompt_function_lookup_t lookup, const char *version, int ompt_version) {
+int ompt_initialize(ompt_function_lookup_t lookup, const char *version, unsigned int ompt_version) {
   LOOKUP(lookup,ompt_get_parallel_id);
   LOOKUP(lookup,ompt_set_callback);
   REGISTER(ompt_event_parallel_begin);

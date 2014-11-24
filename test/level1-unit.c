@@ -102,7 +102,7 @@ if (ompt_set_callback(EVENT, (ompt_callback_t) EVENT ## _fn) == 0) { \
   fprintf(stderr,"Failed to register OMPT callback %s!\n", #EVENT); return 0; \
 }
 
-int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, int ompt_version) {
+int ompt_initialize(ompt_function_lookup_t lookup, const char *runtime_version, unsigned int ompt_version) {
   printf("Init: %s ver %i\n",runtime_version,ompt_version);
   LOOKUP(lookup,ompt_get_parallel_id);
   LOOKUP(lookup,ompt_set_callback);

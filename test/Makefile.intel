@@ -53,13 +53,14 @@ endif
 
 OPT += -DOMPT_DEBUG -DUSE_OFFLOAD=$(USE_OFFLOAD) -g
 
-LIBDIR_OMP =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
+BDIR_OMP =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)
+LIBDIR_OMP =$(BDIR_OMP)/$(STRIP)
 
 LIB =$(LIBDIR_OMP)/libiomp5.so $(LIBDIR_OFLD_LIB) -lm
 
 LIBS=-Wl,-rpath=$(LIBDIR_OMP) $(LIBDIR_OFLD_RPTH) $(LIB)
 
-INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/src
+INCLUDES=-I$(BDIR_OMP)
 HEADERS=${wildcard *.h}
 
 FC = ifort

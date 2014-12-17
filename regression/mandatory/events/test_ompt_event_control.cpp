@@ -7,7 +7,9 @@ using namespace std;
 
 void on_ompt_event_control(uint64_t command,  uint64_t modifier)
 {
-    CHECK(command == 101 && modifier == 212, IMPLEMENTED_BUT_INCORRECT, "Wrong arguments passed to control callback");
+    if(command == 101 && modifier == 212) {
+        exit(CORRECT);
+    }
 }
 
 void 
@@ -23,6 +25,6 @@ main(int argc, char** argv)
 {
     warmup();
     ompt_control(101, 212);
-    for (;;) pause();
-    return global_error_code;
+    usleep(300000);
+    return IMPLEMENTED_BUT_INCORRECT;
 }

@@ -2,7 +2,6 @@
 #include <common.h>
 #include <iostream>
 #include <map>
-#include <assert.h>
 #include <vector>
 #include <unistd.h>
 #include <pthread.h>
@@ -21,10 +20,12 @@ static bool test_taskwait = false;
 static bool test_taskgroup = false;
 vector<ompt_state_t> observed_states;
 
+ompt_get_state_t my_ompt_get_state;
 
 void
 init_test(ompt_function_lookup_t lookup) {
-    ASSERT(ompt_get_state, NOT_IMPLEMENTED, "ompt_get_state is not implemented");
+    my_ompt_get_state = (ompt_get_state_t)lookup("ompt_get_state"); 
+    CHECK(my_ompt_get_state, NOT_IMPLEMENTED, "ompt_get_state is not implemented");
 }
 
 pthread_mutex_t mutex_states;
@@ -45,7 +46,7 @@ void
 trace_collector_callback(int sig, siginfo_t *si, void *uc)
 {
     ompt_wait_id_t currWait;
-    ompt_state_t current_state = ompt_get_state(&currWait);
+    ompt_state_t current_state = my_ompt_get_state(&currWait);
     observed_states.push_back(current_state);
 }
 
@@ -83,7 +84,6 @@ int
 main()
 {
     pthread_mutex_init(&mutex_states, NULL);
-    printf("\n>>> Test OMPT_GET_STATE: start\n");
     /* set up a timer */
     Timer timer; 
     init_timer(&timer);
@@ -93,7 +93,7 @@ main()
     /* TEST 0: Outside parallel region, expect to see ompt_state_work_serial */ 
     monitor_prelogue();
     serialwork(2);
-    ASSERT(check_states(observed_states, "(ompt_state_work_serial)+"),  IMPLEMENTED_BUT_INCORRECT,
+    CHECK(check_states(observed_states, "(ompt_state_work_serial)+"),  IMPLEMENTED_BUT_INCORRECT,
            "Expect state serial outside parallel regions");
     monitor_epilogue();
  
@@ -107,7 +107,7 @@ main()
         serialwork(2);
     }
     monitor_epilogue();
-    ASSERT(check_states(observed_states, "(ompt_state_work_parallel)+"), \ 
+    CHECK(check_states(observed_states, "(ompt_state_work_parallel)+"), \ 
             IMPLEMENTED_BUT_INCORRECT, "Expect state parallel inside parallel regions");
     
     /* 
@@ -126,7 +126,7 @@ main()
         accumulator+=(i*i);
     }
     monitor_epilogue(); 
-    ASSERT(check_states(observed_states, "(ompt_state_work_parallel|ompt_state_work_reduction)*(ompt_state_wait_barrier)*"), IMPLEMENTED_BUT_INCORRECT, \
+    CHECK(check_states(observed_states, "(ompt_state_work_parallel|ompt_state_work_reduction)*(ompt_state_wait_barrier)*"), IMPLEMENTED_BUT_INCORRECT, \
                         "Expect state reduction parallel or maybe overhead in reduction regions");
 
 
@@ -146,7 +146,7 @@ main()
     }
     monitor_epilogue();
 
-    ASSERT(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_explicit)+)*$"), \
+    CHECK(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_explicit)+)*$"), \
            IMPLEMENTED_BUT_INCORRECT, "Expect ompt_state_wait_barrier or ompt_state_wait_barrier_explicit here");
 
     /* 
@@ -160,7 +160,7 @@ main()
         }
     }
     monitor_epilogue();
-    ASSERT(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_implicit)+)*$"), \
+    CHECK(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_implicit)+)*$"), \
            IMPLEMENTED_BUT_INCORRECT, "Expect ompt_state_wait_barrier or ompt_state_wait_barrier_implicit here");
 
 
@@ -200,7 +200,7 @@ main()
     }
     monitor_epilogue();
     //TODO
-    ASSERT(check_states(observed_states, \
+    CHECK(check_states(observed_states, \
                        "(ompt_state_wait_taskwait)*(.)*(ompt_state_wait_taskgroup)*$"), \
                        IMPLEMENTED_BUT_INCORRECT, \
                        "Expect to see ompt_state_taskwait and then ompt_state_taskgroup");
@@ -227,7 +227,7 @@ main()
         }
     }
     monitor_epilogue();
-    ASSERT(check_states(observed_states, \
+    CHECK(check_states(observed_states, \
                        "(ompt_state_work_parallel)*(ompt_state_wait_lock)+(ompt_state_work_parallel)*"), \
                        IMPLEMENTED_BUT_INCORRECT, \
                        "Expect to see a sequence of ompt_state_work_parallel and ompt_state_wait_lock");
@@ -250,7 +250,7 @@ main()
     omp_destroy_nest_lock(&nest_lock);
     monitor_epilogue();
     //TODO: do we differentiate between wait_nest_lock and wait_lock?
-    ASSERT(check_states(observed_states, \
+    CHECK(check_states(observed_states, \
                        "(ompt_state_work_parallel)*(ompt_state_wait_nest_lock)+(ompt_state_work_parallel)*"), \
                        IMPLEMENTED_BUT_INCORRECT, \
                        "Expect to see a sequence of ompt_state_work_parallel and ompt_state_wait_nest_lock");
@@ -275,7 +275,7 @@ main()
     monitor_epilogue();
 
     //TODO: do we differentiate between critical and wait_lock?
-    ASSERT(check_states(observed_states, \
+    CHECK(check_states(observed_states, \
                        "(ompt_state_work_parallel)*(ompt_state_wait_critical)+(ompt_state_work_parallel)*"), \
                        IMPLEMENTED_BUT_INCORRECT, \
                        "Expect to see a sequence of ompt_state_work_parallel and wait_critical");
@@ -298,7 +298,7 @@ main()
         }
     }
     monitor_epilogue();
-    ASSERT(check_states(observed_states, \
+    CHECK(check_states(observed_states, \
                        "(ompt_state_wait_atomic)+"), \
                        IMPLEMENTED_BUT_INCORRECT, \
                        "Expect to see ompt_state_wait_atomic");
@@ -320,12 +320,11 @@ main()
     }
     monitor_epilogue();
     //TODO: do we differentiate between ompt_state_wait_barrier and ordered
-    ASSERT(check_states(observed_states, \
+    CHECK(check_states(observed_states, \
                        "(ompt_state_wait_ordered)+"), \
                        IMPLEMENTED_BUT_INCORRECT, \
                        "Expect to see ompt_state_wait_ordered");
      
-    cout << "TEST END" << endl;
     return 0;
 
 }

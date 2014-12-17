@@ -5,6 +5,7 @@
 #include <string>
 #include <Regex.h>
 #include <iostream>
+#include <signal.h>
 #include "common.h"
 
 #define LOOKUP( lookup, fn ) fn = ( fn ## _t )lookup( #fn ); \
@@ -22,12 +23,23 @@ FOREACH_OMPT_FN( macro )
     
 pthread_mutex_t thread_mutex;
 pthread_mutex_t assert_mutex;
+int global_error_code = CORRECT;
 
 
 using namespace std;
 
 void
-serialwork(int workload) {
+warmup() 
+{
+    int a;
+    #pragma omp atomic
+    a += 1;
+}
+
+
+void
+serialwork(int workload)
+{
     int i = 0;
     for (i = 0; i < workload; i++) {
         usleep(500000);
@@ -95,14 +107,14 @@ print_current_states(vector<ompt_state_t>& observed_states)
 }
 
 
-long fetch_and_increment(long *addr)
+/*
+ * try to recover from core dump
+ */
+void
+coredump_handler(int signo)
 {
-    long oldVal;
-    pthread_mutex_lock(&thread_mutex);
-    oldVal = *addr;
-    *addr += 1;
-    pthread_mutex_unlock(&thread_mutex);
-    return oldVal;
+    cerr << "\n****** Unexpected Segmentation Fault ******\n\n" << endl;
+    exit(MIN(global_error_code, NOT_IMPLEMENTED));
 }
 
 int
@@ -110,6 +122,8 @@ ompt_initialize( ompt_function_lookup_t lookup,
                  const char*            runtime_version,
                  int                    ompt_version )
 {
+    // try to handle seg fault gracefully
+    signal(SIGSEGV, coredump_handler);
     // lookup functions
     #define macro( fn ) LOOKUP( lookup, fn )
     FOREACH_OMPT_FN( macro )

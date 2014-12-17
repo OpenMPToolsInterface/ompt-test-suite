@@ -2,27 +2,19 @@ EXEC:= $(shell find . -name "test*.cpp" | sed -e "s/\.cpp\$$//")
 UTIL:= $(shell find utils -name "*.cpp" | sed -e "s/\.cpp\$$//")  
 HOST:= $(shell hostname -s)
 
-ifeq ($(opt),2)
-LEVEL=2
-else
-LEVEL=0
-endif
 
-ifeq ($(mode),debug)
-VER=deb
-else
-VER=rel
-endif
+HEADERS=${wildcard *.h}
 
-FLAGS += -DOMPT_DEBUG -g
-FLAGS += -g
+
+EXECS=$(addsuffix .$(SUFFIX),$(EXEC))
+UTILS=$(addsuffix .$(SUFFIX),$(UTIL))
 
 ifeq ($(comp),intel)
   ifndef INTEL_OMP_ROOT
     $(error Need to define INTEL_OMP_ROOT variable)
   endif
 
-  LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
+  LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
   LIB =$(LIBDIR)/libiomp5.so -lm
   LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
 
@@ -61,13 +53,6 @@ else
      $(error Need to specify comp argument (either make comp=intel or make comp=gcc))
   endif
 endif
-
-HEADERS=${wildcard *.h}
-
-
-EXECS=$(addsuffix .$(SUFFIX),$(EXEC))
-UTILS=$(addsuffix .$(SUFFIX),$(UTIL))
-
 all: $(EXECS)
 
 test: all
@@ -79,6 +64,25 @@ test: all
 clean:
 	echo $(UTILS)
 	/bin/rm -f $(EXECS)
+	/bin/rm -f $(UTILS)
+
+
+ifeq ($(opt),2)
+LEVEL=2
+else
+LEVEL=0
+endif
+
+ifeq ($(mode),debug)
+VER=deb
+else
+VER=rel
+endif
+
+FLAGS += -DOMPT_DEBUG -g
+FLAGS += -g
+
+
 
 $(EXECS) : $(HEADERS) $(LIB) $(UTILS)
 

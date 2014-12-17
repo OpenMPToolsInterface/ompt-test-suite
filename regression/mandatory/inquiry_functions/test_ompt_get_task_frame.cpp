@@ -89,8 +89,8 @@ main()
         {
             serialwork(1);
 
-            #pragma omp master 
-            {
+            
+            if (ompt_get_thread_id() != master_thread_id) {
                 ompt_frame_t *frames_level2[MAX_FRAMES];
                 int depth = get_frames( frames_level2, MAX_FRAMES);
                 /*

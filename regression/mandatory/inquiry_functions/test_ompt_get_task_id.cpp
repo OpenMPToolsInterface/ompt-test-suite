@@ -53,5 +53,6 @@ main(int argc, char** argv)
             }
         }
     }
+    CHECK(my_ompt_get_task_id(1000) == 0, IMPLEMENTED_BUT_INCORRECT, "Test at an invalid depth");
     return global_error_code;
 }

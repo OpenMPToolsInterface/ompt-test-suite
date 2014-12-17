@@ -18,8 +18,8 @@ on_ompt_event_thread_begin(ompt_thread_type_t thread_type, ompt_thread_id_t thre
     } else {
         CHECK(thread_type == ompt_thread_worker, IMPLEMENTED_BUT_INCORRECT, "Expect to see ompt_thread_worker");
         CHECK(thread_id_map.count(thread_id) == 0, IMPLEMENTED_BUT_INCORRECT, "Expect non-duplicate thread ids");
-        thread_id_map[thread_id] = thread_type;
     }
+    thread_id_map[thread_id] = thread_type;
 }
 
 void 
@@ -45,6 +45,6 @@ main(int argc, char** argv)
             }
         }
     }
-    CHECK(thread_id_map.size() == (NUM_THREADS-1), IMPLEMENTED_BUT_INCORRECT, "Wrong number of calls to ompt_event_threadbegins");
+    CHECK(thread_id_map.size() == (NUM_THREADS), IMPLEMENTED_BUT_INCORRECT, "Wrong number of calls to ompt_event_threadbegins");
     return global_error_code;
 }

@@ -103,7 +103,6 @@ main()
     monitor_prelogue();
     #pragma omp parallel num_threads(NUM_THREADS)
     {
-        printf("parallel region \n");
         serialwork(2);
     }
     monitor_epilogue();
@@ -131,7 +130,7 @@ main()
 
 
     /* 
-     * TEST3.1: Tesing barrier states: ompt_state_wait_barrier_implicit
+     * TEST3.1: Tesing barrier states: ompt_state_wait_barrier_explicit
      */
     monitor_prelogue();
     #pragma omp parallel num_threads(NUM_THREADS)
@@ -146,7 +145,7 @@ main()
     }
     monitor_epilogue();
 
-    CHECK(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_explicit)+)*$"), \
+    CHECK(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_explicit)+)"), \
            IMPLEMENTED_BUT_INCORRECT, "Expect ompt_state_wait_barrier or ompt_state_wait_barrier_explicit here");
 
     /* 
@@ -160,7 +159,7 @@ main()
         }
     }
     monitor_epilogue();
-    CHECK(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_implicit)+)*$"), \
+    CHECK(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_implicit)+)"), \
            IMPLEMENTED_BUT_INCORRECT, "Expect ompt_state_wait_barrier or ompt_state_wait_barrier_implicit here");
 
 
@@ -199,9 +198,9 @@ main()
         }
     }
     monitor_epilogue();
-    //TODO
+    //TODO differentiate ompt_state_wait_taskwait and ompt_state_wait_barrier ?
     CHECK(check_states(observed_states, \
-                       "(ompt_state_wait_taskwait)*(.)*(ompt_state_wait_taskgroup)*$"), \
+                       "(ompt_state_wait_taskwait)+(.)*(ompt_state_wait_taskgroup)+$"), \
                        IMPLEMENTED_BUT_INCORRECT, \
                        "Expect to see ompt_state_taskwait and then ompt_state_taskgroup");
 

@@ -1,17 +1,18 @@
-#ifndef COMMON_H
-#define	COMMON_H
+#ifndef common_h
+#define	common_h
+
+#include <assert.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <omp.h>
 #include <ompt.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <pthread.h>
-#include <vector>
-#include <string>
 
-using namespace std;
+#define TRUE  1
+#define FALSE 0
+
 extern pthread_mutex_t thread_mutex;
 extern pthread_mutex_t assert_mutex;
 extern int global_error_code;
@@ -45,14 +46,20 @@ FOREACH_OMPT_FN( macro )
 #define CORRECT 0
 #define CONTINUE 200
 
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 void warmup();
-void print_current_states(vector<ompt_state_t>& observed_states);
-bool check_states(vector<ompt_state_t>& observed_states, string regex_pattern);
-void check_current_state(ompt_state_t expected_state);
 void serialwork(int workload);
-bool register_callback(ompt_event_t e, ompt_callback_t c);
+int register_callback(ompt_event_t e, ompt_callback_t c);
 // Callback function called after OMPT was initialized. E.g. for setting event callbacks
 extern void init_test(ompt_function_lookup_t lookup);
 
-#endif	/* COMMON_H */
+#if defined(__cplusplus)
+};
+#endif
+
+#endif	/* common_h */
 

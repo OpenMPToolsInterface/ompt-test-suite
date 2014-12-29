@@ -1,13 +1,7 @@
-#include <map>
-#include <vector>
-#include <iostream>
-#include <string>
-#include <iostream>
-
+#include <stdio.h>
 #include <signal.h>
 
 #include "common.h"
-#include "regex-match.h"
 
 
 #define LOOKUP( lookup, fn ) fn = ( fn ## _t )lookup( #fn ); \
@@ -54,15 +48,16 @@ serialwork(int workload)
 
 
 
-bool
+int
 register_callback(ompt_event_t e, ompt_callback_t c) {
     int code = ompt_set_callback(e, c);
     if (code != ompt_set_result_event_may_occur_callback_always) {
-        return false;
+        return FALSE;
     }
-    return true;
+    return TRUE;
 }
 
+#if 0
 /*
  * check whether the state sequence in vector observed_states match a regular 
  * expression specified in regex_pattern
@@ -107,6 +102,7 @@ print_current_states(vector<ompt_state_t>& observed_states)
         cout << map[observed_states[i]] << " \n"; 
     }
 }
+#endif
 
 
 /*
@@ -115,7 +111,7 @@ print_current_states(vector<ompt_state_t>& observed_states)
 void
 coredump_handler(int signo)
 {
-    cerr << "\n****** Unexpected Segmentation Fault ******\n\n" << endl;
+    fprintf(stderr, "\n****** Unexpected Segmentation Fault ******\n\n");
     exit(MIN(global_error_code, NOT_IMPLEMENTED));
 }
 

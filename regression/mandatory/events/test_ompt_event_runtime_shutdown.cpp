@@ -17,7 +17,7 @@ init_test(ompt_function_lookup_t lookup)
 {
     global_error_code = NOT_IMPLEMENTED;
     if (!register_callback(ompt_event_runtime_shutdown, (ompt_callback_t) on_ompt_event_runtime_shutdown)) {
-        cout << "Failed to register ompt_event_runtime_shutdown" << endl;
+        cout << "failed to register ompt_event_runtime_shutdown" << endl;
     }
 }
 

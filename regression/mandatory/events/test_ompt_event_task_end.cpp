@@ -30,7 +30,7 @@ on_ompt_event_task_begin(ompt_task_id_t parent_task_id,
 void
 on_ompt_event_task_end(ompt_task_id_t  task_id)
 {
-    CHECK(task_ids.count(task_id) != 0, IMPLEMENTED_BUT_INCORRECT, "No record for task id");
+    CHECK(task_ids.count(task_id) != 0, IMPLEMENTED_BUT_INCORRECT, "no record for task id");
     #pragma omp atomic update
     count -= 1;
 }
@@ -39,10 +39,10 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_task_begin, (ompt_callback_t) on_ompt_event_task_begin)) {
-        CHECK(false, NOT_IMPLEMENTED, "Failed to register ompt_event_task_begin");
+        CHECK(false, NOT_IMPLEMENTED, "failed to register ompt_event_task_begin");
     }
     if (!register_callback(ompt_event_task_end, (ompt_callback_t) on_ompt_event_task_end)) {
-        CHECK(false, NOT_IMPLEMENTED, "Failed to register ompt_event_task_begin");
+        CHECK(false, NOT_IMPLEMENTED, "failed to register ompt_event_task_begin");
     }
 }
 
@@ -69,6 +69,6 @@ main(int argc, char** argv)
             }
         }
     }
-    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT, "Unbalanced number of calls to begin and end callbacks");
+    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT, "unbalanced number of calls to begin and end callbacks");
     return global_error_code;
 }

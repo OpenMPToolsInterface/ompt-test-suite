@@ -46,7 +46,7 @@ main(int argc, char **argv)
     serialwork(1);
     ompt_frame_t * frames_begin[MAX_FRAMES];
     int depth = get_frames(frames_begin, MAX_FRAMES);
-    CHECK(depth == 1, IMPLEMENTED_BUT_INCORRECT, "Expect frame depth == 1");
+    CHECK(depth == 1, IMPLEMENTED_BUT_INCORRECT, "expect frame depth == 1");
 
     int master_thread_id = ompt_get_thread_id();
     omp_set_nested(1);
@@ -61,7 +61,7 @@ main(int argc, char **argv)
          * one for entering the runtime, the other one for exiting
          * (see tr-2.pdf pp 34)
          */
-        CHECK(depth >= 2, IMPLEMENTED_BUT_INCORRECT, "Expect 2 frames after the initialization of the first parallel region");
+        CHECK(depth >= 2, IMPLEMENTED_BUT_INCORRECT, "expect 2 frames after the initialization of the first parallel region");
         
         /*
          * the first frame(r2) has no reenter, but has exit(set by exiting
@@ -99,31 +99,31 @@ main(int argc, char **argv)
                  * the previous r2, two new frames seperated by the runtime
                  * procedure that initializes the 2nd parallel region
                  */
-                CHECK(depth >= 3, IMPLEMENTED_BUT_INCORRECT, "Expect frame depth >= 3");
+                CHECK(depth >= 3, IMPLEMENTED_BUT_INCORRECT, "expect frame depth >= 3");
                 
                 /* the first(r4) frame has no reenter, but has exit */
-                CHECK(frames_level2[0] != NULL, IMPLEMENTED_BUT_INCORRECT, "Expect the last frame(r4) to be non-null");
-                CHECK(frames_level2[0]->reenter_runtime_frame == 0, IMPLEMENTED_BUT_INCORRECT, "Expect the last frame(r4) to have a null reenter pointer");
-                CHECK(frames_level2[0]->exit_runtime_frame  != 0, IMPLEMENTED_BUT_INCORRECT, "Expect the last frame(r4) to have an exit pointer");
+                CHECK(frames_level2[0] != NULL, IMPLEMENTED_BUT_INCORRECT, "expect the last frame(r4) to be non-null");
+                CHECK(frames_level2[0]->reenter_runtime_frame == 0, IMPLEMENTED_BUT_INCORRECT, "expect the last frame(r4) to have a null reenter pointer");
+                CHECK(frames_level2[0]->exit_runtime_frame  != 0, IMPLEMENTED_BUT_INCORRECT, "expect the last frame(r4) to have an exit pointer");
     
                 /* the second(r3) frame has both reenter and exit */
-                CHECK(frames_level2[1] != NULL, IMPLEMENTED_BUT_INCORRECT, "Expect the 2nd to last frame(r3) to be non-null");
-                CHECK(frames_level2[1]->reenter_runtime_frame != 0, IMPLEMENTED_BUT_INCORRECT, "Expect the 2nd to last frame(r3) has a reenter pointer");
-                CHECK(frames_level2[1]->exit_runtime_frame != 0, IMPLEMENTED_BUT_INCORRECT, "Expect the 2nd to last frame(r3) has a exit pointer");
+                CHECK(frames_level2[1] != NULL, IMPLEMENTED_BUT_INCORRECT, "expect the 2nd to last frame(r3) to be non-null");
+                CHECK(frames_level2[1]->reenter_runtime_frame != 0, IMPLEMENTED_BUT_INCORRECT, "expect the 2nd to last frame(r3) has a reenter pointer");
+                CHECK(frames_level2[1]->exit_runtime_frame != 0, IMPLEMENTED_BUT_INCORRECT, "expect the 2nd to last frame(r3) has a exit pointer");
                 
                 /* the third frame has no reenter, but has exit */
-                CHECK(frames_level2[2] != NULL, IMPLEMENTED_BUT_INCORRECT, "Expect the 3nd to last frame to be non-null");
-                CHECK(frames_level2[2]->reenter_runtime_frame != 0, IMPLEMENTED_BUT_INCORRECT, "Expect the 3rd to last frame to have a reenter pointer");
-                CHECK(frames_level2[2]->exit_runtime_frame == 0, IMPLEMENTED_BUT_INCORRECT, "Expect the 3rd to last frame has a null exit pointer"); 
+                CHECK(frames_level2[2] != NULL, IMPLEMENTED_BUT_INCORRECT, "expect the 3nd to last frame to be non-null");
+                CHECK(frames_level2[2]->reenter_runtime_frame != 0, IMPLEMENTED_BUT_INCORRECT, "expect the 3rd to last frame to have a reenter pointer");
+                CHECK(frames_level2[2]->exit_runtime_frame == 0, IMPLEMENTED_BUT_INCORRECT, "expect the 3rd to last frame has a null exit pointer"); 
 
                 /* checking if the third frame is r1, the documention says the value of the structure is preserved */
-                CHECK(frames_level2[2] == frames_level1[1], IMPLEMENTED_BUT_INCORRECT, "Expect the 3rd frame to be same as r2");
+                CHECK(frames_level2[2] == frames_level1[1], IMPLEMENTED_BUT_INCORRECT, "expect the 3rd frame to be same as r2");
             }
         }
     }
 
     ompt_frame_t * frames_end[MAX_FRAMES];
     depth = get_frames(frames_end, MAX_FRAMES);
-    CHECK(depth == 1, IMPLEMENTED_BUT_INCORRECT, "Expect frame depth == 1");
+    CHECK(depth == 1, IMPLEMENTED_BUT_INCORRECT, "expect frame depth == 1");
     return global_error_code;
 }

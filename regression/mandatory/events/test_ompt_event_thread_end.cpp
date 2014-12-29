@@ -29,11 +29,11 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_thread_begin, (ompt_callback_t) on_ompt_event_thread_begin)) {
-        cout << "Failed to register ompt_event_thread_begin" << endl;
+        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_thread_begin");
         exit(NOT_IMPLEMENTED);
     }
     if (!register_callback(ompt_event_thread_end, (ompt_callback_t) on_ompt_event_thread_end)) {
-        cout << "Failed to register ompt_event_thread_end" << endl;
+        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_thread_end");
         exit(NOT_IMPLEMENTED);
     }
 }
@@ -53,6 +53,6 @@ main(int argc, char** argv)
             }
         }
     }
-    CHECK(thread_id_map.size() == (NUM_THREADS), IMPLEMENTED_BUT_INCORRECT, "Wrong number of calls to ompt_event_threadbegins");
+    CHECK(thread_id_map.size() == (NUM_THREADS), IMPLEMENTED_BUT_INCORRECT, "wrong number of calls to ompt_event_threadbegins");
     return global_error_code;
 }

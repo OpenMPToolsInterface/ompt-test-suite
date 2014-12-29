@@ -30,14 +30,14 @@ main(int argc, char **argv)
     #pragma omp parallel num_threads(SMALL_NUM_THREADS)
     {
         CHECK(my_ompt_get_parallel_team_size(0) == SMALL_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
-              "Wrong team size");
+              "wrong team size");
         #pragma omp parallel num_threads(BIG_NUM_THREADS)
         {
             serialwork(1);
             CHECK(my_ompt_get_parallel_team_size(0) == SMALL_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
-                  "Expect the same team size as before, not a bigger one");
+                  "expect the same team size as before, not a bigger one");
             CHECK(my_ompt_get_parallel_team_size(1) == SMALL_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
-                  "Expect the same team size as before, not a bigger one");
+                  "expect the same team size as before, not a bigger one");
         }
     }
 
@@ -48,12 +48,13 @@ main(int argc, char **argv)
         #pragma omp parallel num_threads(BIG_NUM_THREADS)
         {
             CHECK(my_ompt_get_parallel_team_size(0) == BIG_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
-                  "Expect BIG_NUM_THREADS team size");
+                  "expect BIG_NUM_THREADS team size");
             CHECK(my_ompt_get_parallel_team_size(1) == SMALL_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
-                  "Expect SMALL_NUM_THREADS team size");
+                  "expect SMALL_NUM_THREADS team size");
         }
     }
-    CHECK(my_ompt_get_parallel_team_size(1000) == -1, IMPLEMENTED_BUT_INCORRECT, "Need to return -1 when ancestor doesn't exist");
+    CHECK(my_ompt_get_parallel_team_size(1000) == -1, IMPLEMENTED_BUT_INCORRECT, \
+          "need to return -1 when ancestor doesn't exist");
     return global_error_code;
 }
 

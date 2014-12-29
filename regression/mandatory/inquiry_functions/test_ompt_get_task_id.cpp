@@ -33,27 +33,27 @@ main(int argc, char** argv)
                 serialwork(0);
                 ompt_task_id_t  level1_task_id = my_ompt_get_task_id(0);
                 CHECK(level0_task_id == my_ompt_get_task_id(1), IMPLEMENTED_BUT_INCORRECT, \
-                      "Level 1 parent task id is inconsistent");
+                      "level 1 parent task id is inconsistent");
                 #pragma omp task
                 {
                     serialwork(0);
                     ompt_task_id_t  level2_task_id = my_ompt_get_task_id(0);
                     CHECK(level1_task_id == my_ompt_get_task_id(1), IMPLEMENTED_BUT_INCORRECT, \
-                      "Level 2 parent task id is inconsistent");
+                      "level 2 parent task id is inconsistent");
                     CHECK(level0_task_id == my_ompt_get_task_id(2), IMPLEMENTED_BUT_INCORRECT, \
-                      "Level 2 grandparent task id is inconsistent");
+                      "level 2 grandparent task id is inconsistent");
                     #pragma omp task
                     {
                         CHECK(level2_task_id == my_ompt_get_task_id(1), IMPLEMENTED_BUT_INCORRECT, \
-                            "Level 3 parent task id is inconsistent");
+                            "level 3 parent task id is inconsistent");
                         CHECK(level1_task_id == my_ompt_get_task_id(2), IMPLEMENTED_BUT_INCORRECT, \
-                            "Level 3 parent task id is inconsistent");
+                            "level 3 parent task id is inconsistent");
                         serialwork(1);
                     }
                 }
             }
         }
     }
-    CHECK(my_ompt_get_task_id(1000) == 0, IMPLEMENTED_BUT_INCORRECT, "Test at an invalid depth");
+    CHECK(my_ompt_get_task_id(1000) == 0, IMPLEMENTED_BUT_INCORRECT, "test at an invalid depth");
     return global_error_code;
 }

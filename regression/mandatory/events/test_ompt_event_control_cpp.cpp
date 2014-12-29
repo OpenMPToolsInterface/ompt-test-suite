@@ -16,7 +16,7 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_control, (ompt_callback_t) on_ompt_event_control)) {
-        CHECK(false, NOT_IMPLEMENTED, "Failed to register ompt_event_control");
+        CHECK(false, NOT_IMPLEMENTED, "failed to register ompt_event_control");
     }
 }
 

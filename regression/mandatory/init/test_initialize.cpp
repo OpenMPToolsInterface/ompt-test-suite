@@ -2,7 +2,9 @@
 #include <omp.h>
 #include <ompt.h>
 
-#include "ompt_assert.h"
+#include <error.h>
+
+int init_success = 0;
 
 extern "C" {
 #ifdef OMPT_V2013_07
@@ -11,7 +13,7 @@ int ompt_initialize(void)
 #ifdef REPORT_CALLBACK
   printf("ompt_initialize(void) called\n");
 #endif
-  return_code = SUCCESS;
+  init_success = 1;
   return 1;
 }
 #else
@@ -23,20 +25,20 @@ int ompt_initialize(ompt_function_lookup_t lookup,
   printf("ompt_initialize(lookup = %p, runtime_version = %s, "
          "ompt_version = %d)\n", runtime_version, ompt_version);
 #endif
-  return_code = SUCCESS;
+  init_success = 1;
   return 1;
 }
 #endif
 };
 
-int main()
+int main(int argc, char **argv)
 {
+  register_segv_handler(argv);
+
   int max_threads = omp_get_max_threads();
 
-  OMPT_ASSERT(test_initialize, (max_threads > 0), "ompt_get_max_threads() returned %d <= 0\n", max_threads);
-  OMPT_ASSERT(test_initialize, (return_code == SUCCESS), "ompt_initialize was not called\n");
+  CHECK((max_threads > 0), IMPLEMENTED_BUT_INCORRECT, "ompt_get_max_threads() returned %d <= 0\n", max_threads);
+  CHECK(init_success, NOT_IMPLEMENTED, "ompt_initialize was not called\n");
 
-  OMPT_SUCCESS(test_initialize, (return_code == SUCCESS));
-
-  return return_code;
+  return global_error_code;
 }

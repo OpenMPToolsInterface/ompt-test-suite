@@ -5,6 +5,13 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include <assert.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+
 
 
 //*****************************************************************************
@@ -19,7 +26,7 @@
 // global variables
 //*****************************************************************************
 
-#define LOOKUP( lookup, fn ) \
+#define DEFINE_OMPT_FN_PTR( lookup, fn ) \
     fn = ( fn ## _t )lookup( #fn ); \
     if ( !fn ) \
     { \
@@ -34,28 +41,9 @@
 // global variables
 //*****************************************************************************
     
-pthread_mutex_t thread_mutex;
-pthread_mutex_t assert_mutex;
-
-int global_error_code = CORRECT;
-const char *executable_name = "";
-
 #define macro( fn ) fn ## _t fn;
 FOREACH_OMPT_FN( macro )
 #undef macro
-
-
-
-//*****************************************************************************
-// private functions 
-//*****************************************************************************
-
-static void
-segv_handler(int signo)
-{
-    fprintf(stderr, "%s: failed with segmentation fault\n", executable_name);
-    exit(MIN(global_error_code, NOT_IMPLEMENTED));
-}
 
 
 
@@ -97,13 +85,6 @@ register_callback(ompt_event_t e, ompt_callback_t c) {
 }
 
 
-void register_segv_handler(char **argv)
-{
-  executable_name = argv[0];
-  signal(SIGSEGV, segv_handler);
-}
-
-
 extern "C" {
 
 int
@@ -112,7 +93,7 @@ ompt_initialize( ompt_function_lookup_t lookup,
                  unsigned int           ompt_version )
 {
     // lookup functions
-    #define macro( fn ) LOOKUP( lookup, fn )
+    #define macro( fn ) DEFINE_OMPT_FN_PTR( lookup, fn )
     FOREACH_OMPT_FN( macro )
     #undef macro
     pthread_mutex_init(&thread_mutex, NULL);

@@ -28,18 +28,18 @@ main(int argc, char **argv)
    
     // enable nested parallelism
     omp_set_nested(1);
-    CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "Master should always see a null idle frame");
+    CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "master should always see a null idle frame");
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         if (ompt_get_thread_id() == master_thread_id) {
-            CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "Master should always see a null idle frame");
+            CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "master should always see a null idle frame");
         }
 
         #pragma omp parallel num_threads(NUM_THREADS)
         {
             serialwork(1);
             if (ompt_get_thread_id() == master_thread_id) {
-                CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "Master should always see a null idle frame");
+                CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "master should always see a null idle frame");
             }
         }
     }
@@ -48,7 +48,7 @@ main(int argc, char **argv)
      * If nested parallelism is disabled, or is not supported by the OpenMP implementation, then the new team that is
      * created by a thread encountering a parallel construct inside a parallel region
      * will consist only of the encountering thread. Thus, in this case, we should be able to see a consistent
-     * lowest idle frame for each thread.
+     * idle frame for each thread.
      */
     omp_set_nested(0);
     map<int, void *> threadId_to_idleFrame;
@@ -65,7 +65,7 @@ main(int argc, char **argv)
             #pragma omp critical
             {
                 CHECK(threadId_to_idleFrame[ompt_get_thread_id()] == my_ompt_get_idle_frame(), \
-                      IMPLEMENTED_BUT_INCORRECT, "Thread should have a consistent lowest idle frame");
+                      IMPLEMENTED_BUT_INCORRECT, "thread should have a consistent idle frame");
             }
             #pragma omp parallel num_threads(NUM_THREADS)
             {
@@ -73,12 +73,12 @@ main(int argc, char **argv)
                 #pragma omp critical
                 {
                     CHECK(threadId_to_idleFrame[ompt_get_thread_id()] == my_ompt_get_idle_frame(), \
-                        IMPLEMENTED_BUT_INCORRECT, "Thread should have a consistent lowest idle frame");
+                        IMPLEMENTED_BUT_INCORRECT, "thread should have a consistent idle frame");
                 }
             }
         }
     }
-    CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "Master should always see a null idle frame");
+    CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "master should always see a null idle frame");
     return global_error_code;
 }
 

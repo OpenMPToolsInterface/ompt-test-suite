@@ -28,9 +28,9 @@ on_ompt_event_parallel_begin(ompt_task_id_t parent_task_id,    /* id of parent t
     parallel_id_to_task_frame_map[parallel_id] = parent_task_frame;
     if (test_enclosing_context) {
         CHECK(ompt_get_task_id(0) == global_parent_task_id, IMPLEMENTED_BUT_INCORRECT,\
-              "Parallel begin callback doesn't execute in parent's context");
+              "parallel begin callback doesn't execute in parent's context");
         CHECK(ompt_get_task_frame(0) == global_parent_task_frame, IMPLEMENTED_BUT_INCORRECT,\
-              "Parallel begin callback doesn't execute in parent's context");
+              "parallel begin callback doesn't execute in parent's context");
     }
 }
 
@@ -38,7 +38,7 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_parallel_begin, (ompt_callback_t) on_ompt_event_parallel_begin)) {
-        CHECK(false, NOT_IMPLEMENTED, "Failed to register ompt_event_parallel_begin");
+        CHECK(false, NOT_IMPLEMENTED, "failed to register ompt_event_parallel_begin");
     }
 }
 
@@ -68,19 +68,19 @@ main(int argc, char** argv)
         serialwork(0);
         ompt_parallel_id_t level1_parallel_id = ompt_get_parallel_id(0);
         ompt_task_id_t   level1_task_id = ompt_get_task_id(0);
-        CHECK(ompt_get_task_id(1) == parallel_id_to_task_id_map[level1_parallel_id], IMPLEMENTED_BUT_INCORRECT, \
-                                                                                       "Level 1 parent task id does not match");
+        CHECK(ompt_get_task_id(1) == parallel_id_to_task_id_map[level1_parallel_id], IMPLEMENTED_BUT_INCORRECT, 
+	      "level 1 parent task id does not match");
         CHECK(ompt_get_task_frame(1) == parallel_id_to_task_frame_map[level1_parallel_id], IMPLEMENTED_BUT_INCORRECT, 
-                                                                                       "Level 1 parent task frame does not match");
+	      "level 1 parent task frame does not match");
 
         #pragma omp parallel num_threads(NUM_THREADS)
         {
             serialwork(0);
             ompt_parallel_id_t level2_parallel_id = ompt_get_parallel_id(0);
-            CHECK(ompt_get_task_id(1) == parallel_id_to_task_id_map[level2_parallel_id], IMPLEMENTED_BUT_INCORRECT, \
-                                                                                           "Level 2 parent task id does not match");
-            CHECK(ompt_get_task_frame(1) == parallel_id_to_task_frame_map[level2_parallel_id], IMPLEMENTED_BUT_INCORRECT, \
-                                                                                           "Level 2 parent task frame does not match");
+            CHECK(ompt_get_task_id(1) == parallel_id_to_task_id_map[level2_parallel_id], IMPLEMENTED_BUT_INCORRECT, 
+	          "level 2 parent task id does not match");
+            CHECK(ompt_get_task_frame(1) == parallel_id_to_task_frame_map[level2_parallel_id], 
+                  IMPLEMENTED_BUT_INCORRECT, "level 2 parent task frame does not match");
             #pragma omp parallel num_threads(NUM_THREADS)
             {
                 serialwork(0);
@@ -89,6 +89,6 @@ main(int argc, char** argv)
     }
     
     int num_parallel_regions = parallel_id_to_task_id_map.size();
-    CHECK(num_parallel_regions == (1+(1+NUM_THREADS)*NUM_THREADS), IMPLEMENTED_BUT_INCORRECT, "Enter parallel regions incorrect number of times");
+    CHECK(num_parallel_regions == (1+(1+NUM_THREADS)*NUM_THREADS), IMPLEMENTED_BUT_INCORRECT, "enter parallel regions incorrect number of times");
     return global_error_code;
 }

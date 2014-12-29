@@ -32,16 +32,16 @@ on_ompt_event_parallel_end(ompt_parallel_id_t parallel_id,    /* id of parallel 
                 ompt_task_id_t task_id                        /* id of task                  */)
 {
     CHECK(parallel_id_to_task_id.count(parallel_id) != 0, IMPLEMENTED_BUT_INCORRECT, \
-            "No record found for parallel id");
+          "no record found for parallel id");
     CHECK(task_ids.count(task_id) != 0, IMPLEMENTED_BUT_INCORRECT, 
-            "No record found task_id");
+          "no record found task_id");
     #pragma omp atomic update
     count -= 1;
     if (test_enclosing_context) {
         CHECK(ompt_get_task_id(0) == global_parent_task_id, IMPLEMENTED_BUT_INCORRECT,\
-              "Parallel end callback doesn't execute in parent's context");
+              "parallel end callback doesn't execute in parent's context");
         CHECK(ompt_get_task_frame(0) == global_parent_task_frame, IMPLEMENTED_BUT_INCORRECT,\
-              "Parallel end callback doesn't execute in parent's context");
+              "parallel end callback doesn't execute in parent's context");
     }
 }
 
@@ -49,10 +49,10 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_parallel_begin, (ompt_callback_t) on_ompt_event_parallel_begin)) {
-        CHECK(false, NOT_IMPLEMENTED, "Failed to register ompt_event_parallel_begin");
+        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_parallel_begin");
     }
     if (!register_callback(ompt_event_parallel_end, (ompt_callback_t) on_ompt_event_parallel_end)) {
-        CHECK(false, NOT_IMPLEMENTED, "Failed to register ompt_event_parallel_end");
+        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_parallel_end");
     }
 }
 
@@ -75,6 +75,7 @@ main(int argc, char** argv)
     test_enclosing_context = false;
     parallel_id_to_task_id.clear();
 
-    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT, "Number of calls to parallel begin differs from the number of calls to end");
+    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT, 
+          "number of calls to parallel begin differs from the number of calls to end");
     return global_error_code;
 }

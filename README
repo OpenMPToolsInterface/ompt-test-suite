@@ -1,4 +1,14 @@
-The test suite comprises of two folders:
+This directory contains regression tests and example codes for testing the implementation 
+of the OMPT application programming interface for tools in an OpenMP runtime system.
+ 
+This directory includes three subdirectories:
 
-regression: which contains a bundle of regression tests to check if an implementation of OMPT is valid or not.
-test: a collection of any tests, examples and benchmarks
+	ompt: 
+		contains ompt.h - an include file that defines the OMPT interface
+
+	regression: 
+		contains regression tests that check if an implementation of OMPT 
+                is consistent with the OMPT specification
+
+	test: 
+		contains a collection of tests, examples and benchmarks

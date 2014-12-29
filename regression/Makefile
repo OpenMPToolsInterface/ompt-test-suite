@@ -60,6 +60,7 @@ endif
 #  add include path for utility headers 
 # -----------------------------------------------------------------------------
 INCLUDES += -I./utils
+INCLUDES += -I../ompt
 
 
 # -----------------------------------------------------------------------------
@@ -106,9 +107,10 @@ else
   LEVEL=0
 endif
 
+FLAGS = $(OMPFLAGS)
 FLAGS += -O$(LEVEL)
-
 FLAGS += -DOMPT_DEBUG -g
+FLAGS += $(INCLUDES) 
 
 
 # -----------------------------------------------------------------------------
@@ -128,7 +130,7 @@ $(LIBUTIL): $(UTIL_O)
 $(TEST_EXEC): $(UTIL_H) $(UTIL_SRCS) $(LIBUTIL)
 
 $(TEST_EXEC):  % : %.o 
-	$(CXX) $(INCLUDES) $(FLAGS) -o $@ $(OMPFLAGS) $< $(LIB) $(LIBS) $(LIBUTIL) -lrt
+	$(CXX) $(FLAGS) -o $@ $< $(LIB) $(LIBS) $(LIBUTIL) -lrt
 
 
 # -----------------------------------------------------------------------------
@@ -136,11 +138,11 @@ $(TEST_EXEC):  % : %.o
 # -----------------------------------------------------------------------------
 
 %.o : %.c 
-	$(CC)  -c $(INCLUDES) $(FLAGS) -o $@ $(OMPFLAGS) $<
+	$(CC)  -c $(FLAGS) -o $@ $<
 
 %.o : %.cpp 
-	$(CXX) -c $(INCLUDES) $(FLAGS) -o $@ $(OMPFLAGS) $<
+	$(CXX) -c $(FLAGS) -o $@ $<
 
 %.o : %.f
-	$(FC)  -c $(INCLUDES) $(FLAGS) -o $@ $(OMPFLAGS) $< 
+	$(FC)  -c $(FLAGS) -o $@ $< 
 

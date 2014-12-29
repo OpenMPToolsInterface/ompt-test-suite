@@ -1,15 +1,12 @@
-IBM_COMPILER_ROOT=/home/johnmc/opt/apps/ibm
+ifndef IBM_COMPILER_ROOT
+  $(error You must define IBM_COMPILER_ROOT so that the OpenMP library version providing the OMPT API can be found)
+endif
+
 FC = xlf
 CC = xlc_r
-CXX = xlc++_r # -v
-
-OMPT_ROOT=/home/johnmc
-INCLUDES=-I$(OMPT_ROOT) 
+CXX = xlc++_r
 
 OMPFLAGS= -q64 -qsmp=omp -qthreaded -qdebug=lompinterface
 
 LIBDIR=$(IBM_COMPILER_ROOT)/lib64/ompt_light
-LIBS=-L$(LIBDIR) -lxlsmp  -Wl,-rpath=$(LIBDIR)
 LIBS=$(LIBDIR)/libxlsmp.so  -Wl,-rpath=$(LIBDIR)
-
-FLAG_SHARED     = -qmkshrobj

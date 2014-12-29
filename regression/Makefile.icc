@@ -1,3 +1,7 @@
+ifndef INTEL_OMP_ROOT
+  $(error You must define INTEL_OMP_ROOT so that the OpenMP library version providing the OMPT API can be found)
+endif
+
 # ----------------------------------
 # set up compilers
 # ----------------------------------
@@ -11,16 +15,12 @@ CXX 		= icpc
 # compiler flags for OpenMP
 # ----------------------------------
 
-OMPFLAGS 	= -openmp -lrt
+OMPFLAGS 	= -openmp
 
 
 # ----------------------------------
 # set up OpenMP runtime
 # ----------------------------------
-
-ifndef INTEL_OMP_ROOT
-  $(error Need to define INTEL_OMP_ROOT variable)
-endif
 
 HOST		:= $(shell hostname -s)
 

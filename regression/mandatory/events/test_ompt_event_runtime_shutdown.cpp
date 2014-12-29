@@ -23,9 +23,9 @@ init_test(ompt_function_lookup_t lookup)
 
 void work()
 {
-    #pragma parallel num_threads(NUM_THREADS)
+    #pragma omp parallel num_threads(NUM_THREADS)
     {
-        #pragma parallel num_threads(NUM_THREADS) 
+        #pragma omp parallel num_threads(NUM_THREADS) 
         {
           serialwork(1);
         }

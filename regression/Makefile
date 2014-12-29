@@ -1,97 +1,146 @@
-EXEC:= $(shell find . -name "test*.cpp" | sed -e "s/\.cpp\$$//")  
-UTIL:= $(shell find utils -name "*.cpp" | sed -e "s/\.cpp\$$//")  
-HOST:= $(shell hostname -s)
+# -----------------------------------------------------------------------------
+#  source files for tests
+# -----------------------------------------------------------------------------
+
+TEST_SRCS	:= $(shell find . -name "test*.cpp")  
+
+# -----------------------------------------------------------------------------
+#  source and include files for utilities
+# -----------------------------------------------------------------------------
+
+UTIL_SRCS	:= $(shell find utils -name "*.cpp") 
+
+UTIL_H		:= $(shell find utils -name "*.h") 
 
 
-HEADERS=${wildcard *.h}
+# -----------------------------------------------------------------------------
+#  object files and executables for tests
+# -----------------------------------------------------------------------------
+
+TEST_O		= $(subst .cpp,.o,$(TEST_SRCS))
+TEST_EXEC	= $(subst .cpp,,$(TEST_SRCS))
 
 
-EXECS=$(addsuffix .$(SUFFIX),$(EXEC))
-UTILS=$(addsuffix .$(SUFFIX),$(UTIL))
+# -----------------------------------------------------------------------------
+#  object files for utilities
+# -----------------------------------------------------------------------------
 
-ifeq ($(comp),intel)
-  ifndef INTEL_OMP_ROOT
-    $(error Need to define INTEL_OMP_ROOT variable)
-  endif
+UTIL_O		= $(subst .cpp,.o,$(UTIL_SRCS))
 
-  LIBDIR =$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
-  LIB =$(LIBDIR)/libiomp5.so -lm
-  LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
 
-  INCLUDES=-I$(INTEL_OMP_ROOT)/itt/libomp_oss/src -I$(INTEL_OMP_ROOT)/itt/libomp_oss/exports/common/include/ -I./ -I./utils/headers
+# -----------------------------------------------------------------------------
+#  support library containing utiliies
+# -----------------------------------------------------------------------------
 
-  FC = ifort
-  CC = icpc
-  CXX = icpc
-  OMPFLAGS = -openmp -lrt
+LIBUTIL		= utils/libutil.a
 
-  ifeq ($(strip),yes)
-    STRIP=stripped
-  else
-    STRIP=unstripped
-  endif
 
-  ifeq ($(arch),mic)
-    ARCH=.knc.lin.off
-    FLAGS=-mmic
-    PREF=lrb
-    SUFFIX=mic
-  else
-    PREF=lin
-    SUFFIX=host
-  endif
+# -----------------------------------------------------------------------------
+#  include Makefile with rules for each compiler
+# -----------------------------------------------------------------------------
 
-else 
- ifeq ($(comp),gcc)
-   FC = gfortran -gdwarf-3
-   CC = gcc -gdwarf-3
-   CXX = g++ -gdwarf-3
-  
-   OMPFLAGS = -fopenmp
+MEMOIZED_COMPILER = .memoized_compiler
 
-  else
-     $(error Need to specify comp argument (either make comp=intel or make comp=gcc))
-  endif
+ifndef ($(compiler),)
+  compiler := $(shell cat $(wildcard $(MEMOIZED_COMPILER) /dev/null))
 endif
-all: $(EXECS)
 
-test: all
-	@$(foreach var,$(EXECS), \
+ifeq ($(compiler),icc)
+  include Makefile.icc
+else ifeq ($(compiler),gcc)
+  include Makefile.gcc
+else ifeq ($(compiler),xlc)
+  include Makefile.xlc
+else
+  $(error Need to specify comp argument (make compiler=icc, make compiler=gcc, or make compiler=xlc))
+endif
+
+
+# -----------------------------------------------------------------------------
+#  add include path for utility headers 
+# -----------------------------------------------------------------------------
+INCLUDES += -I./utils
+
+
+# -----------------------------------------------------------------------------
+#  build all tests
+# -----------------------------------------------------------------------------
+
+build: $(TEST_EXEC) memoize
+
+
+# -----------------------------------------------------------------------------
+#  run all regression tests
+# -----------------------------------------------------------------------------
+
+test: build 
+	@$(foreach var,$(TEST_EXEC), \
 		echo $(var); $(var) > /dev/null \
 		echo $? \
 	)
 		
-clean:
-	echo $(UTILS)
-	/bin/rm -f $(EXECS)
-	/bin/rm -f $(UTILS)
+# -----------------------------------------------------------------------------
+#  remove binaries
+# -----------------------------------------------------------------------------
 
+clean: memoize
+	/bin/rm -f $(TEST_EXEC) $(TEST_O)
+	/bin/rm -f $(UTIL_O)
+	/bin/rm -f $(LIBUTIL)
+
+
+# -----------------------------------------------------------------------------
+#  memoize the value for a compiler so you don't have to supply it every time
+# -----------------------------------------------------------------------------
+memoize:
+	$(shell echo -n $(compiler) > $(MEMOIZED_COMPILER)) 
+
+
+# -----------------------------------------------------------------------------
+#  compute compiler flags for utilities and tests 
+# -----------------------------------------------------------------------------
 
 ifeq ($(opt),2)
-LEVEL=2
+  LEVEL=2
 else
-LEVEL=0
+  LEVEL=0
 endif
 
-ifeq ($(mode),debug)
-VER=deb
-else
-VER=rel
-endif
+FLAGS += -O$(LEVEL)
 
 FLAGS += -DOMPT_DEBUG -g
-FLAGS += -g
 
 
+# -----------------------------------------------------------------------------
+#  rules for building library of utilities
+# -----------------------------------------------------------------------------
 
-$(EXECS) : $(HEADERS) $(LIB) $(UTILS)
+$(UTIL_O): $(UTIL_H)
 
-$(UTILS) : %.host :  %.cpp 
-	$(CXX) -c $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $^
+$(LIBUTIL): $(UTIL_O)
+	ar r $@ $(UTIL_O) 
 
-$(EXECS) : %.host :  %.cpp $(HEADERS) $(LIB) $(UTILS) common.cpp
-	$(CXX) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $^ $(LIBS)
 
-%.$(SUFFIX): %.f
-	$(FC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)
+# -----------------------------------------------------------------------------
+#  rules for building tests
+# -----------------------------------------------------------------------------
+
+$(TEST_EXEC): $(UTIL_H) $(UTIL_SRCS) $(LIBUTIL)
+
+$(TEST_EXEC):  % : %.o 
+	$(CXX) $(INCLUDES) $(FLAGS) -o $@ $(OMPFLAGS) $< $(LIB) $(LIBS) $(LIBUTIL) -lrt
+
+
+# -----------------------------------------------------------------------------
+# rules for separate compilation of source files
+# -----------------------------------------------------------------------------
+
+%.o : %.c 
+	$(CC)  -c $(INCLUDES) $(FLAGS) -o $@ $(OMPFLAGS) $<
+
+%.o : %.cpp 
+	$(CXX) -c $(INCLUDES) $(FLAGS) -o $@ $(OMPFLAGS) $<
+
+%.o : %.f
+	$(FC)  -c $(INCLUDES) $(FLAGS) -o $@ $(OMPFLAGS) $< 
 

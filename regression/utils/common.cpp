@@ -1,12 +1,14 @@
-#include "common.h"
 #include <map>
 #include <vector>
 #include <iostream>
 #include <string>
-#include <Regex.h>
 #include <iostream>
+
 #include <signal.h>
+
 #include "common.h"
+#include "regex-match.h"
+
 
 #define LOOKUP( lookup, fn ) fn = ( fn ## _t )lookup( #fn ); \
     if ( !fn ) \
@@ -31,7 +33,7 @@ using namespace std;
 void
 warmup() 
 {
-    int a;
+    int a = omp_get_num_threads();
     #pragma omp atomic
     a += 1;
 }
@@ -117,10 +119,11 @@ coredump_handler(int signo)
     exit(MIN(global_error_code, NOT_IMPLEMENTED));
 }
 
+extern "C" {
 int
 ompt_initialize( ompt_function_lookup_t lookup,
                  const char*            runtime_version,
-                 int                    ompt_version )
+                 unsigned int           ompt_version )
 {
     // try to handle seg fault gracefully
     signal(SIGSEGV, coredump_handler);
@@ -133,3 +136,4 @@ ompt_initialize( ompt_function_lookup_t lookup,
     init_test(lookup);
     return 1;
 }
+};

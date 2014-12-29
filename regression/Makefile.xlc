@@ -1,0 +1,15 @@
+IBM_COMPILER_ROOT=/home/johnmc/opt/apps/ibm
+FC = xlf
+CC = xlc_r
+CXX = xlc++_r # -v
+
+OMPT_ROOT=/home/johnmc
+INCLUDES=-I$(OMPT_ROOT) 
+
+OMPFLAGS= -q64 -qsmp=omp -qthreaded -qdebug=lompinterface
+
+LIBDIR=$(IBM_COMPILER_ROOT)/lib64/ompt_light
+LIBS=-L$(LIBDIR) -lxlsmp  -Wl,-rpath=$(LIBDIR)
+LIBS=$(LIBDIR)/libxlsmp.so  -Wl,-rpath=$(LIBDIR)
+
+FLAG_SHARED     = -qmkshrobj

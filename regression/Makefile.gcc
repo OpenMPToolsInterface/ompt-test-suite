@@ -1,0 +1,4 @@
+FC = gfortran -gdwarf-3
+CC = gcc -gdwarf-3
+CXX = g++ -gdwarf-3
+OMPFLAGS = -fopenmp

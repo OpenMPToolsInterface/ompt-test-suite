@@ -3,10 +3,12 @@
 #include <stdio.h>
 #include <signal.h>
 #include <time.h>
-#include <sys/types.h>
 #include <unistd.h>
+
+#include <sys/types.h>
 #include <sys/syscall.h>
-#include <Timer.h>
+
+#include "timer.h"
 
 static void
 state_query_callback(int sig, siginfo_t *si, void *uc)

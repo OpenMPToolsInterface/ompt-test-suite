@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define	COMMON_H
 
+#include <omp.h>
 #include <ompt.h>
 #include <unistd.h>
 #include <stdlib.h>

@@ -2,13 +2,19 @@
 #  source files for tests
 # -----------------------------------------------------------------------------
 
-TEST_SRCS	:= $(shell find . -name "test*.cpp")  
+TEST_SRCS	:= \
+	$(shell find . -name "test*.cpp") \
+	$(shell find . -name "test*.c")  \
+	$(shell find . -name "test*.f")
 
 # -----------------------------------------------------------------------------
 #  source and include files for utilities
 # -----------------------------------------------------------------------------
 
-UTIL_SRCS	:= $(shell find utils -name "*.cpp") 
+UTIL_SRCS	:= \
+	$(shell find utils -name "*.cpp") \
+	$(shell find utils -name "*.c") \
+	$(shell find utils -name "*.f")
 
 UTIL_H		:= $(shell find utils -name "*.h") 
 
@@ -17,15 +23,15 @@ UTIL_H		:= $(shell find utils -name "*.h")
 #  object files and executables for tests
 # -----------------------------------------------------------------------------
 
-TEST_O		= $(subst .cpp,.o,$(TEST_SRCS))
-TEST_EXEC	= $(subst .cpp,,$(TEST_SRCS))
+TEST_EXEC	:= $(basename $(TEST_SRCS))
+TEST_O		= $(addsuffix .o,$(TEST_EXEC))
 
 
 # -----------------------------------------------------------------------------
 #  object files for utilities
 # -----------------------------------------------------------------------------
 
-UTIL_O		= $(subst .cpp,.o,$(UTIL_SRCS))
+UTIL_O		= $(addsuffix .o,$(basename $(UTIL_SRCS)))
 
 
 # -----------------------------------------------------------------------------

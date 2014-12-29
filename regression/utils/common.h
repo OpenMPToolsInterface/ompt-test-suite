@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include <omp.h>
 #include <ompt.h>
 
 #include "error.h"
@@ -19,9 +18,12 @@ extern "C" {
 #endif
 
 void warmup();
+
 void serialwork(int workload);
+
 int register_callback(ompt_event_t e, ompt_callback_t c);
-// Callback function called after OMPT was initialized. E.g. for setting event callbacks
+
+// callback function from ompt_initialize that can be used to set callbacks
 extern void init_test(ompt_function_lookup_t lookup);
 
 #if defined(__cplusplus)

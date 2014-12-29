@@ -34,7 +34,12 @@ const char *executable_name = "";
 static void
 segv_handler(int signo)
 {
-    printf("  %s: error -- failed with segmentation fault\n", executable_name);
+    static int reported_segv = 0;
+    pthread_mutex_lock(&assert_mutex); \
+    if (reported_segv++ == 0) {
+      printf("  %s: error -- failed with segmentation fault\n", executable_name);
+    }
+    pthread_mutex_unlock(&assert_mutex); \
     exit(MIN(global_error_code, NOT_IMPLEMENTED));
 }
 

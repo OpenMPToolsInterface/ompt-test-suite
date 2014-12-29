@@ -24,14 +24,14 @@ extern int global_error_code;
 #define REG_CB( EVENT ) \
     if ( ompt_set_callback( ompt_event_##EVENT, ( ompt_callback_t )on_##EVENT ) != ompt_set_result_event_may_occur_callback_always ) \
     { \
-        fprintf(stderr, "Failed to register OMPT callback %s!\n", #EVENT ); \
+        fprintf(stderr, "\tFailed to register OMPT callback %s!\n", #EVENT ); \
 	fflush(stderr); \
         exit(NOT_IMPLEMENTED); \
     }
 
 #define CHECK(__condition, __error_code, __message...) if (!(__condition)) { \
     pthread_mutex_lock(&assert_mutex); \
-    printf("\n\nERROR in Test[%s] Line[%d]: \n",  __FILE__, __LINE__); printf(__message); printf("\n\n");   \
+    printf("\tERROR in Test[%s] Line[%d]: \n",  __FILE__, __LINE__); printf("\t\t" __message "\n" ); \
     pthread_mutex_unlock(&assert_mutex); \
     global_error_code = MIN(global_error_code, __error_code); }
 
@@ -50,6 +50,8 @@ FOREACH_OMPT_FN( macro )
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
+void register_segv_handler(char **argv);
 
 void warmup();
 void serialwork(int workload);

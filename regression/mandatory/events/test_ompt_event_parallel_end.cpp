@@ -59,6 +59,8 @@ init_test(ompt_function_lookup_t lookup)
 int
 main(int argc, char** argv)
 {
+    register_segv_handler(argv);
+
     global_parent_task_id = ompt_get_task_id(0);
     global_parent_task_frame = ompt_get_task_frame(0);
     test_enclosing_context = true;

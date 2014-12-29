@@ -34,6 +34,7 @@ init_test(ompt_function_lookup_t lookup)
 int
 main(int argc, char** argv)
 {
+    register_segv_handler(argv);
     warmup();
     #pragma omp parallel num_threads(NUM_THREADS)
     {

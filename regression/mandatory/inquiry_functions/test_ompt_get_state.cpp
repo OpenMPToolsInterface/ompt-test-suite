@@ -1,5 +1,4 @@
 #include <omp.h>
-#include <common.h>
 #include <iostream>
 #include <map>
 #include <vector>
@@ -9,6 +8,8 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <common.h>
+#include <states.h>
 #include <timer.h>
 
 
@@ -82,8 +83,9 @@ monitor_prelogue()
 
 
 int
-main()
+main(int argc, char **argv)
 {
+    register_segv_handler(argv);
     pthread_mutex_init(&mutex_states, NULL);
     /* set up a timer */
     Timer timer; 

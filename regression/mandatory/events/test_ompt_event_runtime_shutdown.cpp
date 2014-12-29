@@ -35,6 +35,7 @@ void work()
 int
 main(int argc, char** argv)
 {
+    register_segv_handler(argv);
     warmup();
     work();
     usleep(3000000); /* sleep 3s */

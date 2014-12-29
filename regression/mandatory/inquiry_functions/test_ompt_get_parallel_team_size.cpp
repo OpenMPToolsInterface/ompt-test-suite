@@ -17,9 +17,9 @@ init_test(ompt_function_lookup_t lookup) {
 }
 
 int
-main()
+main(int argc, char **argv)
 {
-   
+    register_segv_handler(argv);
     warmup();
     serialwork(1);
     int master_thread_id = ompt_get_thread_id();

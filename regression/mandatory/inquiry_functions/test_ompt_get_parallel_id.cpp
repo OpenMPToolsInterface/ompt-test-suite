@@ -15,8 +15,9 @@ void init_test(ompt_function_lookup_t lookup) {
 }
 
 
-int main()
+int main(int argc, char **argv)
 {
+    register_segv_handler(argv);
     warmup();
     CHECK(my_ompt_get_parallel_id(0) == 0, IMPLEMENTED_BUT_INCORRECT, "Outside a parallel region, my_ompt_get_parallel_id should return 0");
     

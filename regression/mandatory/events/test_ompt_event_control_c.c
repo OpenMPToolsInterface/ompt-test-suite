@@ -20,6 +20,7 @@ init_test(ompt_function_lookup_t lookup)
 int
 main(int argc, char** argv)
 {
+    register_segv_handler(argv);
     warmup();
     ompt_control(101, 212);
     usleep(300000);

@@ -39,8 +39,9 @@ get_frames(ompt_frame_t *frame[], int max_frames)
 }
 
 int
-main()
+main(int argc, char **argv)
 {
+    register_segv_handler(argv);
     warmup();
     serialwork(1);
     ompt_frame_t * frames_begin[MAX_FRAMES];

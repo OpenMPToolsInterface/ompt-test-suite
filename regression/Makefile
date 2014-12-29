@@ -82,9 +82,11 @@ build: $(TEST_EXEC) memoize
 
 test: build 
 	@$(foreach var,$(TEST_EXEC), \
-		echo $(var); $(var) > /dev/null \
-		echo $? \
+		echo $(var): begin test; $(var);  \
+		echo "$(var): end test"; echo; echo;   \
 	)
+
+# if  test "\$?" -eq 0; then; echo $(var): success; else echo $(var): fail; fi; \
 		
 # -----------------------------------------------------------------------------
 #  remove binaries

@@ -11,7 +11,7 @@ ompt_get_parallel_id_t my_ompt_get_parallel_id;
 
 void init_test(ompt_function_lookup_t lookup) {
     my_ompt_get_parallel_id = (ompt_get_parallel_id_t)lookup("my_ompt_get_parallel_id"); 
-    CHECK(my_ompt_get_parallel_id, NOT_IMPLEMENTED, "ompt_get_parallel_id is not implemented");
+    CHECK(my_ompt_get_parallel_id, FATAL, "failed to register ompt_get_parallel_id");
 }
 
 

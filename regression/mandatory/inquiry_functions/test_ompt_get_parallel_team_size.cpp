@@ -12,8 +12,8 @@ ompt_get_parallel_team_size_t my_ompt_get_parallel_team_size;
 
 void
 init_test(ompt_function_lookup_t lookup) {
-    my_ompt_get_parallel_team_size = (ompt_get_parallel_team_size_t)lookup("my_ompt_get_parallel_team_size"); 
-    CHECK(my_ompt_get_parallel_team_size, NOT_IMPLEMENTED, "my_ompt_get_parallel_team_size is not implemented");
+    my_ompt_get_parallel_team_size = (ompt_get_parallel_team_size_t)lookup("ompt_get_parallel_team_size"); 
+    CHECK(my_ompt_get_parallel_team_size, FATAL, "failed to register ompt_get_parallel_team_size");
 }
 
 int

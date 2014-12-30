@@ -15,7 +15,7 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     my_ompt_get_task_id = (ompt_get_task_id_t)lookup("ompt_get_task_id");
-    CHECK(my_ompt_get_task_id, NOT_IMPLEMENTED, "my_ompt_get_task_id is not implemented");
+    CHECK(my_ompt_get_task_id, FATAL,  "failed to register my_ompt_get_task_id");
 }
 
 int

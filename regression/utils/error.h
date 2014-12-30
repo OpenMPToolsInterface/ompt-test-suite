@@ -1,6 +1,7 @@
-#ifndef check_h
-#define	check_h
+#ifndef error_h
+#define	error_h
 
+#include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
 
@@ -13,8 +14,10 @@
     pthread_mutex_lock(&assert_mutex); \
     printf("  %s: error at %s:%d",  executable_name, __FILE__, __LINE__); printf(" -- "  __VA_ARGS__ ); printf("\n"); \
     pthread_mutex_unlock(&assert_mutex); \
+    if (__error_code == FATAL) exit(FATAL); \
     global_error_code = MIN(global_error_code, __error_code); }
 
+#define FATAL -3
 #define NOT_IMPLEMENTED -2
 #define IMPLEMENTED_BUT_INCORRECT -1 
 #define CORRECT 0
@@ -35,5 +38,5 @@ void register_segv_handler(char **argv);
 #endif
 
 
-#endif	/* check_h */
+#endif	/* error_h */
 

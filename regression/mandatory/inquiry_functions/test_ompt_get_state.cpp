@@ -12,10 +12,11 @@
 #include <states.h>
 #include <timer.h>
 
-
-
 using namespace std;
+
 #define NUM_THREADS 4
+#define VECTOR_LENGTH 20000000
+
 static bool test_implicit_barrier = false;
 static bool monitor_explicit_barrier = false;
 static bool test_taskwait = false;
@@ -27,7 +28,7 @@ ompt_get_state_t my_ompt_get_state;
 void
 init_test(ompt_function_lookup_t lookup) {
     my_ompt_get_state = (ompt_get_state_t)lookup("ompt_get_state"); 
-    CHECK(my_ompt_get_state, NOT_IMPLEMENTED, "ompt_get_state is not implemented");
+    CHECK(my_ompt_get_state, FATAL, "failed to register ompt_get_state");
 }
 
 pthread_mutex_t mutex_states;
@@ -39,6 +40,8 @@ collect_trace(ompt_state_t state)
 {
     if (!timer_signal_blocked) {
         pthread_mutex_lock(&mutex_states);
+        CHECK(observed_states.size() != observed_states.capacity(), FATAL, \
+              "observed_states state vector capacity exhausted; increase VECTOR_LENGTH");
         observed_states.push_back(state);
         pthread_mutex_unlock(&mutex_states);
     }
@@ -49,6 +52,8 @@ trace_collector_callback(int sig, siginfo_t *si, void *uc)
 {
     ompt_wait_id_t currWait;
     ompt_state_t current_state = my_ompt_get_state(&currWait);
+    CHECK(observed_states.size() != observed_states.capacity(), FATAL, \
+          "observed_states state vector capacity exhausted; increase VECTOR_LENGTH");
     observed_states.push_back(current_state);
 }
 
@@ -86,6 +91,10 @@ int
 main(int argc, char **argv)
 {
     register_segv_handler(argv);
+    warmup();
+
+    observed_states.reserve(VECTOR_LENGTH);
+
     pthread_mutex_init(&mutex_states, NULL);
     /* set up a timer */
     Timer timer; 
@@ -316,6 +325,8 @@ main(int argc, char **argv)
         }
         #pragma omp ordered
         {
+            CHECK(observed_states.size() != observed_states.capacity(), FATAL, \
+                  "observed_states state vector capacity exhausted; increase VECTOR_LENGTH");
             sequence.push_back(i);
         }
     }

@@ -1,11 +1,13 @@
-#include <omp.h>
-#include <common.h>
 #include <iostream>
-#include <unistd.h>
+
+#include <omp.h>
 #include <unistd.h>
 #include <map>
 
+#include <common.h>
+
 using namespace std;
+
 #define NUM_THREADS 4
 #define MAX_FRAMES 5
 
@@ -14,32 +16,40 @@ ompt_get_idle_frame_t my_ompt_get_idle_frame;
 void
 init_test(ompt_function_lookup_t lookup) {
     my_ompt_get_idle_frame= (ompt_get_idle_frame_t)lookup("ompt_get_idle_frame"); 
-    CHECK(my_ompt_get_idle_frame, NOT_IMPLEMENTED, "ompt_get_idle_frame is not implemented");
+    CHECK(my_ompt_get_idle_frame, FATAL, "failed to register ompt_get_idle_frame");
 }
 
 
 int
 main(int argc, char **argv)
 {
+    int master_thread_id;
+
     register_segv_handler(argv);
     warmup();
     serialwork(1);
-    int master_thread_id = ompt_get_thread_id();
+
+    master_thread_id = ompt_get_thread_id();
    
     // enable nested parallelism
     omp_set_nested(1);
-    CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "master should always see a null idle frame");
+
+    CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, \
+          "initial thread should always have a null idle frame");
+
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         if (ompt_get_thread_id() == master_thread_id) {
-            CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "master should always see a null idle frame");
+            CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, \
+                  "initial thread should always have a null idle frame");
         }
 
         #pragma omp parallel num_threads(NUM_THREADS)
         {
             serialwork(1);
             if (ompt_get_thread_id() == master_thread_id) {
-                CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "master should always see a null idle frame");
+                CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, \
+                      "initial thread should always have a null idle frame");
             }
         }
     }
@@ -78,7 +88,10 @@ main(int argc, char **argv)
             }
         }
     }
-    CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, "master should always see a null idle frame");
+
+    CHECK(my_ompt_get_idle_frame() == NULL, IMPLEMENTED_BUT_INCORRECT, \
+          "initial thread should always have a null idle frame");
+
     return global_error_code;
 }
 

@@ -13,7 +13,7 @@ void
 init_test(ompt_function_lookup_t lookup) 
 {
     my_ompt_get_task_frame = (ompt_get_task_frame_t)lookup("ompt_get_task_frame"); 
-    CHECK(my_ompt_get_task_frame, NOT_IMPLEMENTED, "ompt_get_task_frame is not implemented");
+    CHECK(my_ompt_get_task_frame, FATAL, "failed to register ompt_get_task_frame");
 }
 
 

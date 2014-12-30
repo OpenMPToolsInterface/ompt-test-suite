@@ -49,10 +49,10 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_parallel_begin, (ompt_callback_t) on_ompt_event_parallel_begin)) {
-        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_parallel_begin");
+        CHECK(FALSE, FATAL, "failed to register ompt_event_parallel_begin");
     }
     if (!register_callback(ompt_event_parallel_end, (ompt_callback_t) on_ompt_event_parallel_end)) {
-        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_parallel_end");
+        CHECK(FALSE, FATAL, "failed to register ompt_event_parallel_end");
     }
 }
 
@@ -60,6 +60,7 @@ int
 main(int argc, char** argv)
 {
     register_segv_handler(argv);
+    warmup();
 
     global_parent_task_id = ompt_get_task_id(0);
     global_parent_task_frame = ompt_get_task_frame(0);

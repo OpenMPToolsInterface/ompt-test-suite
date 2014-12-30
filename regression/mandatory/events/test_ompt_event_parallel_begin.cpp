@@ -38,7 +38,7 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_parallel_begin, (ompt_callback_t) on_ompt_event_parallel_begin)) {
-        CHECK(false, NOT_IMPLEMENTED, "failed to register ompt_event_parallel_begin");
+        CHECK(false, FATAL, "failed to register ompt_event_parallel_begin");
     }
 }
 

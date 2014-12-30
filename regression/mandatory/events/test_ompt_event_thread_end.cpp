@@ -29,12 +29,10 @@ void
 init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_thread_begin, (ompt_callback_t) on_ompt_event_thread_begin)) {
-        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_thread_begin");
-        exit(NOT_IMPLEMENTED);
+        CHECK(false, FATAL, "failed to register ompt_event_thread_begin");
     }
     if (!register_callback(ompt_event_thread_end, (ompt_callback_t) on_ompt_event_thread_end)) {
-        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_thread_end");
-        exit(NOT_IMPLEMENTED);
+        CHECK(false, FATAL, "failed to register ompt_event_thread_end");
     }
 }
 

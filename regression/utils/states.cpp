@@ -40,7 +40,7 @@ check_states(vector<ompt_state_t>& observed_states, string regex_pattern)
 void 
 print_current_states(vector<ompt_state_t>& observed_states)
 {
-    printf("observed_states size: %d \n", observed_states.size());
+    cout << "observed_states size: " << observed_states.size() << endl;
     map<ompt_state_t, string> map; 
     #define macro( state, id) map[state] = #state;
     FOREACH_OMPT_STATE( macro )

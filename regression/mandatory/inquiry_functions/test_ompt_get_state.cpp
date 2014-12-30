@@ -116,7 +116,7 @@ main(int argc, char **argv)
         serialwork(2);
     }
     monitor_epilogue();
-    CHECK(check_states(observed_states, "(ompt_state_work_parallel)+"), \ 
+    CHECK(check_states(observed_states, "(ompt_state_work_parallel)+"), \
             IMPLEMENTED_BUT_INCORRECT, "expect state parallel inside parallel regions");
     
     /* 

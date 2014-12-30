@@ -40,8 +40,6 @@ collect_trace(ompt_state_t state)
 {
     if (!timer_signal_blocked) {
         pthread_mutex_lock(&mutex_states);
-        CHECK(observed_states.size() != observed_states.capacity(), FATAL, \
-              "observed_states state vector capacity exhausted; increase VECTOR_LENGTH");
         observed_states.push_back(state);
         pthread_mutex_unlock(&mutex_states);
     }
@@ -53,7 +51,7 @@ trace_collector_callback(int sig, siginfo_t *si, void *uc)
     ompt_wait_id_t currWait;
     ompt_state_t current_state = my_ompt_get_state(&currWait);
     CHECK(observed_states.size() != observed_states.capacity(), FATAL, \
-          "observed_states state vector capacity exhausted; increase VECTOR_LENGTH");
+          "observed_states state vector capacity exhausted; can't log any more states in signal handler");
     observed_states.push_back(current_state);
 }
 
@@ -325,8 +323,6 @@ main(int argc, char **argv)
         }
         #pragma omp ordered
         {
-            CHECK(observed_states.size() != observed_states.capacity(), FATAL, \
-                  "observed_states state vector capacity exhausted; increase VECTOR_LENGTH");
             sequence.push_back(i);
         }
     }

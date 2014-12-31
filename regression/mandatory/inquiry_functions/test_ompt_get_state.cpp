@@ -179,7 +179,10 @@ main(int argc, char **argv)
     monitor_prelogue();
     #pragma omp parallel
     {
+#if defined(_OPENMP) && (_OPENMP >= 201307)
+        // use taskgroup if OMP 4.0 or later
         #pragma omp taskgroup
+#endif
         {
             int i, num_tasks = NUM_THREADS* 4;
             #pragma omp for
@@ -206,6 +209,10 @@ main(int argc, char **argv)
                 }
             }
         }
+#if !defined(_OPENMP) || (_OPENMP < 201307)
+        // use task wait if OMP < 4.0
+        #pragma omp taskwait
+#endif
     }
     monitor_epilogue();
     //TODO differentiate ompt_state_wait_taskwait and ompt_state_wait_barrier ?

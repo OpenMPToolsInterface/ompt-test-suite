@@ -4,6 +4,8 @@
 #include <sstream>      
 #include <map>
 
+#include <pthread.h>
+
 #define NUM_THREADS 2
 
 using namespace std;
@@ -15,6 +17,10 @@ ompt_task_id_t global_parent_task_id;
 ompt_frame_t * global_parent_task_frame;
 bool test_enclosing_context;
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+volatile int regions_encountered = 0;
+
 void
 on_ompt_event_parallel_begin(ompt_task_id_t parent_task_id,    /* id of parent task            */
                              ompt_frame_t *parent_task_frame,  /* frame data of parent task    */
@@ -24,8 +30,12 @@ on_ompt_event_parallel_begin(ompt_task_id_t parent_task_id,    /* id of parent t
 {
     CHECK(parallel_id_to_task_id_map.count(parallel_id) == 0, IMPLEMENTED_BUT_INCORRECT, "duplicated parallel region ids");
     CHECK(requested_team_size == NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, "wrong requested team size");
+
+    pthread_mutex_lock(&mutex);
     parallel_id_to_task_id_map[parallel_id] = parent_task_id;
     parallel_id_to_task_frame_map[parallel_id] = parent_task_frame;
+    pthread_mutex_unlock(&mutex);
+
     if (test_enclosing_context) {
         CHECK(ompt_get_task_id(0) == global_parent_task_id, IMPLEMENTED_BUT_INCORRECT,\
               "parallel begin callback doesn't execute in parent's context");
@@ -47,8 +57,9 @@ main(int argc, char** argv)
 {
     register_segv_handler(argv);
     warmup();
+    pthread_mutex_unlock(&mutex);
 
-    /* First test whether callback executes in parent enclosing context */
+    /* test whether callback executes in parent enclosing context */
     test_enclosing_context = true;
     global_parent_task_id = ompt_get_task_id(0);
     global_parent_task_frame = ompt_get_task_frame(0);
@@ -60,9 +71,8 @@ main(int argc, char** argv)
     parallel_id_to_task_id_map.clear();
     parallel_id_to_task_frame_map.clear();
     
-    
-
     omp_set_nested(3);
+    regions_encountered += 1;
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         serialwork(0);
@@ -73,6 +83,8 @@ main(int argc, char** argv)
         CHECK(ompt_get_task_frame(1) == parallel_id_to_task_frame_map[level1_parallel_id], IMPLEMENTED_BUT_INCORRECT, 
 	      "level 1 parent task frame does not match");
 
+        #pragma omp atomic update
+        regions_encountered += 1;
         #pragma omp parallel num_threads(NUM_THREADS)
         {
             serialwork(0);
@@ -81,6 +93,9 @@ main(int argc, char** argv)
 	          "level 2 parent task id does not match");
             CHECK(ompt_get_task_frame(1) == parallel_id_to_task_frame_map[level2_parallel_id], 
                   IMPLEMENTED_BUT_INCORRECT, "level 2 parent task frame does not match");
+
+            #pragma omp atomic update
+            regions_encountered += 1;
             #pragma omp parallel num_threads(NUM_THREADS)
             {
                 serialwork(0);
@@ -88,7 +103,9 @@ main(int argc, char** argv)
         }
     }
     
-    int num_parallel_regions = parallel_id_to_task_id_map.size();
-    CHECK(num_parallel_regions == (1+(1+NUM_THREADS)*NUM_THREADS), IMPLEMENTED_BUT_INCORRECT, "enter parallel regions incorrect number of times");
+    int begins = parallel_id_to_task_id_map.size();
+    CHECK(begins == regions_encountered, IMPLEMENTED_BUT_INCORRECT, \
+          "parallel region begin doesn't match region entries (expected %d observed %d)", \
+          regions_encountered, begins);
     return global_error_code;
 }

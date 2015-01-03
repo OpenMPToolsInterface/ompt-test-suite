@@ -3,9 +3,11 @@
 # -----------------------------------------------------------------------------
 
 TEST_SRCS	:= \
-	$(shell find . -name "test*.cpp") \
-	$(shell find . -name "test*.c")  \
-	$(shell find . -name "test*.f")
+	$(shell find mandatory/init -name "test*.cpp") \
+	$(shell find mandatory/events -name "test*.cpp") \
+	$(shell find mandatory/events -name "test*.c") \
+	$(shell find mandatory/inquiry_functions -name "test*.cpp") \
+	$(shell find optional -name "test*.cpp") 
 
 # -----------------------------------------------------------------------------
 #  source and include files for utilities

@@ -8,5 +8,11 @@ CXX = xlc++_r
 
 OMPFLAGS= -q64 -qsmp=omp -qthreaded -qdebug=lompinterface
 
-LIBDIR=$(IBM_COMPILER_ROOT)/lib64/ompt_light
+ifeq ($(version),full) 
+OMPT_VERSION=ompt_full
+else
+OMPT_VERSION=ompt_light
+endif
+
+LIBDIR=$(IBM_COMPILER_ROOT)/lib64/$(OMPT_VERSION)
 LIBS=$(LIBDIR)/libxlsmp.so  -Wl,-rpath=$(LIBDIR)

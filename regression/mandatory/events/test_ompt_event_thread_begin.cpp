@@ -4,7 +4,14 @@
 #include <sstream>      
 #include <map>
 
-#define NUM_THREADS 4
+#include <pthread.h>
+
+#define DEBUG 0
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+volatile int nthreads_expected = 0;
+volatile int nthreads_created = 0;
 
 using namespace std;
 
@@ -13,13 +20,27 @@ map<ompt_task_id_t, ompt_thread_type_t> thread_id_map;
 void
 on_ompt_event_thread_begin(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id)
 {
-    if (omp_get_thread_num() == 0) {
-        CHECK(thread_type == ompt_thread_initial, IMPLEMENTED_BUT_INCORRECT, "expect to see ompt_thread_initial");
+    static int first = 1;
+
+    pthread_mutex_lock(&mutex);
+    nthreads_created += 1;
+
+#if DEBUG
+    printf("thread_id = %d thread_type = %d\n", thread_id, thread_type);
+    fflush(NULL);
+#endif
+
+    if (first == 1) {
+        CHECK(thread_type == ompt_thread_initial, IMPLEMENTED_BUT_INCORRECT, \
+              "expect to see ompt_thread_initial (%d) but got %d", ompt_thread_initial, thread_type);
+        first = 0;
     } else {
-        CHECK(thread_type == ompt_thread_worker, IMPLEMENTED_BUT_INCORRECT, "expect to see ompt_thread_worker");
-        CHECK(thread_id_map.count(thread_id) == 0, IMPLEMENTED_BUT_INCORRECT, "expect non-duplicate thread ids");
+        CHECK(thread_type == ompt_thread_worker || thread_type == ompt_thread_other, IMPLEMENTED_BUT_INCORRECT, \
+              "expected to see ompt_thread_worker or ompt_thread_other after initial thread");
+        CHECK(thread_id_map.count(thread_id) == 0, IMPLEMENTED_BUT_INCORRECT, "duplicate thread ids");
     }
     thread_id_map[thread_id] = thread_type;
+    pthread_mutex_unlock(&mutex);
 }
 
 void 
@@ -35,17 +56,20 @@ main(int argc, char** argv)
 {
     register_segv_handler(argv);
     warmup();
-    #pragma omp parallel num_threads(NUM_THREADS)
+
+    #pragma omp parallel 
     {
-        #pragma omp parallel num_threads(NUM_THREADS)
-        {
-            #pragma omp parallel num_threads(NUM_THREADS)
-            {
-                serialwork(0);
-            }
-        }
+        #pragma omp atomic update
+        nthreads_expected += 1;
     }
-    CHECK(thread_id_map.size() == (NUM_THREADS), IMPLEMENTED_BUT_INCORRECT, 
+
+
+#if DEBUG
+    printf("num threads created = %d\n", nthreads_created);
+#endif
+
+    CHECK(nthreads_created == nthreads_expected, IMPLEMENTED_BUT_INCORRECT, \
           "wrong number of calls to ompt_event_thread_begin");
+
     return global_error_code;
 }

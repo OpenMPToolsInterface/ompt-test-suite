@@ -32,4 +32,4 @@ for test, path in name_to_path:
     code, out, err = execute_test_case(path)
     if len(out) != 0:
        print out,;
-    print("Result: {} ".format(test).ljust(50)  + "    Status: [%s]\n" % (code_to_status[code]))
+    print("Result: " + test.ljust(50)  + "Status: [%s]\n" % (code_to_status[code]))

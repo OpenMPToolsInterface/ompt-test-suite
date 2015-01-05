@@ -29,14 +29,16 @@ main(int argc, char **argv)
 
     #pragma omp parallel num_threads(SMALL_NUM_THREADS)
     {
-        CHECK(my_ompt_get_parallel_team_size(0) == SMALL_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
+        int team_size_0 = omp_get_team_size(omp_get_level());
+        CHECK(my_ompt_get_parallel_team_size(0) == team_size_0, IMPLEMENTED_BUT_INCORRECT, \
               "wrong team size");
         #pragma omp parallel num_threads(BIG_NUM_THREADS)
         {
+            int team_size_1 = omp_get_team_size(omp_get_level());
             serialwork(1);
-            CHECK(my_ompt_get_parallel_team_size(0) == SMALL_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
+            CHECK(my_ompt_get_parallel_team_size(0) == team_size_1, IMPLEMENTED_BUT_INCORRECT, \
                   "expect the same team size as before, not a bigger one");
-            CHECK(my_ompt_get_parallel_team_size(1) == SMALL_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
+            CHECK(my_ompt_get_parallel_team_size(1) == team_size_0, IMPLEMENTED_BUT_INCORRECT, \
                   "expect the same team size as before, not a bigger one");
         }
     }
@@ -45,11 +47,13 @@ main(int argc, char **argv)
     omp_set_nested(0);
     #pragma omp parallel num_threads(SMALL_NUM_THREADS)
     {
+        int team_size_0 = omp_get_team_size(omp_get_level());
         #pragma omp parallel num_threads(BIG_NUM_THREADS)
         {
-            CHECK(my_ompt_get_parallel_team_size(0) == BIG_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
+            int team_size_1 = omp_get_team_size(omp_get_level());
+            CHECK(my_ompt_get_parallel_team_size(0) == team_size_1, IMPLEMENTED_BUT_INCORRECT, \
                   "expect BIG_NUM_THREADS team size");
-            CHECK(my_ompt_get_parallel_team_size(1) == SMALL_NUM_THREADS, IMPLEMENTED_BUT_INCORRECT, \
+            CHECK(my_ompt_get_parallel_team_size(1) == team_size_0, IMPLEMENTED_BUT_INCORRECT, \
                   "expect SMALL_NUM_THREADS team size");
         }
     }

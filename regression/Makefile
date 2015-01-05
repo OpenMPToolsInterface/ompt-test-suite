@@ -1,95 +1,154 @@
-EXEC = \
-	testtool \
-	test_task_id \
-	test_event_parallel \
-	test_event_thread \
-	test_ompt_frame \
-	test_wait_barrier
+# -----------------------------------------------------------------------------
+#  source files for tests
+# -----------------------------------------------------------------------------
 
-HOST:= $(shell hostname -s)
+TEST_SRCS	:= \
+	$(shell find mandatory/init -name "test*.cpp") \
+	$(shell find mandatory/events -name "test*.cpp") \
+	$(shell find mandatory/events -name "test*.c") \
+	$(shell find mandatory/inquiry_functions -name "test*.cpp") \
+	$(shell find optional -name "test*.cpp") 
+
+# -----------------------------------------------------------------------------
+#  source and include files for utilities
+# -----------------------------------------------------------------------------
+
+UTIL_SRCS	:= \
+	$(shell find utils -name "*.cpp") \
+	$(shell find utils -name "*.c") \
+	$(shell find utils -name "*.f")
+
+UTIL_H		:= $(shell find utils -name "*.h") 
+
+
+# -----------------------------------------------------------------------------
+#  object files and executables for tests
+# -----------------------------------------------------------------------------
+
+TEST_EXEC	:= $(basename $(TEST_SRCS))
+TEST_O		= $(addsuffix .o,$(TEST_EXEC))
+
+
+# -----------------------------------------------------------------------------
+#  object files for utilities
+# -----------------------------------------------------------------------------
+
+UTIL_O		= $(addsuffix .o,$(basename $(UTIL_SRCS)))
+
+
+# -----------------------------------------------------------------------------
+#  support library containing utiliies
+# -----------------------------------------------------------------------------
+
+LIBUTIL		= utils/libutil.a
+
+
+# -----------------------------------------------------------------------------
+#  include Makefile with rules for each compiler
+# -----------------------------------------------------------------------------
+
+MEMOIZED_COMPILER = .memoized_compiler
+
+ifndef ($(compiler),)
+  compiler := $(shell cat $(wildcard $(MEMOIZED_COMPILER) /dev/null))
+endif
+
+ifeq ($(compiler),icc)
+  include Makefile.icc
+else ifeq ($(compiler),gcc)
+  include Makefile.gcc
+else ifeq ($(compiler),xlc)
+  include Makefile.xlc
+else
+  $(error Need to specify comp argument (make compiler=icc, make compiler=gcc, or make compiler=xlc))
+endif
+
+
+# -----------------------------------------------------------------------------
+#  add include path for utility headers 
+# -----------------------------------------------------------------------------
+INCLUDES += -I./utils
+INCLUDES += -I../ompt
+
+
+# -----------------------------------------------------------------------------
+#  build all tests
+# -----------------------------------------------------------------------------
+
+build: $(TEST_EXEC) memoize
+
+
+# -----------------------------------------------------------------------------
+#  run all regression tests
+# -----------------------------------------------------------------------------
+
+test: build 
+	@python run_all_tests.py
+
+		
+# -----------------------------------------------------------------------------
+#  remove binaries
+# -----------------------------------------------------------------------------
+
+clean: memoize
+	/bin/rm -f $(TEST_EXEC) $(TEST_O)
+	/bin/rm -f $(UTIL_O)
+	/bin/rm -f $(LIBUTIL)
+
+
+# -----------------------------------------------------------------------------
+#  memoize the value for a compiler so you don't have to supply it every time
+# -----------------------------------------------------------------------------
+memoize:
+	$(shell echo -n $(compiler) > $(MEMOIZED_COMPILER)) 
+
+
+# -----------------------------------------------------------------------------
+#  compute compiler flags for utilities and tests 
+# -----------------------------------------------------------------------------
 
 ifeq ($(opt),2)
-LEVEL=2
+  LEVEL=2
 else
-LEVEL=0
+  LEVEL=0
 endif
 
-
-ifeq ($(mode),debug)
-VER=deb
-else
-VER=rel
-endif
-
+FLAGS = $(OMPFLAGS)
+FLAGS += -O$(LEVEL)
 FLAGS += -DOMPT_DEBUG -g
-FLAGS += -g
-
-ifeq ($(comp),intel)
-  ifndef INTEL_OMP_ROOT
-    $(error Need to define INTEL_OMP_ROOT variable)
-  endif
-
-  BDIR=$(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)
-  LIBDIR=$(BDIR)/$(STRIP)
-  LIB =$(LIBDIR)/libiomp5.so -lm
-  LIBS=-Wl,-rpath=$(LIBDIR) $(LIB)
-
-  INCLUDES=-I$(BDIR)
-
-  FC = ifort
-  CC = icc -std=c99
-  CXX = icpc
-  OMPFLAGS = -openmp
-
-  ifeq ($(strip),yes)
-    STRIP=stripped
-  else
-    STRIP=unstripped
-  endif
-
-  ifeq ($(arch),mic)
-    ARCH=.knc.lin.off
-    FLAGS=-mmic
-    PREF=lrb
-    SUFFIX=mic
-  else
-    PREF=lin
-    SUFFIX=host
-  endif
-
-else 
- ifeq ($(comp),gcc)
-   FC = gfortran -gdwarf-3
-   CC = gcc -gdwarf-3
-   CXX = g++ -gdwarf-3
-  
-   OMPFLAGS = -fopenmp
-
-  else
-     $(error Need to specify comp argument (either make comp=intel or make comp=gcc))
-  endif
-endif
-
-HEADERS=${wildcard *.h}
-
-# EXEC = nest1-unit
-
-EXECS=$(addsuffix .$(SUFFIX),$(EXEC))
-
-all: $(EXECS)
+FLAGS += $(INCLUDES) 
 
 
-clean:
-	/bin/rm -f $(EXECS)
+# -----------------------------------------------------------------------------
+#  rules for building library of utilities
+# -----------------------------------------------------------------------------
 
-$(EXECS) : $(HEADERS) $(LIB)
+$(UTIL_O): $(UTIL_H)
 
-%.$(SUFFIX): %.c common.c
-	$(CC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $^ $(LIBS)
+$(LIBUTIL): $(UTIL_O)
+	ar r $@ $(UTIL_O) 
 
-%.$(SUFFIX): %.cpp common.c
-	$(CXX) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $^ $(LIBS)
 
-%.$(SUFFIX): %.f
-	$(FC) $(INCLUDES) $(FLAGS) -O$(LEVEL) -o $@ $(OMPFLAGS) $< $(LIBS)
+# -----------------------------------------------------------------------------
+#  rules for building tests
+# -----------------------------------------------------------------------------
+
+$(TEST_EXEC): $(UTIL_H) $(UTIL_SRCS) $(LIBUTIL)
+
+$(TEST_EXEC):  % : %.o 
+	$(CXX) $(FLAGS) -o $@ $< $(LIB) $(LIBS) $(LIBUTIL) -lrt
+
+
+# -----------------------------------------------------------------------------
+# rules for separate compilation of source files
+# -----------------------------------------------------------------------------
+
+%.o : %.c 
+	$(CC)  -c $(FLAGS) -o $@ $<
+
+%.o : %.cpp 
+	$(CXX) -c $(FLAGS) -o $@ $<
+
+%.o : %.f
+	$(FC)  -c $(FLAGS) -o $@ $< 
 

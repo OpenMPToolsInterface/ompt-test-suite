@@ -1,0 +1,18 @@
+ifndef IBM_COMPILER_ROOT
+  $(error You must define IBM_COMPILER_ROOT so that the OpenMP library version providing the OMPT API can be found)
+endif
+
+FC = xlf
+CC = xlc_r
+CXX = xlc++_r
+
+OMPFLAGS= -q64 -qsmp=omp -qthreaded -qdebug=lompinterface
+
+ifeq ($(version),full) 
+OMPT_VERSION=ompt_full
+else
+OMPT_VERSION=ompt_light
+endif
+
+LIBDIR=$(IBM_COMPILER_ROOT)/lib64/$(OMPT_VERSION)
+LIBS=$(LIBDIR)/libxlsmp.so  -Wl,-rpath=$(LIBDIR)

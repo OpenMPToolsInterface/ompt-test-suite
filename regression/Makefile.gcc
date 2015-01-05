@@ -1,0 +1,19 @@
+# ----------------------------------
+# set up compilers
+# ----------------------------------
+
+FC = gfortran -gdwarf-3
+CC = gcc -gdwarf-3
+CXX = g++ -gdwarf-3
+
+# ----------------------------------
+# compiler flags for OpenMP
+# ----------------------------------
+
+OMPFLAGS = -fopenmp
+
+# ----------------------------------
+# set up Intel OpenMP runtime
+# ----------------------------------
+
+include Makefile.intelomp

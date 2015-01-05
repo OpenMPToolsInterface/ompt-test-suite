@@ -1,0 +1,21 @@
+# ----------------------------------
+# set up compilers
+# ----------------------------------
+
+FC 		= ifort
+CC 		= icpc
+CXX 		= icpc
+
+
+# ----------------------------------
+# compiler flags for OpenMP
+# ----------------------------------
+
+OMPFLAGS 	= -openmp
+
+
+# ----------------------------------
+# set up OpenMP runtime
+# ----------------------------------
+
+include Makefile.intelomp

@@ -4,15 +4,29 @@
 #include <sstream>      
 #include <set>
 #include <map>
+
+#include <pthread.h>
+
 #define NUM_THREADS 4
 
 using namespace std;
 typedef map<ompt_thread_id_t, int> thread_id_map_t;
 thread_id_map_t thread_id_map;
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int active_workers = 0;
+int total_workers = 0;
+
 void 
 on_ompt_event_thread_begin(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id){
-    thread_id_map[thread_id] = thread_type;
+  pthread_mutex_lock(&mutex);
+  if (thread_type == ompt_thread_worker) {
+     active_workers++;
+     total_workers++;
+  }
+  thread_id_map[thread_id] = thread_type;
+  pthread_mutex_unlock(&mutex);
 }
 
 void 
@@ -21,8 +35,14 @@ on_ompt_event_thread_end(ompt_thread_type_t thread_type, ompt_thread_id_t thread
   /* for the end of the thread, only worker threads is invoked, is ompt_thread_other possible here? */
   // CHECK(thread_type == ompt_thread_worker, IMPLEMENTED_BUT_INCORRECT, "only worker threads is invoked");
 
-  /* the thread id should be the same as the thread id in the thread_begin */
-  CHECK(thread_id_map.count(thread_id)>0, IMPLEMENTED_BUT_INCORRECT, "thread is should be seen before");
+  pthread_mutex_lock(&mutex);
+  // the thread id should be the same as the thread id in the thread_begin */
+  CHECK(thread_id_map.count(thread_id)>0, IMPLEMENTED_BUT_INCORRECT, \
+        "thread should have been entered in map during ompt_event_thread_begin");
+  if (thread_type == ompt_thread_worker) {
+    active_workers--;
+  }
+  pthread_mutex_unlock(&mutex);
 }
 
 void 
@@ -41,16 +61,16 @@ main(int argc, char** argv)
 {
     register_segv_handler(argv);
     warmup();
-    #pragma omp parallel num_threads(NUM_THREADS)
+
+    #pragma omp parallel 
     {
-        #pragma omp parallel num_threads(NUM_THREADS)
-        {
-            #pragma omp parallel num_threads(NUM_THREADS)
-            {
-                serialwork(0);
-            }
-        }
+       serialwork(0);
     }
-    CHECK(thread_id_map.size() == (NUM_THREADS), IMPLEMENTED_BUT_INCORRECT, "wrong number of calls to ompt_event_threadbegins");
+
+    CHECK(total_workers > 0, IMPLEMENTED_BUT_INCORRECT, "no worker threads created");
+
+    CHECK(active_workers == 0, IMPLEMENTED_BUT_INCORRECT, \
+          "mismatch between number of calls to ompt_event_thread_begin/end");
+
     return global_error_code;
 }

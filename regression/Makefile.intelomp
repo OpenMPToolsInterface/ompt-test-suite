@@ -20,6 +20,7 @@ else
   STRIP=unstripped
 endif
 
+
 ifeq ($(arch),mic)
   ARCH=.knc.lin.off
   FLAGS=-mmic
@@ -36,6 +37,13 @@ LIBDIR          = \
 LIB             = $(LIBDIR)/libiomp5.so -lm
 
 LIBS            =-Wl,-rpath=$(LIBDIR) $(LIB)
+
+ifeq ($(target),yes)
+  TARGET_LIBDIR=$(INTEL_OMP_ROOT)/itt/offload/build/host
+  TARGET_LIB =$(TARGET_LIBDIR)/liboffload.so
+  LIBS += -Wl,-rpath=$(TARGET_LIBDIR) $(TARGET_LIB)
+endif
+
 
 # ----------------------------------
 # include path for ompt.h and omp.h

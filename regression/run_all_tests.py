@@ -25,7 +25,7 @@ def execute_test_case(path):
 add_test_cases('mandatory/events')
 add_test_cases('mandatory/inquiry_functions')
 add_test_cases('optional')
-
+add_test_cases('target/events')
 
 try:
   for test, path in name_to_path:

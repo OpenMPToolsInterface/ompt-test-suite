@@ -9,6 +9,11 @@ TEST_SRCS	:= \
 	$(shell find mandatory/inquiry_functions -name "test*.cpp") \
 	$(shell find optional -name "test*.cpp") 
 
+ifeq ($(target),yes)
+  TEST_SRCS 	+= $(shell find target/events -name "test*.cpp")
+endif
+
+
 # -----------------------------------------------------------------------------
 #  source and include files for utilities
 # -----------------------------------------------------------------------------
@@ -60,7 +65,7 @@ else ifeq ($(compiler),gcc)
 else ifeq ($(compiler),xlc)
   include Makefile.xlc
 else
-  $(error Need to specify comp argument (make compiler=icc, make compiler=gcc, or make compiler=xlc))
+  $(error Need to specify compiler argument (make compiler=icc, make compiler=gcc, or make compiler=xlc))
 endif
 
 

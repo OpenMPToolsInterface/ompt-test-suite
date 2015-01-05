@@ -27,9 +27,12 @@ add_test_cases('mandatory/inquiry_functions')
 add_test_cases('optional')
 
 
-for test, path in name_to_path:
+try:
+  for test, path in name_to_path:
     print('Running test ' + test + ' ...');
     code, out, err = execute_test_case(path)
     if len(out) != 0:
        print out,;
     print("Result: " + test.ljust(50)  + "Status: [%s]\n" % (code_to_status[code]))
+except:
+    print "\nTests aborted with a signal."

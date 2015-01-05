@@ -9,7 +9,7 @@ using namespace std;
 
 void on_ompt_event_runtime_shutdown(uint64_t command,  uint64_t modifier)
 {
-    exit(CORRECT);
+    _exit(CORRECT);
 }
 
 void 

@@ -22,18 +22,12 @@ int
 get_frames(ompt_frame_t *frame[], int max_frames)
 {
     int depth = 0;
-    ompt_frame_t *fr;
 
-    while (depth < max_frames) 
-    {
-        fr = my_ompt_get_task_frame(depth);
-
-        if (fr) {
-            frame[depth] = fr;
-            depth++;
-        } else {
-            break;
-        }
+    while (depth < max_frames) {
+        ompt_frame_t *f = my_ompt_get_task_frame(depth);
+        if (f == NULL) break;
+        frame[depth] = f;
+        depth++;
     } 
     return depth;
 }
@@ -50,11 +44,12 @@ main(int argc, char **argv)
 
     int master_thread_id = ompt_get_thread_id();
     omp_set_nested(1);
+
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         serialwork(1); 
         ompt_frame_t *frames_level1[MAX_FRAMES];
-        int depth = get_frames( frames_level1, MAX_FRAMES);
+        int depth = get_frames(frames_level1, MAX_FRAMES);
 
         /* 
          * my_ompt_get_task_frame should return at least 2 frames: 
@@ -79,12 +74,17 @@ main(int argc, char **argv)
         CHECK(frames_level1[1]->reenter_runtime_frame != 0, IMPLEMENTED_BUT_INCORRECT, "r1 should have renter");
         CHECK(frames_level1[1]->exit_runtime_frame == 0, IMPLEMENTED_BUT_INCORRECT, "r1 should have no exit");
 
+        #pragma omp master
+        {
         /*
          * second frame(r1)'s reenter location should be less than the 
          * first frame(r2)'s exit location
          */
-        CHECK(frames_level1[1]->reenter_runtime_frame <= frames_level1[0]->exit_runtime_frame, IMPLEMENTED_BUT_INCORRECT,
-              "r1 should have a reenter address less than r2's exit address");
+        CHECK(frames_level1[1]->reenter_runtime_frame >= frames_level1[0]->exit_runtime_frame, IMPLEMENTED_BUT_INCORRECT, \
+              "r1 should have a reenter address greater than r2's exit address r1={exit=%p, reenter=%p} r2={exit=%p, reenter=%p}", \
+              frames_level1[1]->exit_runtime_frame, frames_level1[1]->reenter_runtime_frame, \
+              frames_level1[0]->exit_runtime_frame, frames_level1[0]->reenter_runtime_frame); 
+        }
     
         #pragma omp parallel num_threads(NUM_THREADS)
         {

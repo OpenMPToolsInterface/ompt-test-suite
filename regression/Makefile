@@ -83,12 +83,8 @@ build: $(TEST_EXEC) memoize
 # -----------------------------------------------------------------------------
 
 test: build 
-	@$(foreach var,$(TEST_EXEC), \
-		echo $(var): begin test; $(var);  \
-		echo "$(var): end test"; echo; echo;   \
-	)
+	@python run_all_tests.py
 
-# if  test "\$?" -eq 0; then; echo $(var): success; else echo $(var): fail; fi; \
 		
 # -----------------------------------------------------------------------------
 #  remove binaries

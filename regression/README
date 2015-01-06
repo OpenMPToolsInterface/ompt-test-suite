@@ -1,13 +1,29 @@
-OMPT defines an application programming interface through which one can write 
-powerful monitoring or analysis software for OpenMP applications. However, 
-traditionally various vendors usually have di↵erent OpenMP runtime, and as
- of now, there is not an easy way to automatically determine whether a 
-particular OpenMP fully supports the OMPT standard. This motivates us 
-to develop an automatic test suite for that purpose. Our test suite is 
-fully automatic. After running it, you will be able to tell whether the 
-runtime you are testing against is a minimally-compliant implementation 
+OMPT defines an application programming interface through which
+one can write powerful monitoring or analysis software for OpenMP
+applications. However, traditionally various vendors usually have
+di↵erent OpenMP runtime, and as
+ of now, there is not an easy way to automatically determine whether a
+particular OpenMP fully supports the OMPT standard. This motivates us
+to develop an automatic test suite for that purpose. Our test suite is
+fully automatic. After running it, you will be able to tell whether the
+runtime you are testing against is a minimally-compliant implementation
 of the OMPT specification.
 
+Currently, the Makefile provides support for xlc, icc, and gcc. xlc
+support is geared to work with IBM's OMPT-enhanced LOMP runtime. icc and
+gcc support are geared to work with an OMPT-enhanced version of Intel's
+open source runtime, which is available at
 
-To build the test for intel platform, type:
-make comp=intel
+	git clone https://code.google.com/p/ompt-intel-openmp/
+
+To build the regression tests for the Intel runtime
+
+	cd regression
+	export INTEL_COMPILER_ROOT=/pathto/your/intel/ompt-intel-openmp 
+	make -j compiler=xxx (where xxx = icc or gcc)
+
+To build the regression tests for the IBM LOMP runtime, 
+
+	cd regression
+	export IBM_COMPILER_ROOT=/pathto/your/ibm/compiler/root  
+	make -j compiler=xlc

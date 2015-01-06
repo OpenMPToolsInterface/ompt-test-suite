@@ -17,10 +17,10 @@ def add_test_cases(dir_path):
                 name_to_path.append((name, os.path.join(root, name)))
 
 def execute_test_case(path):
-    p = subprocess.Popen(path, stdout=subprocess.PIPE, shell=True)
-    (out, err) = p.communicate()
+    p = subprocess.Popen(path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
+    out = p.communicate()[0]
     code = p.wait()
-    return code, out, err
+    return code, out
 
 add_test_cases('mandatory/events')
 add_test_cases('mandatory/inquiry_functions')
@@ -29,10 +29,10 @@ add_test_cases('optional')
 
 try:
   for test, path in name_to_path:
-    print('Running test ' + test + ' ...');
-    code, out, err = execute_test_case(path)
+    print('Running test ' + test + ' ...')
+    code, out = execute_test_case(path)
     if len(out) != 0:
-       print out,;
+       print out,
     print("Result: " + test.ljust(50)  + "Status: [%s]\n" % (code_to_status[code]))
 except:
-    print "\nTests aborted with a signal."
+    print "\nRegression tests aborted with a signal."

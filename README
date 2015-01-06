@@ -1,8 +1,10 @@
 This directory contains regression tests and example codes for testing the implementation 
 of the OMPT application programming interface for tools in an OpenMP runtime system.
  
-This directory includes three subdirectories:
+This directory includes four subdirectories:
 
+        doc:
+                documentation for the regression test suite
 	ompt: 
 		contains ompt.h - an include file that defines the OMPT interface
 

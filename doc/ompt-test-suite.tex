@@ -50,14 +50,14 @@ The test suite can be obtained by cloning the master branch of its {\tt git} rep
     
 
 \subsection{Test Suite Organization}
-The regression directory contains three subdirectories: doc, mandatory,  optional, and utils. The {\tt doc} subdirectory contains the source for this document. The mandatory subdirectory  contains subdirectories with regression tests  for all of the mandatory APIs that a runtime needs to support. Inside the mandatory directory, there are subdirectories for OMPT  initialization, events, and inquiry operations. At the top level, the utils subdirectory contains support code for the regression tests, including support for error reporting, sampling, timing, and regular expression matching.
+The regression directory contains three subdirectories: mandatory,  optional, and utils. The mandatory subdirectory  contains subdirectories with regression tests  for all of the mandatory APIs that a runtime needs to support. Inside the mandatory directory, there are subdirectories for OMPT  initialization, events, and inquiry operations. At the top level, the utils subdirectory contains support code for the regression tests, including support for error reporting, sampling, timing, and regular expression matching.
 
 
 \subsection{Building the Test Suite}
 
 At present, the test suite contains Makefiles for two OpenMP runtimes: IBM's lightweight OpenMP runtime (LOMP), and Intel's open-source OpenMP runtime. The build system supports 
 \begin{itemize}
-\item IBM's xlc compiler with LOMP,
+\item xlc  with IBM's LOMP,
 \item icc with Intel's OpenMP runtime, and
 \item gcc with Intel's OpenMP runtime.
 \end{itemize}

@@ -69,7 +69,7 @@ monitor_epilogue()
 }
 
 int
-monitor_prelogue()
+monitor_prologue()
 {
     timer_signal_blocked = false;
     sigset_t mask;
@@ -101,28 +101,31 @@ main(int argc, char **argv)
     start_timer(&timer, 100);
 
     /* TEST 0: Outside parallel region, expect to see ompt_state_work_serial */ 
-    monitor_prelogue();
+    monitor_prologue();
     serialwork(2);
-    CHECK(check_states(observed_states, "(ompt_state_work_serial)+"),  IMPLEMENTED_BUT_INCORRECT,
-           "expect state serial outside parallel regions");
     monitor_epilogue();
+
+    CHECK(check_states(observed_states, "(ompt_state_work_serial)+"),  IMPLEMENTED_BUT_INCORRECT,\
+          "expect state serial outside parallel regions; observed '%s'", \
+          state_string(observed_states).c_str());
  
     /* 
      * TEST1: Inside parallel region, expect to see ompt_state_work_parallel
      */
-    monitor_prelogue();
+    monitor_prologue();
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         serialwork(2);
     }
     monitor_epilogue();
     CHECK(check_states(observed_states, "(ompt_state_work_parallel)+"), \
-            IMPLEMENTED_BUT_INCORRECT, "expect state parallel inside parallel regions");
+          IMPLEMENTED_BUT_INCORRECT, "expect state parallel inside parallel regions; observed states '%s'", \
+          state_string(observed_states).c_str());
     
     /* 
      * TEST2: In the middle of a reduction, expect to see ompt_state_work_reduction, ompt_state_work_parallel
      */
-    monitor_prelogue();
+    monitor_prologue();
     int i, accumulator = 0, N = 16;
     int master_thread_id = ompt_get_thread_id();
     #pragma omp parallel for num_threads(NUM_THREADS) private(i) reduction(+:accumulator)
@@ -136,13 +139,13 @@ main(int argc, char **argv)
     }
     monitor_epilogue(); 
     CHECK(check_states(observed_states, "(ompt_state_work_parallel|ompt_state_work_reduction)*(ompt_state_wait_barrier)*"), IMPLEMENTED_BUT_INCORRECT, \
-                        "expect state reduction parallel or maybe overhead in reduction regions");
-
+          "expect state reduction parallel or maybe overhead in reduction regions; observed states '%s'", \
+          state_string(observed_states).c_str());
 
     /* 
      * TEST3.1: Tesing barrier states: ompt_state_wait_barrier_explicit
      */
-    monitor_prelogue();
+    monitor_prologue();
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         if (ompt_get_thread_id() != master_thread_id) {
@@ -156,33 +159,35 @@ main(int argc, char **argv)
     monitor_epilogue();
 
     CHECK(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_explicit)+)"), \
-           IMPLEMENTED_BUT_INCORRECT, "expect ompt_state_wait_barrier or ompt_state_wait_barrier_explicit here");
+          IMPLEMENTED_BUT_INCORRECT, "expect ompt_state_wait_barrier or ompt_state_wait_barrier_explicit here; observed '%s'", \
+          state_string(observed_states).c_str());
 
     /* 
      * TEST3.2: Tesing barrier states: ompt_state_wait_barrier_implicit
      */
-    monitor_prelogue();
+    monitor_prologue();
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         if (ompt_get_thread_id() != master_thread_id) {
             serialwork(2);
         }
+        serialwork(2);
     }
     monitor_epilogue();
     CHECK(check_states(observed_states, "((ompt_state_work_parallel)+(ompt_state_wait_barrier|ompt_state_wait_barrier_implicit)+)"), \
-           IMPLEMENTED_BUT_INCORRECT, "expect ompt_state_wait_barrier or ompt_state_wait_barrier_implicit here");
+          IMPLEMENTED_BUT_INCORRECT, "expect ompt_state_wait_barrier or ompt_state_wait_barrier_implicit here; observed '%s'", \
+          state_string(observed_states).c_str());
 
 
     /*
      * TEST 4: Testing task wait states : ompt_state_wait_taskwait, ompt_state_wait_taskgroup
      */
-    monitor_prelogue();
+#if defined(_OPENMP) && (_OPENMP >= 201307)
+    monitor_prologue();
     #pragma omp parallel
     {
-#if defined(_OPENMP) && (_OPENMP >= 201307)
         // use taskgroup if OMP 4.0 or later
         #pragma omp taskgroup
-#endif
         {
             int i, num_tasks = NUM_THREADS* 4;
             #pragma omp for
@@ -209,17 +214,15 @@ main(int argc, char **argv)
                 }
             }
         }
-#if !defined(_OPENMP) || (_OPENMP < 201307)
-        // use task wait if OMP < 4.0
         #pragma omp taskwait
-#endif
     }
     monitor_epilogue();
     //TODO differentiate ompt_state_wait_taskwait and ompt_state_wait_barrier ?
-    CHECK(check_states(observed_states, \
-                       "(ompt_state_wait_taskwait)+(.)*(ompt_state_wait_taskgroup)+$"), \
-                       IMPLEMENTED_BUT_INCORRECT, \
-                       "expect to see ompt_state_taskwait and then ompt_state_taskgroup");
+    CHECK(check_states(observed_states, "(ompt_state_wait_taskwait)+(.)*(ompt_state_wait_taskgroup)+$"), \
+          IMPLEMENTED_BUT_INCORRECT, \
+          "expect to see ompt_state_taskwait and then ompt_state_taskgroup; observed '%s'", \
+          state_string(observed_states).c_str());
+#endif
 
     /*
      * TEST 5.1: Testing ompt_state_wait_lock
@@ -227,7 +230,7 @@ main(int argc, char **argv)
     
     omp_lock_t single_lock;
     omp_init_lock(&single_lock);
-    monitor_prelogue();
+    monitor_prologue();
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         int i;
@@ -243,15 +246,15 @@ main(int argc, char **argv)
         }
     }
     monitor_epilogue();
-    CHECK(check_states(observed_states, \
-                       "(ompt_state_work_parallel)*(ompt_state_wait_lock)+(ompt_state_work_parallel)*"), \
-                       IMPLEMENTED_BUT_INCORRECT, \
-                       "expect to see a sequence of ompt_state_work_parallel and ompt_state_wait_lock");
+    CHECK(check_states(observed_states, "(ompt_state_work_parallel)*(ompt_state_wait_lock)+(ompt_state_work_parallel)*"), \
+          IMPLEMENTED_BUT_INCORRECT, \
+          "expect to see a sequence of ompt_state_work_parallel and ompt_state_wait_lock; observed '%s'", \
+          state_string(observed_states).c_str());
 
     /*
      * TEST 5.2: Testing ompt_state_wait_nest_lock
      */
-    monitor_prelogue();
+    monitor_prologue();
     omp_nest_lock_t nest_lock;
     omp_init_nest_lock(&nest_lock);
     #pragma omp parallel num_threads(NUM_THREADS)
@@ -260,22 +263,22 @@ main(int argc, char **argv)
         for (i = 0; i < nest_levels; i++) {
             omp_set_nest_lock(&nest_lock);
             usleep(rand() % 500000);
+            serialwork(1);
             omp_unset_nest_lock(&nest_lock);
         }
     }
     omp_destroy_nest_lock(&nest_lock);
     monitor_epilogue();
-    //TODO: do we differentiate between wait_nest_lock and wait_lock?
-    CHECK(check_states(observed_states, \
-                       "(ompt_state_work_parallel)*(ompt_state_wait_nest_lock)+(ompt_state_work_parallel)*"), \
-                       IMPLEMENTED_BUT_INCORRECT, \
-                       "expect to see a sequence of ompt_state_work_parallel and ompt_state_wait_nest_lock");
+    CHECK(check_states(observed_states, "(ompt_state_work_parallel)*(ompt_state_wait_nest_lock)+(ompt_state_work_parallel)*"), \
+          IMPLEMENTED_BUT_INCORRECT, \
+          "expect to see a sequence of ompt_state_work_parallel and ompt_state_wait_nest_lock; observed '%s'", \
+          state_string(observed_states).c_str());
     
 
     /*
      * TEST 6: Testing ompt_state_wait_critical
      */
-    monitor_prelogue();
+    monitor_prologue();
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         int i;
@@ -291,15 +294,17 @@ main(int argc, char **argv)
     monitor_epilogue();
 
     //TODO: do we differentiate between critical and wait_lock?
-    CHECK(check_states(observed_states, \
-                       "(ompt_state_work_parallel)*(ompt_state_wait_critical)+(ompt_state_work_parallel)*"), \
-                       IMPLEMENTED_BUT_INCORRECT, \
-                       "expect to see a sequence of ompt_state_work_parallel and wait_critical");
+    CHECK(check_states(observed_states, "(ompt_state_work_parallel)*(ompt_state_wait_critical)+(ompt_state_work_parallel)*"), \
+          IMPLEMENTED_BUT_INCORRECT, \
+          "expect to see a sequence of ompt_state_work_parallel and wait_critical; observed '%s'", \
+          state_string(observed_states).c_str());
         
+#if 0 
+// an atomic isn't necessarily observable 
     /*
      * TEST 7: Testing ompt_state_wait_atomic
      */
-    monitor_prelogue();
+    monitor_prologue();
     long atomic_number = 0;
     #pragma omp parallel num_threads(NUM_THREADS)
     {
@@ -314,13 +319,14 @@ main(int argc, char **argv)
         }
     }
     monitor_epilogue();
-    CHECK(check_states(observed_states, \
-                       "(ompt_state_wait_atomic)+"), \
-                       IMPLEMENTED_BUT_INCORRECT, "expect to see ompt_state_wait_atomic");
+    CHECK(check_states(observed_states, "(ompt_state_wait_atomic)+"), \
+          IMPLEMENTED_BUT_INCORRECT, "expect to see ompt_state_wait_atomic; observed '%s'", \
+          state_string(observed_states).c_str());
+#endif
     /*
      * TEST 8: Testing ompt_state_wait_ordered
      */
-    monitor_prelogue();
+    monitor_prologue();
     vector<int> sequence; // can use this to check the correctness of the ordered construct
     #pragma omp parallel for private(i) ordered schedule(dynamic)
     for (i=0; i<1000; i++) 
@@ -336,7 +342,8 @@ main(int argc, char **argv)
     monitor_epilogue();
     //TODO: do we differentiate between ompt_state_wait_barrier and ordered
     CHECK(check_states(observed_states, "(ompt_state_wait_ordered)+"), \
-                       IMPLEMENTED_BUT_INCORRECT, "expect to see ompt_state_wait_ordered");
+          IMPLEMENTED_BUT_INCORRECT, "expect to see ompt_state_wait_ordered; observed '%s'", \
+          state_string(observed_states).c_str());
      
     return 0;
 

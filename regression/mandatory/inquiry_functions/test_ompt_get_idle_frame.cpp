@@ -15,7 +15,7 @@ ompt_get_idle_frame_t my_ompt_get_idle_frame;
 
 void
 init_test(ompt_function_lookup_t lookup) {
-    my_ompt_get_idle_frame= (ompt_get_idle_frame_t)lookup("ompt_get_idle_frame"); 
+    my_ompt_get_idle_frame = (ompt_get_idle_frame_t) lookup("ompt_get_idle_frame"); 
     CHECK(my_ompt_get_idle_frame, FATAL, "failed to register ompt_get_idle_frame");
 }
 

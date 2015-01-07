@@ -44,6 +44,7 @@
 	macro (ompt_get_state) 		\
 					\
 	macro (ompt_get_parallel_id) 	\
+	macro (ompt_get_parallel_team_size) 	\
 	macro (ompt_get_task_id) 	\
 	macro (ompt_get_thread_id)
 #endif

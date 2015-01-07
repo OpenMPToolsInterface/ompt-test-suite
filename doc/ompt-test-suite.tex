@@ -1,0 +1,273 @@
+\documentclass{article}
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{.pdf}
+
+\usepackage[final]{pdfpages}
+
+\headheight 0in
+\oddsidemargin 0in
+\evensidemargin  0in
+\topmargin  -.25in
+\textwidth 6.5in
+\textheight 9in
+\title{Test Suite for Minimally-Compliant OMPT Implementation\thanks{This document is an incomplete draft that is meant to serve as a starting point for useful documentation}}
+\author{ 
+Matt Zhenghuan Zhao \and John Mellor-Crummey}
+% \date{December 17, 2014}
+
+
+\usepackage{comment}
+\usepackage{needspace}
+\usepackage[colorlinks=true,citecolor=blue]{hyper ref}
+\usepackage{url}
+\usepackage{xcolor}
+
+\newcommand{\descheader}[1]{{\needspace{3\baselineskip}\vspace{1em}\noindent \fbox{#1}}}
+
+
+\begin{document}     
+\pagestyle{empty}
+
+\setcounter{page}{1}
+\pagestyle{plain}
+                                           
+\maketitle
+\section{Introduction}
+OMPT defines an application programming interface through which one can write powerful  monitoring or analysis software
+for OpenMP applications. However, traditionally various vendors usually have different OpenMP runtime, and as of now,
+there is not an easy way to automatically determine whether a particular OpenMP fully supports the OMPT standard.
+This motivates us to develop an automatic test suite for that purpose. Our test suite is fully automatic. After running it,
+you will be able to tell whether the runtime you are testing against is a minimally-compliant implementation of the OMPT 
+specification. 
+
+
+\subsection{Obtaining the Test Suite}
+The test suite can be obtained by cloning the master branch of its {\tt git} repository, as shown below:
+\begin{verbatim}
+    git clone https://code.google.com/p/ompt-test-suite/
+\end{verbatim}
+
+    
+
+\subsection{Test Suite Organization}
+The regression directory contains three subdirectories: mandatory,  optional, and utils. The mandatory subdirectory  contains subdirectories with regression tests  for all of the mandatory APIs that a runtime needs to support. Inside the mandatory directory, there are subdirectories for OMPT  initialization, events, and inquiry operations. At the top level, the utils subdirectory contains support code for the regression tests, including support for error reporting, sampling, timing, and regular expression matching.
+
+
+\subsection{Building the Test Suite}
+
+At present, the test suite contains Makefiles for two OpenMP runtimes: IBM's lightweight OpenMP runtime (LOMP), and Intel's open-source OpenMP runtime. The build system supports 
+\begin{itemize}
+\item xlc  with IBM's LOMP,
+\item icc with Intel's OpenMP runtime, and
+\item gcc with Intel's OpenMP runtime.
+\end{itemize}
+
+\subsubsection{Configuring an OpenMP Runtime System}
+Before building the OMPT test suite, one must first set an environment variable to specify the path to the runtime system.
+\begin{itemize}
+\item On an IBM POWER platform, set \verb|IBM_COMPILER_ROOT| to the root of the IBM compiler and runtime tree, e.g., {\tt /opt/apps/ibm}. The compiler and runtime tree must contain support for OMPT. The presence of OMPT support can be identified by the presence of subdirectories \verb|ompt_light| and \verb|opmt_full| in \verb|IBM_COMPILER_ROOT/lib64|.
+\item On an \verb|x86_64| platform, set \verb|INTEL_OMP_ROOT| to the root of Intel open-source OpenMP runtime directory, e.g., the directory obtained by running {\tt  git clone https://code.google.com/p/ompt-intel-openmp}, and then running \verb|make| in the  \verb|itt/libomp_oss| subdirectory.
+\end{itemize}
+\subsubsection{Compiling the Test Suite}
+In the top level of the test suite, run the following commands, where xxx is replaced by the appropriate compiler: xlc, icc, or gcc.
+    \begin{verbatim}
+    cd regression
+    make compiler=xxx       
+    \end{verbatim}
+\noindent The executables generated will reside under the same paths as their sources.
+    
+\subsubsection{Running the Test Suite}
+    
+    After building the test cases, you can run them by executing the following command in the top-level regression directory:
+      \begin{verbatim}
+    make test       
+    \end{verbatim}
+ The Makefile will use the Python script \verb|run_all_tests.py| located in the \verb|utils| subdirectory to run all of the tests.
+ Alternatively, you can execute a test  directly by running it from the command line. For example, one may run the regression test for \verb|ompt_get_parallel_id| by running the executable 
+\begin{verbatim}
+    ./mandatory/inquiry_functions/test_ompt_get_parallel_id  
+\end{verbatim}
+
+    
+    
+\subsubsection{How to interpret the results}
+    After you execute a single test case, there is three possible return code (0, 255, 254).
+    0(CORRECT) means the runtime has cleanly passed this test case, 255(IMPLEMENTED\_BUT\_INCORRECT) means that the runtime has implemented the API the test case is testing but has failed, and finally 254(NOT\_IMPLEMENTED) means that the 
+    test case hasn't implemented the API being tested at all.
+    
+    Some test cases might cause segmentation fault when it fails on some runtime, we try to catch this by 
+    catching all SIGSEGV signals, and in this case, the return value is always 254 no matter what has actually happened, as 
+    it's impossible to recover the original program context at that point. The most robust way in this case is to run the tests with 
+    the python script, which then runs the tests in a different process, so all exceptions/seg fault are handled gracefully.
+    
+    
+    
+\section{Test Case Details}
+This section enumerates test cases included in the test suite and describes what they are testing. 
+API descriptions are copied directly from the OMPT specification \cite{MC2014}.
+
+\subsection{Mandatory Events}
+A minimally compliant implementation of OMPT has to implement eight mandatory events:
+ompt\_event\_control,  ompt\_event\_runtime\_shutdown,  ompt\_event\_parallel\_begin,  ompt\_event\_parallel\_end, 
+ompt\_event\_task\_begin, ompt\_event\_task\_end, \\ ompt\_event\_thread\_begin, and ompt\_event\_thread\_end.
+
+\subsubsection{ompt\_event\_control}
+    \begin{itemize}
+        \item  be able to register ompt\_event\_control event with a callback.
+        \item  the arguments passed to the callback are the values passed by the user to ompt\_control.
+    \end{itemize}
+
+\subsubsection{ompt\_event\_runtime\_shutdown}
+    \begin{itemize}
+        \item  be able to register ompt\_event\_runtime\_shutdown event with a callback.
+        \item  exit with 0 only inside the callback in order to test whether the callback is executed before main returns.
+    \end{itemize}
+
+
+\subsubsection{ompt\_event\_parallel\_begin}
+    \begin{itemize}
+        \item  be able to register ompt\_event\_parallel\_begin event with a callback.
+        \item  running some inquiry functions to test whether the callback executes in the context of the task that encountered the parallel construct.
+        \item  validate arguments parent\_task\_id and parent\_task\_frame passed into the callback by comparing them with the results of the  inquiry function inserted in the program.
+        \item  no duplicated parallel ids.
+        \item  nested parallel regions with depth 3 and with n threads at each level should generate a total of of (1+(1+n)*n) calls to the parallel begin callback.
+    \end{itemize}
+
+\subsubsection{ompt\_event\_parallel\_end}
+    \begin{itemize}
+        \item  be able to register ompt\_event\_parallel\_end event with a callback.
+        \item  running some inquiry functions to test  whether the callback executes in the context of the task that encountered the parallel construct.
+        \item   parallel\_id passed in parallel\_end callback has to appear first in parallel\_begin callback.
+        \item   equal number of calls to parallel\_begin callback and parallel\_end callback.
+    \end{itemize}
+
+
+\subsubsection{ompt\_event\_task\_begin}
+    \begin{itemize}
+        \item  be able to register ompt\_event\_task\_begin event with a callback.
+        \item  running some inquiry functions to test  whether the callback executes in the context of the task that encountered the parallel construct(test by calling ompt\_get\_task\_id, and ompt\_get\_task\_frame in the callback). 
+        \item  validate arguments parent\_task\_id and parent\_task\_frame passed into the callback by comparing them with the results of the  inquiry function inserted in the program.
+        \item  no duplicated new task ids.
+    \end{itemize}
+
+\subsubsection{ompt\_event\_task\_end}
+    \begin{itemize}
+        \item  be able to register ompt\_event\_task\_end event with a callback.
+        \item  skip the context test because the callback can execute in the context of an arbitrary task on the thread that completed the explicit task 
+        \item   task\_id passed in task\_end callback has to appear first in task\_begin callback.
+        \item   equal number of calls to task\_begin callback and task\_end callback.
+    \end{itemize}
+
+\subsubsection{ompt\_event\_thread\_begin}
+    \begin{itemize}
+        \item  be able to register ompt\_event\_thread\_begin event with a callback.
+        \item  set up a nested parallel region(nested option is disabled) with depth 3 and n threads at each level, expect to see n calls to the thread\_begin callback.
+        \item  thread with thread number 0 should have type ompt\_thread\_initial, while others should have ompt\_thread\_worker or ompt\_thread\_other(in our test case,
+            we should expect to see ompt\_thread\_worker).
+    \end{itemize}
+
+\subsubsection{ompt\_event\_thread\_end}
+    \begin{itemize}
+        \item  be able to register ompt\_event\_thread\_end event with a callback.
+        \item  expect to see type ompt\_thread\_worker at the thread\_end callback in our test case.
+        \item  thread\_id passed into thread\_end callback should appear first in thread\_begin callback
+    \end{itemize}
+
+\subsection{Inquiry Functions}
+A minimally compliant implementation of OMPT also has to implement six  inquiry functions:
+ompt\_get\_idle\_frame, ompt\_get\_parallel\_id, ompt\_get\_task\_id, ompt\_get\_parallel\_team\_size, ompt\_get\_task\_frame, ompt\_get\_state.
+
+\subsubsection{ompt\_get\_idle\_frame}
+    \begin{itemize}
+        \item  be able to lookup ompt\_get\_idle\_frame using the ompt\_function\_lookup\_t function.
+        \item  a call to ompt\_get\_idle\_frame on initial thread will always return NULL(test this behavior both outside and inside nested parallel regions).
+        \item  with omp\_nested disabled, the new team that is created by a thread encountering a parallel construct inside a parallel region will consist
+            only of the encountering thread.  Thus, in the scenario, we should expect a consistent lowest idle frame for each thread.
+    \end{itemize}
+
+\subsubsection{ompt\_get\_parallel\_id}
+
+    \begin{itemize}
+        \item  be able to lookup ompt\_get\_parallel\_id using the ompt\_function\_lookup\_t function.
+        \item outside a parallel region, ompt\_get\_parallel\_id should return 0.
+        \item create a nested parallel region with depth 3, and call ompt\_get\_parallel\_id with various depths to test whether it returns consistent 
+                 results. 
+    \end{itemize}
+
+
+\subsubsection{ompt\_get\_task\_id}
+
+    \begin{itemize}
+        \item  be able to lookup ompt\_get\_task\_id using the ompt\_function\_lookup\_t function.
+        \item if a tool requests a task ID at a depth deeper than the dynamic nesting of implicit and explicit tasks in the current execution context, ompt\_get\_task\_id will return 0.
+        \item similar to ompt\_get\_parallel\_id, create a nested task with depth 3, and call ompt\_get\_task\_id to see if it returns consistent results.
+    \end{itemize}
+
+
+\subsubsection{ompt\_get\_parallel\_team\_size}
+
+    \begin{itemize}
+        \item  be able to lookup ompt\_get\_parallel\_team\_size using the ompt\_function\_lookup\_t function.
+        \item when omp\_nested is disabled,  the current  team size is expected to be the same as its parent’s team size.
+        \item when omp\_nested is enabled, the current team size should be different from the parent’s team size if we allow different degrees of parallelism at the two levels.
+        \item function returns the value -1 when requesting higher levels of ancestry than exist.
+    \end{itemize}
+
+
+\subsubsection{ompt\_get\_task\_frame}
+
+    \begin{itemize}
+        \item  be able to lookup ompt\_get\_task\_frame using the ompt\_function\_lookup\_t function.
+        \item (please refer to the graph on page 32 in OpenMP Technical Report on the OMPT Interface) \cite{MC2014}.        
+        \item  the initial thread should see two frames r1, r2 on the stack such that r1 has reenter but not exit address and r2 has exit but not reenter address, and r1’s reenter address should be less than the r2’s exit address.
+        \item test the behavior across threads; when thread 2 reach code C, it should see frames r4, r3, r1 on the stack but not r2(r2 is initiated after the runtime procedure created thread 2).
+        \item function returns the value NULL when requesting higher levels of ancestry than exist.
+    \end{itemize}
+
+
+\subsubsection{ompt\_get\_state}
+
+    \begin{itemize}
+        \item  be able to lookup ompt\_get\_state using the ompt\_function\_lookup\_t function.
+        \item (Sampling-based testing, matching collect states on the master thread with a regular expression).
+        \item outside a parallel region,  expect sampled states to include  ompt\_state\_work\_serial.
+        \item inside a parallel region with pure serial work,  expect sampled states to include ompt\_state\_work\_serial.
+        \item in a parallel region doing a reduction, expect sampled states to include ompt\_state\_wait\_barrier(reduction is fast and can be hard to catch, so use zero or more matching).
+        \item in a parallel region with an explicit barrier, expect sampled states to include  ompt\_state\_wait\_barrier\_explicit or ompt\_state\_wait\_barrier.
+        \item in a parallel region with an implicit barrier, expect sampled states to include ompt\_state\_wait\_barrier\_implicit or ompt\_state\_wait\_barrier.
+        \item in a task group with explicit taskwait construct, expect sampled states to include ompt\_state\_wait\_taskwait followed by ompt\_state\_wait\_taskgroup.
+        \item in a parallel region with a single lock(ompt\_lock\_t object), expect sampled states to include ompt\_state\_wait\_lock.
+        \item in a parallel region with a nested lock, expect sampled states to include ompt\_state\_wait\_nest\_lock.
+        \item in a parallel region with a critical construct, expect sampled states to include ompt\_state\_wait\_critical.
+        \item in a parallel region with atomic update, expect sampled states to include ompt\_state\_wait\_atomic.
+        \item in a parallel region with ordered construct, expect sampled states to include ompt\_state\_wait\_barrier.
+    \end{itemize}
+
+
+
+\section{Future work}
+At present, the regression test suite is still in a fledgling state. Much work remains to make it complete (covering the whole API) and thorough (carefully validating as much of the semantics as possible.) At present, most of the optional events lack regression tests. Some of the tests, e.g., \verb|ompt_test_thread_begin|, are relatively naive and don't test the full semantics associated with events. Result logging needs to be improved: some tests  report the same error more than once because more than one thread encounters the code that triggers it. The tests should all include a timeout to protect against a test case that diverges.
+
+
+\section*{Acknowledgments}
+
+The authors would like to acknowledge Laksono Adhianto at Rice University and Alexandre Eichenberger at IBM Research for 
+laying the groundwork for this test suite. Some of test cases are directly based on their prior work.
+
+ \bibliographystyle{abbrv}
+ \bibliography{ompt-tr}
+
+
+\appendix
+
+\begin{thebibliography}{9}
+
+\bibitem[1] {MC2014} Alexandre Eichenberger, John Mellor-Crummey, Martin Schulz. OMPT: An OpenMP\textsuperscript{\textregistered} Tools Application Programming Interface for Performance Analysis. OpenMP Technical Report 2. April 2014.
+
+\end{thebibliography}
+
+\end{document}
+
+
+
+

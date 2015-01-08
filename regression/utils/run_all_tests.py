@@ -36,4 +36,4 @@ try:
        print out,
     print("Result: " + test.ljust(50)  + "Status: [%s]\n" % (code_to_status[code]))
 except:
-    print "\nRegression tests aborted with a signal."
+    print "\nRegression tests were interrupted with a signal."

@@ -19,6 +19,7 @@
     if (__error_code == FATAL) _exit(FATAL); \
     global_error_code = MIN(global_error_code, __error_code); }
 
+#define SHUTDOWN_FAILED_TO_PREEMPT_EXIT -4
 #define FATAL -3
 #define NOT_IMPLEMENTED -2
 #define IMPLEMENTED_BUT_INCORRECT -1 

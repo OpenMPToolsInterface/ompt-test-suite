@@ -6,6 +6,7 @@ dot ="."
 name_to_path = []
 code_to_status = {}
 code_to_status[0] = "OK"
+code_to_status[252] = "SHUTDOWN FAILED TO PREEMPT EXIT"
 code_to_status[253] = "FATAL"
 code_to_status[254] = "NOT_IMPLEMENTED"
 code_to_status[255] = "IMPLEMENTED BUT INCORRECT"

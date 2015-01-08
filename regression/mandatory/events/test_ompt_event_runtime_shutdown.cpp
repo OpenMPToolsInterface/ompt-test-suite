@@ -9,13 +9,12 @@ using namespace std;
 
 void on_ompt_event_runtime_shutdown(uint64_t command,  uint64_t modifier)
 {
-    _exit(CORRECT);
+    _exit(global_error_code);
 }
 
 void 
 init_test(ompt_function_lookup_t lookup)
 {
-    global_error_code = NOT_IMPLEMENTED;
     if (!register_callback(ompt_event_runtime_shutdown, (ompt_callback_t) on_ompt_event_runtime_shutdown)) {
         CHECK(FALSE, FATAL, "failed to register ompt_event_runtime_shutdown");
     }
@@ -39,5 +38,6 @@ main(int argc, char** argv)
     warmup();
     work();
     usleep(3000000); /* sleep 3s */
-    return global_error_code;
+
+    return SHUTDOWN_FAILED_TO_PREEMPT_EXIT;
 }

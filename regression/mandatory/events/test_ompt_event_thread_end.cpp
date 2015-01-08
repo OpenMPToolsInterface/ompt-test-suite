@@ -1,5 +1,6 @@
 #include <omp.h>
 #include <common.h>
+#include <unistd.h>
 #include <iostream>
 #include <sstream>      
 #include <set>
@@ -18,6 +19,7 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 int worker_begin = 0;
 int worker_end = 0;
 
+
 void 
 on_ompt_event_thread_begin(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id){
   pthread_mutex_lock(&mutex);
@@ -27,6 +29,7 @@ on_ompt_event_thread_begin(ompt_thread_type_t thread_type, ompt_thread_id_t thre
   thread_id_map[thread_id] = thread_type;
   pthread_mutex_unlock(&mutex);
 }
+
 
 void 
 on_ompt_event_thread_end(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id){
@@ -44,6 +47,19 @@ on_ompt_event_thread_end(ompt_thread_type_t thread_type, ompt_thread_id_t thread
   pthread_mutex_unlock(&mutex);
 }
 
+
+static void thread_end_check() 
+{
+    CHECK(worker_begin == worker_end, IMPLEMENTED_BUT_INCORRECT, \
+          "mismatch between number of calls to ompt_event_thread_begin/end: " \
+	  "%d workers begin, %d workers end", worker_begin, worker_end);
+
+    // force an immediate exit with the proper exit status. this will override
+    // any status passed to exit() in main
+    _exit(global_error_code);
+}
+
+
 void 
 init_test(ompt_function_lookup_t lookup)
 {
@@ -53,12 +69,15 @@ init_test(ompt_function_lookup_t lookup)
     if (!register_callback(ompt_event_thread_end, (ompt_callback_t) on_ompt_event_thread_end)) {
         CHECK(false, FATAL, "failed to register ompt_event_thread_end");
     }
+    if (!register_callback(ompt_event_runtime_shutdown, (ompt_callback_t) thread_end_check)) {
+        CHECK(false, FATAL, "failed to register ompt_event_shutdown");
+    }
 }
+
 
 int
 main(int argc, char** argv)
 {
-    register_segv_handler(argv);
     warmup();
 
     #pragma omp parallel 
@@ -68,9 +87,12 @@ main(int argc, char** argv)
 
     CHECK(worker_begin > 0, IMPLEMENTED_BUT_INCORRECT, "no worker threads created");
 
-    CHECK(worker_begin == worker_end, IMPLEMENTED_BUT_INCORRECT, \
-          "mismatch between number of calls to ompt_event_thread_begin/end: " \
-	  "%d workers begin, %d workers end", worker_begin, worker_end);
-
-    return global_error_code;
+    //-------------------------------------------------------------------------------
+    // below, initiate an erroneous exit. the only way the exit will succeed is if
+    // (1) the on_event_runtime_shutdown handler gets invoked
+    // (2) the test in the shutdown handler succeeds, finding that all worker threads
+    //     have terminated.
+    // (3) the shutdown handler forces an immediate exit with the proper exit status
+    //-------------------------------------------------------------------------------
+    return SHUTDOWN_FAILED_TO_PREEMPT_EXIT;
 }

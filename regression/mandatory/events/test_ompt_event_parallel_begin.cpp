@@ -6,6 +6,8 @@
 
 #include <pthread.h>
 
+#define DEBUG 0
+
 #define NUM_THREADS 2
 
 using namespace std;
@@ -13,8 +15,8 @@ using namespace std;
 map<ompt_parallel_id_t, ompt_task_id_t> parallel_id_to_task_id_map;
 map<ompt_parallel_id_t, ompt_frame_t *> parallel_id_to_task_frame_map;
 
-ompt_task_id_t global_parent_task_id;
-ompt_frame_t * global_parent_task_frame;
+ompt_task_id_t serial_task_id;
+ompt_frame_t * serial_task_frame;
 bool test_enclosing_context;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -37,12 +39,13 @@ on_ompt_event_parallel_begin(ompt_task_id_t parent_task_id,    /* id of parent t
     pthread_mutex_unlock(&mutex);
 
     if (test_enclosing_context) {
-        CHECK(ompt_get_task_id(0) == global_parent_task_id, IMPLEMENTED_BUT_INCORRECT,\
+        CHECK(ompt_get_task_id(0) == serial_task_id, IMPLEMENTED_BUT_INCORRECT,\
               "parallel begin callback doesn't execute in parent's context");
-        CHECK(ompt_get_task_frame(0) == global_parent_task_frame, IMPLEMENTED_BUT_INCORRECT,\
+        CHECK(ompt_get_task_frame(0) == serial_task_frame, IMPLEMENTED_BUT_INCORRECT,\
               "parallel begin callback doesn't execute in parent's context");
     }
 }
+
 
 void 
 init_test(ompt_function_lookup_t lookup)
@@ -52,6 +55,75 @@ init_test(ompt_function_lookup_t lookup)
     }
 }
 
+
+void 
+fib_region_nesting(int n, int depth)
+{
+    if (n < 1) return;
+
+    #pragma omp atomic update
+    regions_encountered += 1;
+
+
+    #pragma omp parallel num_threads(NUM_THREADS)
+    {
+        ompt_parallel_id_t parallel_id     = ompt_get_parallel_id(0);
+        ompt_task_id_t     task_id         = ompt_get_task_id(0);
+        ompt_task_id_t     parent_task_id  = ompt_get_task_id(1);
+        ompt_frame_t      *parent_frame    = ompt_get_task_frame(1);
+
+#if DEBUG
+        {
+          pthread_mutex_lock(&mutex);
+          printf("%*s enter region id %lld, task id = %lld, parent task id %lld (threads = %d)\n", 
+                 depth * 2, "", parallel_id, task_id, parent_task_id, omp_get_num_threads());
+          pthread_mutex_unlock(&mutex);
+        }
+#endif
+
+        pthread_mutex_lock(&mutex);
+        CHECK(parent_task_id == parallel_id_to_task_id_map[parallel_id], \
+              IMPLEMENTED_BUT_INCORRECT, \
+	      "ompt_get_task_id(1) = %lld does not match task that created " \
+              "region ompt_get_parallel_id(0)=%lld", parent_task_id, parallel_id);
+
+        CHECK(parent_frame == parallel_id_to_task_frame_map[parallel_id], \
+              IMPLEMENTED_BUT_INCORRECT, \
+	      "ompt_get_task_frame(1) = %p does not match task that created " \
+              "region ompt_get_parallel_id(0)=%lld", parent_frame, parallel_id);
+        pthread_mutex_unlock(&mutex);
+
+        fib_region_nesting(n - 1, depth + 1);
+        fib_region_nesting(n - 2, depth + 1);
+
+#if DEBUG
+        {
+          pthread_mutex_lock(&mutex);
+          printf("%*s exit region id %lld, task id = %lld, parent task id %lld\n", 
+                 depth * 2, "", parallel_id, task_id, parent_task_id);
+          pthread_mutex_unlock(&mutex);
+        }
+#endif
+
+    }
+}
+
+
+void
+fib_region_torture(int n, int iters, int nlevels)
+{
+   int iter, level, i;
+   for (level = 0; level < nlevels; level++) {
+      omp_set_nested(level);
+      for(iter = 0; iter < iters; iter++) {
+         for (i = 1; i < n; i++) {
+           fib_region_nesting(i, 1);
+         }
+      }
+   }
+}
+
+
 int
 main(int argc, char** argv)
 {
@@ -60,21 +132,26 @@ main(int argc, char** argv)
     pthread_mutex_unlock(&mutex);
 
     /* test whether callback executes in parent enclosing context */
+    serial_task_id = ompt_get_task_id(0);
+    serial_task_frame = ompt_get_task_frame(0);
+
     test_enclosing_context = true;
-    global_parent_task_id = ompt_get_task_id(0);
-    global_parent_task_frame = ompt_get_task_frame(0);
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         serialwork(0);
     }
     test_enclosing_context = false; 
+
     parallel_id_to_task_id_map.clear();
     parallel_id_to_task_frame_map.clear();
     
     omp_set_nested(3);
     regions_encountered += 1;
+    test_enclosing_context = true;
     #pragma omp parallel num_threads(NUM_THREADS)
     {
+        test_enclosing_context = false;
+        #pragma omp barrier
         serialwork(0);
         ompt_parallel_id_t level1_parallel_id = ompt_get_parallel_id(0);
         ompt_task_id_t   level1_task_id = ompt_get_task_id(0);
@@ -101,7 +178,12 @@ main(int argc, char** argv)
                 serialwork(0);
             }
         }
+        #pragma omp barrier
+        test_enclosing_context = true;
     }
+    test_enclosing_context = false;
+
+    fib_region_torture(4, 2, 4);
     
     int begins = parallel_id_to_task_id_map.size();
     CHECK(begins == regions_encountered, IMPLEMENTED_BUT_INCORRECT, \

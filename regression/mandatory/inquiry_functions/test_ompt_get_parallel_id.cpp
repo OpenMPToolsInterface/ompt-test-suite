@@ -21,7 +21,8 @@ int main(int argc, char **argv)
     warmup();
     ompt_parallel_id_t L0 = my_ompt_get_parallel_id(0);
 
-    CHECK(L0 == 0, IMPLEMENTED_BUT_INCORRECT, "before outermost parallel region, ompt_get_parallel_id should return 0");
+    CHECK(L0 == 0, IMPLEMENTED_BUT_INCORRECT, \
+	  "before outermost parallel region, ompt_get_parallel_id should return 0");
     
     #pragma omp parallel num_threads(NUM_THREADS)
     {

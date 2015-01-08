@@ -15,15 +15,14 @@ thread_id_map_t thread_id_map;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-int active_workers = 0;
-int total_workers = 0;
+int worker_begin = 0;
+int worker_end = 0;
 
 void 
 on_ompt_event_thread_begin(ompt_thread_type_t thread_type, ompt_thread_id_t thread_id){
   pthread_mutex_lock(&mutex);
   if (thread_type == ompt_thread_worker) {
-     active_workers++;
-     total_workers++;
+     worker_begin++;
   }
   thread_id_map[thread_id] = thread_type;
   pthread_mutex_unlock(&mutex);
@@ -40,7 +39,7 @@ on_ompt_event_thread_end(ompt_thread_type_t thread_type, ompt_thread_id_t thread
   CHECK(thread_id_map.count(thread_id)>0, IMPLEMENTED_BUT_INCORRECT, \
         "thread should have been entered in map during ompt_event_thread_begin");
   if (thread_type == ompt_thread_worker) {
-    active_workers--;
+    worker_end++;
   }
   pthread_mutex_unlock(&mutex);
 }
@@ -67,10 +66,11 @@ main(int argc, char** argv)
        serialwork(0);
     }
 
-    CHECK(total_workers > 0, IMPLEMENTED_BUT_INCORRECT, "no worker threads created");
+    CHECK(worker_begin > 0, IMPLEMENTED_BUT_INCORRECT, "no worker threads created");
 
-    CHECK(active_workers == 0, IMPLEMENTED_BUT_INCORRECT, \
-          "mismatch between number of calls to ompt_event_thread_begin/end");
+    CHECK(worker_begin == worker_end, IMPLEMENTED_BUT_INCORRECT, \
+          "mismatch between number of calls to ompt_event_thread_begin/end: " \
+	  "%d workers begin, %d workers end", worker_begin, worker_end);
 
     return global_error_code;
 }

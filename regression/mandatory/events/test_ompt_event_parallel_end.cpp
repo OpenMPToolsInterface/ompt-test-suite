@@ -18,7 +18,7 @@ static set<ompt_task_id_t> task_ids;
 int count = 0;
 ompt_task_id_t serial_task_id;
 ompt_frame_t * serial_task_frame;
-bool test_enclosing_context;
+bool test_enclosing_context = false;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -32,7 +32,7 @@ on_ompt_event_parallel_begin(ompt_task_id_t parent_task_id,    /* id of parent t
 {
     pthread_mutex_lock(&mutex);
 #if DEBUG
-    printf("parallel_id = %lld, parent_task_frame %p, parent_task_id = %lld\n", 
+    printf("begin parallel: parallel_id = %lld, parent_task_frame %p, parent_task_id = %lld\n", 
            parallel_id, parent_task_frame, parent_task_id);
 #endif
     parallel_id_to_task_id[parallel_id] = parent_task_id;
@@ -47,7 +47,7 @@ on_ompt_event_parallel_end(ompt_parallel_id_t parallel_id,    /* id of parallel 
 {
     pthread_mutex_lock(&mutex);
 #if DEBUG
-    printf("parallel_id = %lld, task_id = %lld\n", parallel_id, task_id);
+    printf("end parallel: parallel_id = %lld, task_id = %lld\n", parallel_id, task_id);
 #endif
     CHECK(parallel_id_to_task_id.count(parallel_id) != 0, IMPLEMENTED_BUT_INCORRECT, \
           "no record found for parallel id");
@@ -62,9 +62,9 @@ on_ompt_event_parallel_end(ompt_parallel_id_t parallel_id,    /* id of parallel 
 
     if (test_enclosing_context) {
         CHECK(ompt_get_task_id(0) == serial_task_id, IMPLEMENTED_BUT_INCORRECT,\
-              "parallel end callback doesn't execute in parent's context");
+              "parallel end callback for region %lld doesn't execute in parent's context", parallel_id);
         CHECK(ompt_get_task_frame(0) == serial_task_frame, IMPLEMENTED_BUT_INCORRECT,\
-              "parallel end callback doesn't execute in parent's context");
+              "parallel end callback for region %lld doesn't execute in parent's context", parallel_id);
     }
 }
 
@@ -93,12 +93,89 @@ main(int argc, char** argv)
            serial_task_id, serial_task_frame);
 #endif
 
+    // single-level parallel region
     test_enclosing_context = true;
     #pragma omp parallel num_threads(NUM_THREADS)
     {
-        serialwork(0);
+       serialwork(0);
     }
     test_enclosing_context = false;
+
+    // two-level nested parallel region (one nested instance)
+    test_enclosing_context = true;
+    #pragma omp parallel num_threads(NUM_THREADS) 
+    {
+        #pragma omp barrier 
+        test_enclosing_context = false;
+        #pragma omp master 
+        {
+          #pragma omp parallel num_threads(NUM_THREADS)
+          {
+            serialwork(0);
+          }
+        }
+        #pragma omp barrier 
+        test_enclosing_context = true;
+    }
+    test_enclosing_context = false;
+
+    // two-level nested parallel region (multiple nested instances)
+    test_enclosing_context = true;
+    #pragma omp parallel num_threads(NUM_THREADS) 
+    {
+        #pragma omp barrier 
+        test_enclosing_context = false;
+        #pragma omp parallel num_threads(NUM_THREADS)
+        {
+          serialwork(0);
+        }
+        #pragma omp barrier 
+        test_enclosing_context = true;
+    }
+    test_enclosing_context = false;
+
+    //  three-level nested parallel region (multiple levels of single instance)
+    test_enclosing_context = true;
+    #pragma omp parallel num_threads(NUM_THREADS) 
+    {
+        #pragma omp barrier 
+        test_enclosing_context = false;
+        #pragma omp master 
+        {
+          #pragma omp parallel num_threads(NUM_THREADS)
+          {
+            #pragma omp master 
+            {
+              #pragma omp parallel num_threads(NUM_THREADS)
+              {
+                 serialwork(0);
+              }
+            }
+          }
+        }
+        #pragma omp barrier 
+        test_enclosing_context = true;
+    }
+    test_enclosing_context = false;
+
+    // three-level nested parallel region (multiple levels of multiple instances)
+    test_enclosing_context = true;
+    #pragma omp parallel num_threads(NUM_THREADS) 
+    {
+        #pragma omp barrier 
+        test_enclosing_context = false;
+        #pragma omp parallel num_threads(NUM_THREADS)
+        {
+          #pragma omp parallel num_threads(NUM_THREADS)
+          {
+             serialwork(0);
+          }
+        }
+        #pragma omp barrier 
+        test_enclosing_context = true;
+    }
+    test_enclosing_context = false;
+
     parallel_id_to_task_id.clear();
 
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT, 

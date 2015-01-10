@@ -1,64 +1,103 @@
-#include <omp.h>
-#include <common.h>
-#include <iostream>
-#include <unistd.h>
-#include <unistd.h>
-#include <map>
+//*****************************************************************************
+// system includes
+//*****************************************************************************
 
-using namespace std;
+#include <map>
+#include <vector>
+
+#include <signal.h>
+
+
+
+//*****************************************************************************
+// OpenMP runtime includes
+//*****************************************************************************
+
+#include <omp.h>
+
+
+
+//*****************************************************************************
+// regression harness includes
+//*****************************************************************************
+
+#include <ompt-regression.h>
+#include <ompt-initialize.h>
+
+
+
+//*****************************************************************************
+// macros
+//*****************************************************************************
+
 #define SMALL_NUM_THREADS 4
 #define BIG_NUM_THREADS   20
+
+
+
+//*****************************************************************************
+// global data
+//*****************************************************************************
+
 ompt_get_parallel_team_size_t my_ompt_get_parallel_team_size;
 
+
+
+//*****************************************************************************
+// interface operations 
+//*****************************************************************************
+
 void
-init_test(ompt_function_lookup_t lookup) {
-    my_ompt_get_parallel_team_size = (ompt_get_parallel_team_size_t)lookup("ompt_get_parallel_team_size"); 
-    CHECK(my_ompt_get_parallel_team_size, FATAL, "failed to register ompt_get_parallel_team_size");
+init_test(ompt_function_lookup_t lookup) 
+{
+  my_ompt_get_parallel_team_size = 
+    (ompt_get_parallel_team_size_t) lookup("ompt_get_parallel_team_size"); 
+  
+  CHECK(my_ompt_get_parallel_team_size, NOT_IMPLEMENTED,	\
+	"failed to look up ompt_get_parallel_team_size");
+  
+  quit_on_init_failure();
 }
+
 
 int
-main(int argc, char **argv)
+regression_test(int argc, char **argv)
 {
-    register_segv_handler(argv);
-    warmup();
-    serialwork(1);
-    int master_thread_id = ompt_get_thread_id();
-   
-    /* enable nested parallelism */
-    omp_set_nested(1);
-
+  int master_thread_id = ompt_get_thread_id();
+  int nested = 0;
+  
+  for(nested = 0; nested <= 1; nested++) {
+    omp_set_nested(nested);
+    
     #pragma omp parallel num_threads(SMALL_NUM_THREADS)
     {
-        int team_size_0 = omp_get_team_size(omp_get_level());
-        CHECK(my_ompt_get_parallel_team_size(0) == team_size_0, IMPLEMENTED_BUT_INCORRECT, \
-              "wrong team size");
-        #pragma omp parallel num_threads(BIG_NUM_THREADS)
-        {
-            int team_size_1 = omp_get_team_size(omp_get_level());
-            serialwork(1);
-            CHECK(my_ompt_get_parallel_team_size(0) == team_size_1, IMPLEMENTED_BUT_INCORRECT, \
-                  "expect the same team size as before, not a bigger one");
-            CHECK(my_ompt_get_parallel_team_size(1) == team_size_0, IMPLEMENTED_BUT_INCORRECT, \
-                  "expect the same team size as before, not a bigger one");
-        }
+      int team_size_0 = omp_get_team_size(omp_get_level());
+      
+      CHECK(my_ompt_get_parallel_team_size(0) == team_size_0,	\
+	    IMPLEMENTED_BUT_INCORRECT, "wrong team size");
+      
+      #pragma omp parallel num_threads(BIG_NUM_THREADS)
+      {
+	int team_size_1 = omp_get_team_size(omp_get_level());
+	
+	CHECK(my_ompt_get_parallel_team_size(0) == team_size_1,		\
+	      IMPLEMENTED_BUT_INCORRECT,				\
+	      "inner team size is %d but "				\
+	      "ompt_get_parallel_team_size(0) reports %d",		\
+	      team_size_1, my_ompt_get_parallel_team_size(0));
+	
+	CHECK(my_ompt_get_parallel_team_size(1) == team_size_0,		\
+	      IMPLEMENTED_BUT_INCORRECT,				\
+	      "outer team size is %d but "				\
+	      "ompt_get_parallel_team_size(1) reports %d",		\
+	      team_size_0, my_ompt_get_parallel_team_size(1));
+      }
     }
-
-    /* when nested parallelism is disabled */
-    omp_set_nested(0);
-    #pragma omp parallel num_threads(SMALL_NUM_THREADS)
-    {
-        int team_size_0 = omp_get_team_size(omp_get_level());
-        #pragma omp parallel num_threads(BIG_NUM_THREADS)
-        {
-            int team_size_1 = omp_get_team_size(omp_get_level());
-            CHECK(my_ompt_get_parallel_team_size(0) == team_size_1, IMPLEMENTED_BUT_INCORRECT, \
-                  "expect BIG_NUM_THREADS team size");
-            CHECK(my_ompt_get_parallel_team_size(1) == team_size_0, IMPLEMENTED_BUT_INCORRECT, \
-                  "expect SMALL_NUM_THREADS team size");
-        }
-    }
-    CHECK(my_ompt_get_parallel_team_size(1000) == -1, IMPLEMENTED_BUT_INCORRECT, \
-          "need to return -1 when ancestor doesn't exist");
-    return global_error_code;
+    
+  }
+  CHECK(my_ompt_get_parallel_team_size(1000) == -1,		\
+	IMPLEMENTED_BUT_INCORRECT,				\
+	"need to return -1 when ancestor doesn't exist");
+  
+  return return_code;
 }
-

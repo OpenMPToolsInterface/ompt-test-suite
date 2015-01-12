@@ -27,6 +27,7 @@ add_test_cases('mandatory/init')
 add_test_cases('mandatory/events')
 add_test_cases('mandatory/inquiry_functions')
 add_test_cases('optional')
+add_test_cases('target/events')
 
 
 try:

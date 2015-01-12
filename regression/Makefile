@@ -2,17 +2,30 @@
 #  source files for tests
 # -----------------------------------------------------------------------------
 
-TEST_SRCS	:= \
-	$(shell find mandatory/init -name "test*.cpp") \
+MI_SRCS	:= \
+	$(shell find mandatory/init -name "test*.cpp") 
+
+ME_SRCS	:= \
 	$(shell find mandatory/events -name "test*.cpp") \
-	$(shell find mandatory/events -name "test*.c") \
-	$(shell find mandatory/inquiry_functions -name "test*.cpp") \
+	$(shell find mandatory/events -name "test*.c") 
+
+MQ_SRCS	:= \
+	$(shell find mandatory/inquiry_functions -name "test*.cpp") 
+
+O_SRCS := \
 	$(shell find optional -name "test*.cpp") 
 
 ifeq ($(target),yes)
-  TEST_SRCS 	+= $(shell find target/events -name "test*.cpp")
+  TE_SRCS 	:= \
+  	$(shell find target/events -name "test*.cpp")
 endif
 
+TEST_SRCS	:= \
+	$(MI_SRCS) \
+	$(ME_SRCS) \
+	$(MQ_SRCS) \
+	$(O_SRCS) \
+	$(TE_SRCS)
 
 # -----------------------------------------------------------------------------
 #  source and include files for utilities
@@ -65,7 +78,7 @@ else ifeq ($(compiler),gcc)
 else ifeq ($(compiler),xlc)
   include Makefile.xlc
 else
-  $(error Need to specify compiler argument (make compiler=icc, make compiler=gcc, or make compiler=xlc))
+  $(error Need to specify compiler argument: make compiler=icc, make compiler=gcc, or make compiler=xlc)
 endif
 
 
@@ -87,10 +100,12 @@ build: $(TEST_EXEC) memoize
 #  run all regression tests
 # -----------------------------------------------------------------------------
 
-test: build 
+test: build runonly
+
+runonly:
 	@python utils/run_all_tests.py
 
-		
+
 # -----------------------------------------------------------------------------
 #  remove binaries
 # -----------------------------------------------------------------------------
@@ -118,10 +133,11 @@ else
   LEVEL=0
 endif
 
-FLAGS = $(OMPFLAGS)
-FLAGS += -O$(LEVEL)
-FLAGS += -DOMPT_DEBUG -g
-FLAGS += $(INCLUDES) 
+BASE_FLAGS += -O$(LEVEL)
+BASE_FLAGS += -DOMPT_DEBUG -g
+BASE_FLAGS += $(INCLUDES) 
+
+FLAGS = $(OMPFLAGS) $(BASE_FLAGS)
 
 
 # -----------------------------------------------------------------------------
@@ -141,12 +157,15 @@ $(LIBUTIL): $(UTIL_O)
 $(TEST_EXEC): $(UTIL_H) $(UTIL_SRCS) $(LIBUTIL)
 
 $(TEST_EXEC):  % : %.o 
-	$(CXX) $(FLAGS) -o $@ $< $(LIB) $(LIBS) $(LIBUTIL) -lrt
+	$(CXX) $(FLAGS) -o $@ $< $(LIBUTIL) $(LIB) $(LIBS) -lrt
 
 
 # -----------------------------------------------------------------------------
 # rules for separate compilation of source files
 # -----------------------------------------------------------------------------
+
+%ompt-regression.o : %ompt-regression.c 
+	$(CC)  -c $(BASE_FLAGS) -o $@ $<
 
 %.o : %.c 
 	$(CC)  -c $(FLAGS) -o $@ $<

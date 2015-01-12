@@ -50,11 +50,11 @@ register_timer_callback(Timer* timer,
 
 
 int 
-start_timer(Timer *timer, long long interval_nanosecs)
+start_timer(Timer *timer, long long usec)
 {
 
-    timer->its.it_value.tv_sec = interval_nanosecs / 1000000000;
-    timer->its.it_value.tv_nsec = interval_nanosecs % 1000000000;
+    timer->its.it_value.tv_sec = usec / 1000000;
+    timer->its.it_value.tv_nsec = usec * 1000;
     timer->its.it_interval.tv_sec = timer->its.it_value.tv_sec;
     timer->its.it_interval.tv_nsec = timer->its.it_value.tv_nsec;
 

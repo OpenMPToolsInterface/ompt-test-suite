@@ -6,7 +6,8 @@ dot ="."
 name_to_path = []
 code_to_status = {}
 code_to_status[0] = "OK"
-code_to_status[253] = "FATAL"
+code_to_status[252] = "FATAL"
+code_to_status[253] = "OMPT SHUTDOWN FAILED TO PREEMPT EXIT"
 code_to_status[254] = "NOT_IMPLEMENTED"
 code_to_status[255] = "IMPLEMENTED BUT INCORRECT"
 
@@ -22,6 +23,7 @@ def execute_test_case(path):
     code = p.wait()
     return code, out
 
+add_test_cases('mandatory/init')
 add_test_cases('mandatory/events')
 add_test_cases('mandatory/inquiry_functions')
 add_test_cases('optional')
@@ -35,4 +37,4 @@ try:
        print out,
     print("Result: " + test.ljust(50)  + "Status: [%s]\n" % (code_to_status[code]))
 except:
-    print "\nRegression tests aborted with a signal."
+    print "\nRegression tests were interrupted with a signal."

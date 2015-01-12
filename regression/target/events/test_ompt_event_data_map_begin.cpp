@@ -1,9 +1,30 @@
+//*****************************************************************************
+// OpenMP runtime includes 
+//*****************************************************************************
+
 #include <omp.h>
-#include <common.h>
+
+
+//*****************************************************************************
+// regression harness includes
+//*****************************************************************************
+
+#include <ompt-regression.h>
+#include <ompt-initialize.h>
+
+
+//*****************************************************************************
+// macros
+//*****************************************************************************
 
 #define DEBUG 0
 
-void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
+
+//*****************************************************************************
+// private operations
+//*****************************************************************************
+
+static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
                 ompt_target_id_t target_id,
                 ompt_data_map_id_t data_map_id,
                 ompt_target_device_id_t device_id,
@@ -19,6 +40,11 @@ void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
     CHECK(task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "task_id not equal to ompt_get_task_id()");
 }
 
+
+//*****************************************************************************
+// interface operations
+//*****************************************************************************
+
 void init_test(ompt_function_lookup_t lookup)
 {
     if (!register_callback(ompt_event_data_map_begin, (ompt_callback_t) on_ompt_event_data_map_begin)) {
@@ -26,9 +52,7 @@ void init_test(ompt_function_lookup_t lookup)
     }
 }
 
-int main(int argc, char** argv) {
-    register_segv_handler(argv);
-
+int regression_test(int argc, char **argv) {
     // task_id=0 workaround
     // TODO: fix in OMPT implementation
     #pragma omp parallel    
@@ -46,5 +70,5 @@ int main(int argc, char** argv) {
         #pragma omp target update from(a)
     }
 
-    return global_error_code;
+    return return_code;
 }

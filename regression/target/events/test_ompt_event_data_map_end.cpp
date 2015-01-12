@@ -1,7 +1,28 @@
+//*****************************************************************************
+// OpenMP runtime includes 
+//*****************************************************************************
+
 #include <omp.h>
-#include <common.h>
+
+
+//*****************************************************************************
+// regression harness includes
+//*****************************************************************************
+
+#include <ompt-regression.h>
+#include <ompt-initialize.h>
+
+
+//*****************************************************************************
+// macros
+//*****************************************************************************
 
 #define DEBUG 0
+
+
+//*****************************************************************************
+// global variables
+//*****************************************************************************
 
 int count = 0; // target_begin -> increased, target_end -> decreased
 
@@ -9,16 +30,19 @@ int count = 0; // target_begin -> increased, target_end -> decreased
 ompt_target_id_t begin_target_id;
 ompt_task_id_t begin_task_id;
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
+//*****************************************************************************
+// private operations
+//*****************************************************************************
+
+static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
                 ompt_target_id_t target_id,
                 ompt_data_map_id_t data_map_id,
                 ompt_target_device_id_t device_id,
                 ompt_target_sync_t sync_type,
                 ompt_data_map_t map_type,
                 ompt_data_size_t bytes) {
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
     printf("task_id = %lld, target_id = %lld, data_map_id = %lld, device_id = %lld, sync_type = %lld, map_type = %lld, bytes = %lld\n",
@@ -34,12 +58,12 @@ void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
 
     count += 1;
 
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&thread_mutex);
 }
 
-void on_ompt_event_data_map_end(ompt_task_id_t task_id,
+static void on_ompt_event_data_map_end(ompt_task_id_t task_id,
                   ompt_target_id_t target_id) {
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
     printf("end: task_id = %lld, target_id = %lld\n", task_id, target_id);
@@ -55,8 +79,13 @@ void on_ompt_event_data_map_end(ompt_task_id_t task_id,
 
     count -= 1;
 
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&thread_mutex);
 }
+
+
+//*****************************************************************************
+// interface operations
+//*****************************************************************************
 
 void init_test(ompt_function_lookup_t lookup)
 {
@@ -69,9 +98,7 @@ void init_test(ompt_function_lookup_t lookup)
     }
 }
 
-int main(int argc, char** argv) {
-    register_segv_handler(argv);
-
+int regression_test(int argc, char **argv) {
     // task_id=0 workaround
     // TODO: fix in OMPT implementation
     #pragma omp parallel    
@@ -120,5 +147,5 @@ int main(int argc, char** argv) {
 
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of data_map_begin and data_map_end calls");
 
-    return global_error_code;
+    return return_code;
 }

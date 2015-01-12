@@ -1,9 +1,30 @@
+//*****************************************************************************
+// OpenMP runtime includes 
+//*****************************************************************************
+
 #include <omp.h>
-#include <common.h>
 
-#define DEBUG 0
 
-void on_ompt_event_target_update_begin(ompt_task_id_t task_id,
+//*****************************************************************************
+// regression harness includes
+//*****************************************************************************
+
+#include <ompt-regression.h>
+#include <ompt-initialize.h>
+
+
+//*****************************************************************************
+// macros
+//*****************************************************************************
+
+#define DEBUG 1
+
+
+//*****************************************************************************
+// private operations
+//*****************************************************************************
+
+static void on_ompt_event_target_update_begin(ompt_task_id_t task_id,
                 ompt_target_id_t target_id,
                 ompt_target_device_id_t device_id,
                 void* target_function) {
@@ -23,9 +44,11 @@ void init_test(ompt_function_lookup_t lookup)
     }
 }
 
-int main(int argc, char** argv) {
-    register_segv_handler(argv);
+//*****************************************************************************
+// interface operations
+//*****************************************************************************
 
+int regression_test(int argc, char **argv) {
     // task_id=0 workaround
     // TODO: fix in OMPT implementation
     #pragma omp parallel    
@@ -45,5 +68,5 @@ int main(int argc, char** argv) {
         CHECK(a == 2, IMPLEMENTED_BUT_INCORRECT, "Update from device to host failed");
     }
 
-    return global_error_code;
+    return return_code;
 }

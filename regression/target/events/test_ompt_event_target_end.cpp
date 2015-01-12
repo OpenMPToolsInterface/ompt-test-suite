@@ -1,27 +1,53 @@
-#include <omp.h>
-#include <common.h>
+//*****************************************************************************
+// system includes 
+//*****************************************************************************
+
 #include <vector>
+
+//*****************************************************************************
+// OpenMP runtime includes 
+//*****************************************************************************
+
+#include <omp.h>
+
+
+//*****************************************************************************
+// regression harness includes
+//*****************************************************************************
+
+#include <ompt-regression.h>
+#include <ompt-initialize.h>
+
+
+//*****************************************************************************
+// macros
+//*****************************************************************************
 
 #define DEBUG 0
 
 #define NUM_THREADS 4
 
-using namespace std;
 
-// target_begin -> increased, target_end -> decreased
-int count = 0; 
+//*****************************************************************************
+// global variables
+//*****************************************************************************
+
+int count = 0; // target_begin -> increased, target_end -> decreased
 
 // save target_id and corresponding task_id for a target_begin (for each thread)
-vector<ompt_target_id_t> target_ids(NUM_THREADS, 0);
-vector<ompt_task_id_t> task_ids(NUM_THREADS, 0);
+std::vector<ompt_target_id_t> target_ids(NUM_THREADS, 0);
+std::vector<ompt_task_id_t> task_ids(NUM_THREADS, 0);
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+//*****************************************************************************
+// private operations
+//*****************************************************************************
     
-void on_ompt_event_target_begin(ompt_task_id_t task_id,
+static void on_ompt_event_target_begin(ompt_task_id_t task_id,
                 ompt_target_id_t target_id,
                 ompt_target_device_id_t device_id,
                 void* target_function) {
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
     printf("begin: task_id = %lld, target_id = %lld, device_id = %lld, target_function = %p\n",
@@ -37,12 +63,12 @@ void on_ompt_event_target_begin(ompt_task_id_t task_id,
 
     count += 1;
 
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&thread_mutex);
 }
 
-void on_ompt_event_target_end(ompt_task_id_t task_id,
+static void on_ompt_event_target_end(ompt_task_id_t task_id,
                   ompt_target_id_t target_id) {
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
     printf("end: task_id = %lld, target_id = %lld\n", task_id, target_id);
@@ -58,7 +84,7 @@ void on_ompt_event_target_end(ompt_task_id_t task_id,
 
     count -= 1;
 
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&thread_mutex);
 }
 
 void init_test(ompt_function_lookup_t lookup) {
@@ -71,10 +97,11 @@ void init_test(ompt_function_lookup_t lookup) {
     }
 }
 
+//*****************************************************************************
+// interface operations
+//*****************************************************************************
 
-int main(int argc, char** argv) {
-    register_segv_handler(argv);
-
+int regression_test(int argc, char **argv) {
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         #pragma omp target  
@@ -90,6 +117,6 @@ int main(int argc, char** argv) {
 
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_begin and target_end calls");
 
-    return global_error_code;
+    return return_code;
 }
 

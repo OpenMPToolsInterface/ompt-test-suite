@@ -24,7 +24,7 @@
 // macros
 //*****************************************************************************
 
-#define DEBUG 0
+#define DEBUG 1
 
 
 //*****************************************************************************
@@ -53,11 +53,14 @@ static void on_ompt_event_target_data_begin(ompt_task_id_t task_id,
     number_begin_events += 1;
 } 
 
-static void init_test(ompt_function_lookup_t lookup)
-{
+static void init_test(ompt_function_lookup_t lookup) {
+
+#if defined(_OPENMP) && (_OPENMP >= 201307)
     if (!register_callback(ompt_event_target_data_begin, (ompt_callback_t) on_ompt_event_target_data_begin)) {
         CHECK(false, FATAL, "failed to register ompt_event_target_update_begin");
     }
+#endif
+
 }
 
 
@@ -66,20 +69,56 @@ static void init_test(ompt_function_lookup_t lookup)
 //*****************************************************************************
 
 int regression_test(int argc, char **argv) {
+
+#if defined(_OPENMP) && (_OPENMP >= 201307)
     // task_id=0 workaround
     // TODO: fix in OMPT implementation
     #pragma omp parallel    
     {
     }
 
-    int a = 1;
+    // ************************************************************************
+    // test case 1: empty data-region
+    // ************************************************************************
+
+    // reset counter
+    number_begin_events = 0;
+
+    /*#pragma omp target data
+    {
+        sleep(1);
+    }
+    
+    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "number of data_begins does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
+*/
+
+    // ************************************************************************
+    // test case 2: alloc an array without passing a size
+    // ************************************************************************
+
+    // reset counter
+    number_begin_events = 0;
+
     int *x = (int*) malloc(10 * sizeof(int));
+
+    #pragma omp target data map(tofrom: x[0:10])
+    {
+        sleep(1);
+    }
+
+    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "number of data_begins does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
+
+/*
     #pragma omp target data map(tofrom: x[0:10], a)
     {
        sleep(1);
     }
 
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "number of data_begins does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
-
+*/
     return return_code;
+#else
+    return TARGET_NOT_SUPPORTED;
+#endif
+
 }

@@ -15,10 +15,8 @@ MQ_SRCS	:= \
 O_SRCS := \
 	$(shell find optional -name "test*.cpp") 
 
-ifeq ($(target),yes)
-  TE_SRCS 	:= \
+TE_SRCS 	:= \
   	$(shell find target/events -name "test*.cpp")
-endif
 
 TEST_SRCS	:= \
 	$(MI_SRCS) \

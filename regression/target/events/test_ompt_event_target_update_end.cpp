@@ -17,7 +17,7 @@
 // macros
 //*****************************************************************************
 
-#define DEBUG 0
+#define DEBUG 1
 
 
 //*****************************************************************************
@@ -84,8 +84,9 @@ static void on_ompt_event_target_update_end(ompt_task_id_t task_id,
 // interface operations
 //*****************************************************************************
 
-void init_test(ompt_function_lookup_t lookup)
-{
+void init_test(ompt_function_lookup_t lookup) {
+
+#if defined(_OPENMP) && (_OPENMP >= 201307)
     if (!register_callback(ompt_event_target_update_begin, (ompt_callback_t) on_ompt_event_target_update_begin)) {
         CHECK(false, FATAL, "failed to register ompt_event_target_update_begin");
     }
@@ -93,9 +94,13 @@ void init_test(ompt_function_lookup_t lookup)
     if (!register_callback(ompt_event_target_update_end, (ompt_callback_t) on_ompt_event_target_update_end)) {
         CHECK(false, FATAL, "failed to register ompt_event_target_update_end");
     }
+#endif
+
 }
 
 int regression_test(int argc, char **argv) {
+
+#if defined(_OPENMP) && (_OPENMP >= 201307)
     // task_id=0 workaround
     // TODO: fix in OMPT implementation
     #pragma omp parallel    
@@ -145,4 +150,8 @@ int regression_test(int argc, char **argv) {
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_update_begin and target_update_end calls");
 
     return return_code;
+#else
+    return TARGET_NOT_SUPPORTED;
+#endif
+
 }

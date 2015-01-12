@@ -23,7 +23,7 @@
 // macros
 //*****************************************************************************
 
-#define DEBUG 0
+#define DEBUG 1
 
 #define NUM_THREADS 4
 
@@ -88,6 +88,8 @@ static void on_ompt_event_target_end(ompt_task_id_t task_id,
 }
 
 void init_test(ompt_function_lookup_t lookup) {
+
+#if defined(_OPENMP) && (_OPENMP >= 201307)
     if (!register_callback(ompt_event_target_begin, (ompt_callback_t) on_ompt_event_target_begin)) {
         CHECK(false, FATAL, "failed to register ompt_event_target_begin");
     }
@@ -95,6 +97,8 @@ void init_test(ompt_function_lookup_t lookup) {
     if (!register_callback(ompt_event_target_end, (ompt_callback_t) on_ompt_event_target_end)) {
         CHECK(false, FATAL, "failed to register ompt_event_target_end");
     }
+#endif
+
 }
 
 //*****************************************************************************
@@ -102,6 +106,8 @@ void init_test(ompt_function_lookup_t lookup) {
 //*****************************************************************************
 
 int regression_test(int argc, char **argv) {
+
+#if defined(_OPENMP) && (_OPENMP >= 201307)
     #pragma omp parallel num_threads(NUM_THREADS)
     {
         #pragma omp target  
@@ -118,5 +124,8 @@ int regression_test(int argc, char **argv) {
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_begin and target_end calls");
 
     return return_code;
+#else
+    return TARGET_NOT_SUPPORTED;
+#endif
 }
 

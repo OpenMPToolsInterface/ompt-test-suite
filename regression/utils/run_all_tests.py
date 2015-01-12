@@ -6,6 +6,7 @@ dot ="."
 name_to_path = []
 code_to_status = {}
 code_to_status[0] = "OK"
+code_to_status[251] = "TARGET NOT SUPPORTED"
 code_to_status[252] = "FATAL"
 code_to_status[253] = "OMPT SHUTDOWN FAILED TO PREEMPT EXIT"
 code_to_status[254] = "NOT_IMPLEMENTED"
@@ -24,9 +25,9 @@ def execute_test_case(path):
     return code, out
 
 add_test_cases('mandatory/init')
-add_test_cases('mandatory/events')
-add_test_cases('mandatory/inquiry_functions')
-add_test_cases('optional')
+#add_test_cases('mandatory/events')
+#add_test_cases('mandatory/inquiry_functions')
+#add_test_cases('optional')
 add_test_cases('target/events')
 
 

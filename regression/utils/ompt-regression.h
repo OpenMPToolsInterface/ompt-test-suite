@@ -39,7 +39,6 @@
 // regression test return codes
 //-----------------------------------------------------------------------------
 
-#define TARGET_NOT_SUPPORTED -5
 #define FATAL -4
 #define OMPT_SHUTDOWN_FAILED_TO_PREEMPT_EXIT -3
 #define NOT_IMPLEMENTED -2

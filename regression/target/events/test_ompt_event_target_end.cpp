@@ -125,7 +125,8 @@ int regression_test(int argc, char **argv) {
 
     return return_code;
 #else
-    return TARGET_NOT_SUPPORTED;
+    CHECK(FALSE, NOT_IMPLEMENTED, "OpenMP 4.0 not supported; OpenMP TARGET feature not tested");
+    return NOT_IMPLEMENTED;
 #endif
 }
 

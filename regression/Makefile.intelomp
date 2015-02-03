@@ -13,7 +13,15 @@ ifeq ($(mode),debug)
   override suffix := .deb$(suffix)
 endif
 
-EXPORTS = $(INTEL_OMP_ROOT)/itt/libomp_oss/exports
+REL_PATH = itt/libomp_oss
+ifeq ($(wildcard $(INTEL_OMP_ROOT)/$(REL_PATH)),)
+  REL_PATH = runtime
+  ifeq ($(wildcard $(INTEL_OMP_ROOT)/$(REL_PATH)),)
+    $(error Type of OpenMP library version could not be determined from INTEL_OMP_ROOT)
+  endif
+endif
+
+EXPORTS = $(INTEL_OMP_ROOT)/$(REL_PATH)/exports
 LIB_DIR = $(EXPORTS)/$(platform)$(suffix)/lib
 LIB = $(LIB_DIR)/libiomp5.so
 

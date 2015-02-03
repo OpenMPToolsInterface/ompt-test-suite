@@ -6,38 +6,20 @@ endif
 # set up OpenMP runtime
 # ----------------------------------
 
-HOST            := $(shell hostname -s)
+platform ?= lin_32e
 
+# compatability
 ifeq ($(mode),debug)
-  VER=deb
-else
-  VER=rel
+  override suffix := .deb$(suffix)
 endif
 
-ifeq ($(strip),yes)
-  STRIP=stripped
-else
-  STRIP=unstripped
-endif
+EXPORTS = $(INTEL_OMP_ROOT)/itt/libomp_oss/exports
+LIB_DIR = $(EXPORTS)/$(platform)$(suffix)/lib
+LIB = $(LIB_DIR)/libiomp5.so
 
-ifeq ($(arch),mic)
-  ARCH=.knc.lin.off
-  FLAGS=-mmic
-  PREF=lrb
-  SUFFIX=mic
-else
-  PREF=lin
-  SUFFIX=host
-endif
-
-LIBDIR          = \
-        $(INTEL_OMP_ROOT)/itt/libomp_oss/tmp/$(PREF)_32e-rtl_5_nor_dyn.12.$(VER).40.c0.t0$(ARCH)-$(HOST)/$(STRIP)
-
-LIB             = $(LIBDIR)/libiomp5.so -lm
-
-LIBS            =-Wl,-rpath=$(LIBDIR) $(LIB)
+LIBS = -Wl,-rpath=$(LIB_DIR) $(LIB) -lm
 
 # ----------------------------------
 # include path for ompt.h and omp.h
 # ----------------------------------
-INCLUDES= -I$(INTEL_OMP_ROOT)/itt/libomp_oss/exports/common/include
+INCLUDES = -I$(EXPORTS)/common$(suffix)/include

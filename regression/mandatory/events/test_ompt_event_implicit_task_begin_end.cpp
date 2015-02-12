@@ -36,8 +36,6 @@
 // global data
 //*****************************************************************************
 
-std::map<ompt_task_id_t, ompt_task_id_t> task_id_to_task_id_map;
-std::map<ompt_task_id_t, ompt_frame_t *> task_id_to_task_frame_map;
 std::set<ompt_task_id_t> task_ids;
 
 int tasks_begin = 0;
@@ -50,29 +48,27 @@ int tasks_end = 0;
 //*****************************************************************************
 
 static void 
-on_ompt_event_task_begin(ompt_task_id_t parent_task_id,    
-                              ompt_frame_t *parent_task_frame,  
-                              ompt_task_id_t new_task_id,       
-                              void *new_task_function)
+on_ompt_event_implicit_task_begin(ompt_parallel_id_t parallel_id, 
+                                  ompt_task_id_t task_id)
 {
 #if DEBUG
     pthread_mutex_lock(&thread_mutex);
-    printf("task_begin %lld (parent %lld)\n", new_task_id, parent_task_id);
+    printf("implicit task_begin %lld (region %lld)\n", task_id, parallel_id);
     pthread_mutex_unlock(&thread_mutex);
 #endif
 
-    task_id_to_task_id_map[new_task_id] = parent_task_id;
-    task_id_to_task_frame_map[new_task_id] = parent_task_frame;
-    task_ids.insert(new_task_id);
+    task_ids.insert(task_id);
     #pragma omp atomic update
     tasks_begin += 1;
 }
 
 static void
-on_ompt_event_task_end(ompt_task_id_t  task_id)
+on_ompt_event_implicit_task_end(ompt_parallel_id_t parallel_id, 
+                                ompt_task_id_t task_id)
 {
 #if DEBUG
     pthread_mutex_lock(&thread_mutex);
+    printf("implicit task_end %lld (region %lld)\n", task_id, parallel_id);
     printf("task_end %lld\n", task_id);
     pthread_mutex_unlock(&thread_mutex);
 #endif
@@ -92,13 +88,13 @@ on_ompt_event_task_end(ompt_task_id_t  task_id)
 void 
 init_test(ompt_function_lookup_t lookup)
 {
-  if (!register_callback(ompt_event_task_begin, 
-			 (ompt_callback_t) on_ompt_event_task_begin)) {
-    CHECK(false, FATAL, "failed to register ompt_event_task_begin");
+  if (!register_callback(ompt_event_implicit_task_begin, 
+			 (ompt_callback_t) on_ompt_event_implicit_task_begin)) {
+    CHECK(false, FATAL, "failed to register ompt_event_implicit_task_begin");
   }
-  if (!register_callback(ompt_event_task_end, 
-			 (ompt_callback_t) on_ompt_event_task_end)) {
-    CHECK(false, FATAL, "failed to register ompt_event_task_begin");
+  if (!register_callback(ompt_event_implicit_task_end, 
+			 (ompt_callback_t) on_ompt_event_implicit_task_end)) {
+    CHECK(false, FATAL, "failed to register ompt_event_implicit_task_begin");
   }
 }
 

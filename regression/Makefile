@@ -21,6 +21,15 @@ TEST_SRCS	:= \
 	$(MQ_SRCS) \
 	$(O_SRCS)
 
+ALL_EXEC  := \
+	$(shell find mandatory -executable -type f -name "test*") \
+	$(shell find optional  -executable -type f -name "test*") 
+
+ALL_DOT_O  := \
+	$(shell find mandatory -type f -name "*.o") \
+	$(shell find optional  -type f -name "*.o") \
+	$(shell find utils     -type f -name "*.o") 
+
 
 # -----------------------------------------------------------------------------
 #  source and include files for utilities
@@ -106,9 +115,9 @@ runonly:
 # -----------------------------------------------------------------------------
 
 clean: memoize
-	/bin/rm -f $(TEST_EXEC) $(TEST_O)
-	/bin/rm -f $(UTIL_O)
+	/bin/rm -f $(ALL_DOT_O) $(ALL_EXEC)
 	/bin/rm -f $(LIBUTIL)
+
 
 
 # -----------------------------------------------------------------------------

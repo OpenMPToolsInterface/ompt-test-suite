@@ -28,7 +28,7 @@
 // macros
 //*****************************************************************************
 
-#define DEBUG 0
+#define DEBUG 1
 #define NUM_THREADS 4
 
 
@@ -51,13 +51,14 @@ static void
 on_ompt_event_implicit_task_begin(ompt_parallel_id_t parallel_id, 
                                   ompt_task_id_t task_id)
 {
-#if DEBUG
     pthread_mutex_lock(&thread_mutex);
+
+#if DEBUG
     printf("implicit task_begin %lld (region %lld)\n", task_id, parallel_id);
-    pthread_mutex_unlock(&thread_mutex);
 #endif
 
     task_ids.insert(task_id);
+    pthread_mutex_unlock(&thread_mutex);
     #pragma omp atomic update
     tasks_begin += 1;
 }
@@ -66,15 +67,17 @@ static void
 on_ompt_event_implicit_task_end(ompt_parallel_id_t parallel_id, 
                                 ompt_task_id_t task_id)
 {
-#if DEBUG
     pthread_mutex_lock(&thread_mutex);
-    printf("implicit task_end %lld (region %lld)\n", task_id, parallel_id);
-    printf("task_end %lld\n", task_id);
-    pthread_mutex_unlock(&thread_mutex);
+
+#if DEBUG
+    printf("implicit task_end   %lld (region %lld)\n", task_id, parallel_id);
 #endif
 
     CHECK(task_ids.count(task_id) != 0, IMPLEMENTED_BUT_INCORRECT, \
-	  "no record for task id");
+	  "no record for task id %lld", task_id);
+
+    pthread_mutex_unlock(&thread_mutex);
+
     #pragma omp atomic update
     tasks_end += 1;
 }

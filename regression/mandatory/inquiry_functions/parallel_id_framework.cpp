@@ -57,6 +57,8 @@ init_test(ompt_function_lookup_t lookup)
 int 
 regression_test(int argc, char **argv)
 {
+  omp_set_nested(NESTED_VALUE);
+
   ompt_parallel_id_t L0 = my_ompt_get_parallel_id(0);
   
   CHECK(L0 == 0, IMPLEMENTED_BUT_INCORRECT,				\

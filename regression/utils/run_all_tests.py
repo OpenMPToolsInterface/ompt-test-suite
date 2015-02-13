@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-dot ="."
+exe =".exe"
 
 name_to_path = []
 code_to_status = {}
@@ -14,7 +14,7 @@ code_to_status[255] = "IMPLEMENTED BUT INCORRECT"
 def add_test_cases(dir_path):
     for root, dirs, files in os.walk(dir_path):
         for name in files:
-            if name.find(dot) == -1 :
+            if name.find(exe) != -1 :
                 name_to_path.append((name, os.path.join(root, name)))
 
 def execute_test_case(path):

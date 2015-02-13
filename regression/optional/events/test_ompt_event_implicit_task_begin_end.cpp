@@ -93,11 +93,13 @@ init_test(ompt_function_lookup_t lookup)
 {
   if (!register_callback(ompt_event_implicit_task_begin, 
 			 (ompt_callback_t) on_ompt_event_implicit_task_begin)) {
-    CHECK(false, FATAL, "failed to register ompt_event_implicit_task_begin");
+    CHECK(false, NOT_IMPLEMENTED, \
+          "failed to register ompt_event_implicit_task_begin");
   }
   if (!register_callback(ompt_event_implicit_task_end, 
 			 (ompt_callback_t) on_ompt_event_implicit_task_end)) {
-    CHECK(false, FATAL, "failed to register ompt_event_implicit_task_begin");
+    CHECK(false, NOT_IMPLEMENTED, \
+          "failed to register ompt_event_implicit_task_begin");
   }
 }
 

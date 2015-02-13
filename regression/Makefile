@@ -47,7 +47,7 @@ UTIL_H		:= $(shell find utils -name "*.h")
 #  object files and executables for tests
 # -----------------------------------------------------------------------------
 
-TEST_EXEC	:= $(basename $(TEST_SRCS))
+TEST_EXEC	:= $(addsuffix .exe,$(basename $(TEST_SRCS)))
 TEST_O		= $(addsuffix .o,$(TEST_EXEC))
 
 
@@ -160,7 +160,7 @@ $(LIBUTIL): $(UTIL_O)
 
 $(TEST_EXEC): $(UTIL_H) $(UTIL_SRCS) $(LIBUTIL)
 
-$(TEST_EXEC):  % : %.o 
+$(TEST_EXEC):  %.exe : %.o 
 	$(CXX) $(FLAGS) -o $@ $< $(LIBUTIL) $(LIB) $(LIBS) -lrt
 
 

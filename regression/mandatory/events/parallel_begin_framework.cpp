@@ -3,6 +3,7 @@
 //*****************************************************************************
 
 #include <map>
+#include <set>
 
 
 
@@ -29,6 +30,9 @@
 
 std::map<ompt_parallel_id_t, ompt_task_id_t> parallel_id_to_task_id_map;
 std::map<ompt_parallel_id_t, ompt_frame_t *> parallel_id_to_task_frame_map;
+
+std::set<ompt_parallel_id_t> parallel_id_set;
+std::set<ompt_task_id_t> task_id_set;
 
 ompt_task_id_t serial_task_id;
 ompt_frame_t * serial_task_frame;
@@ -89,6 +93,18 @@ on_ompt_event_parallel_begin
 #endif
   parallel_id_to_task_id_map[parallel_id] = parent_task_id;
   parallel_id_to_task_frame_map[parallel_id] = parent_task_frame;
+
+  // check if this region id has been seen before
+  std::set<ompt_parallel_id_t>::iterator iter  =
+    parallel_id_set.find(parallel_id);
+  
+  CHECK(iter == parallel_id_set.end(), \
+        IMPLEMENTED_BUT_INCORRECT, \
+        "duplicate parallel region id %lld", *iter);
+
+  // record that this region id has been seen
+  parallel_id_set.insert(parallel_id);
+
   pthread_mutex_unlock(&thread_mutex);
   
   if (test_enclosing_context) {
@@ -100,6 +116,23 @@ on_ompt_event_parallel_begin
 	  IMPLEMENTED_BUT_INCORRECT,					\
 	  "parallel begin callback doesn't execute in parent's context");
   }
+}
+
+static void
+check_implicit_task_id(ompt_task_id_t task_id)
+{
+  pthread_mutex_lock(&thread_mutex);
+  // check if this implicit task id has been seen before
+  std::set<ompt_task_id_t>::iterator iter  =
+    task_id_set.find(task_id);
+
+  CHECK(iter == task_id_set.end(), \
+        IMPLEMENTED_BUT_INCORRECT, \
+        "duplicate implicit task id %lld", *iter);
+
+  // record that this task id has been seen
+  task_id_set.insert(task_id);
+  pthread_mutex_unlock(&thread_mutex);
 }
 
 
@@ -118,7 +151,9 @@ fib_region_nesting(int n, int depth)
     ompt_task_id_t     task_id         = ompt_get_task_id(0);
     ompt_task_id_t     parent_task_id  = ompt_get_task_id(1);
     ompt_frame_t      *parent_frame    = ompt_get_task_frame(1);
-    
+
+    check_implicit_task_id(task_id);
+
 #if DEBUG
     {
       pthread_mutex_lock(&thread_mutex);
@@ -188,6 +223,8 @@ simple_nested_region()
     ompt_parallel_id_t level1_parallel_id = ompt_get_parallel_id(0);
     ompt_task_id_t     level1_task_id     = ompt_get_task_id(0);
 
+    check_implicit_task_id(level1_task_id);
+
     CHECK(level1_parallel_id !=	0,				\
 	  IMPLEMENTED_BUT_INCORRECT, "level1_parallel_id == 0");
 
@@ -213,10 +250,7 @@ simple_nested_region()
       ompt_parallel_id_t level2_parallel_id = ompt_get_parallel_id(0);
       ompt_task_id_t     level2_task_id     = ompt_get_task_id(0);
 
-      if (level2_parallel_id ==	0) {
-         // a good spot for a breakpoint to investigate the problem.
-         ompt_parallel_id_t tmp = ompt_get_parallel_id(0);
-      }				
+      check_implicit_task_id(level2_task_id);
 
       CHECK(level2_parallel_id != 0,				\
 	  IMPLEMENTED_BUT_INCORRECT, "level2_parallel_id == 0");
@@ -240,7 +274,8 @@ simple_nested_region()
       regions_encountered += 1;
       #pragma omp parallel num_threads(NUM_THREADS)
       {
-	serialwork(0);
+        ompt_task_id_t     level3_task_id     = ompt_get_task_id(0);
+        check_implicit_task_id(level3_task_id);
       }
     }
     }

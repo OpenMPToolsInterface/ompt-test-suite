@@ -47,7 +47,7 @@ init_test(ompt_function_lookup_t lookup)
 {
   my_ompt_get_parallel_id = 
     (ompt_get_parallel_id_t) lookup("ompt_get_parallel_id"); 
-  CHECK(my_ompt_get_parallel_id, NOT_IMPLEMENTED, \ 
+  CHECK(my_ompt_get_parallel_id, NOT_IMPLEMENTED, \
 	"failed to register ompt_get_parallel_id");
 
   quit_on_init_failure();
@@ -57,6 +57,8 @@ init_test(ompt_function_lookup_t lookup)
 int 
 regression_test(int argc, char **argv)
 {
+  omp_set_nested(NESTED_VALUE);
+
   ompt_parallel_id_t L0 = my_ompt_get_parallel_id(0);
   
   CHECK(L0 == 0, IMPLEMENTED_BUT_INCORRECT,				\

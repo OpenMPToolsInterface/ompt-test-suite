@@ -25,6 +25,17 @@ TEST_SRCS	:= \
 	$(O_SRCS) \
 	$(TE_SRCS)
 
+ALL_EXEC  := \
+	$(shell find mandatory -executable -type f -name "test*") \
+	$(shell find optional  -executable -type f -name "test*") \
+	$(shell find target    -executable -type f -name "test*")
+
+ALL_DOT_O  := \
+	$(shell find mandatory -type f -name "*.o") \
+	$(shell find optional  -type f -name "*.o") \
+	$(shell find utils     -type f -name "*.o") 
+
+
 # -----------------------------------------------------------------------------
 #  source and include files for utilities
 # -----------------------------------------------------------------------------
@@ -41,7 +52,7 @@ UTIL_H		:= $(shell find utils -name "*.h")
 #  object files and executables for tests
 # -----------------------------------------------------------------------------
 
-TEST_EXEC	:= $(basename $(TEST_SRCS))
+TEST_EXEC	:= $(addsuffix .exe,$(basename $(TEST_SRCS)))
 TEST_O		= $(addsuffix .o,$(TEST_EXEC))
 
 
@@ -109,9 +120,9 @@ runonly:
 # -----------------------------------------------------------------------------
 
 clean: memoize
-	/bin/rm -f $(TEST_EXEC) $(TEST_O)
-	/bin/rm -f $(UTIL_O)
+	/bin/rm -f $(ALL_DOT_O) $(ALL_EXEC)
 	/bin/rm -f $(LIBUTIL)
+
 
 
 # -----------------------------------------------------------------------------
@@ -154,7 +165,7 @@ $(LIBUTIL): $(UTIL_O)
 
 $(TEST_EXEC): $(UTIL_H) $(UTIL_SRCS) $(LIBUTIL)
 
-$(TEST_EXEC):  % : %.o 
+$(TEST_EXEC):  %.exe : %.o 
 	$(CXX) $(FLAGS) -o $@ $< $(LIBUTIL) $(LIB) $(LIBS) -lrt
 
 

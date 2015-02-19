@@ -73,10 +73,6 @@ init_test(ompt_function_lookup_t lookup)
     CHECK(FALSE, NOT_IMPLEMENTED, 
 	  "failed to register ompt_event_acquired_critical");
   }
-
-  if (return_code == NOT_IMPLEMENTED) {
-    _exit(return_code);
-  }
 }
 
 

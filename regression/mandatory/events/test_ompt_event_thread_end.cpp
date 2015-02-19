@@ -110,8 +110,6 @@ init_test(ompt_function_lookup_t lookup)
 			 (ompt_callback_t) thread_end_check)) {
     CHECK(false, NOT_IMPLEMENTED, "failed to register ompt_event_shutdown");
   }
-
-  if (return_code == NOT_IMPLEMENTED) exit(return_code);
 }
 
 

@@ -36,11 +36,10 @@
 // global data
 //*****************************************************************************
 
-std::map<ompt_task_id_t, ompt_task_id_t> task_id_to_task_id_map;
-std::map<ompt_task_id_t, ompt_frame_t *> task_id_to_task_frame_map;
 std::set<ompt_task_id_t> task_ids;
 
-int tasks_active = 0;
+int tasks_begin = 0;
+int tasks_end = 0;
 
 
 
@@ -49,37 +48,38 @@ int tasks_active = 0;
 //*****************************************************************************
 
 static void 
-on_ompt_event_task_begin(ompt_task_id_t parent_task_id,    
-                              ompt_frame_t *parent_task_frame,  
-                              ompt_task_id_t new_task_id,       
-                              void *new_task_function)
+on_ompt_event_implicit_task_begin(ompt_parallel_id_t parallel_id, 
+                                  ompt_task_id_t task_id)
 {
+    pthread_mutex_lock(&thread_mutex);
+
 #if DEBUG
-    pthread_mutex_lock(&assert_mutex);
-    printf("task_begin %lld (parent %lld)\n", new_task_id, parent_task_id);
-    pthread_mutex_unlock(&assert_mutex);
+    printf("implicit task_begin %lld (region %lld)\n", task_id, parallel_id);
 #endif
 
-    task_id_to_task_id_map[new_task_id] = parent_task_id;
-    task_id_to_task_frame_map[new_task_id] = parent_task_frame;
-    task_ids.insert(new_task_id);
+    task_ids.insert(task_id);
+    pthread_mutex_unlock(&thread_mutex);
     #pragma omp atomic update
-    tasks_active += 1;
+    tasks_begin += 1;
 }
 
 static void
-on_ompt_event_task_end(ompt_task_id_t  task_id)
+on_ompt_event_implicit_task_end(ompt_parallel_id_t parallel_id, 
+                                ompt_task_id_t task_id)
 {
+    pthread_mutex_lock(&thread_mutex);
+
 #if DEBUG
-    pthread_mutex_lock(&assert_mutex);
-    printf("task_end %lld\n", task_id);
-    pthread_mutex_unlock(&assert_mutex);
+    printf("implicit task_end   %lld (region %lld)\n", task_id, parallel_id);
 #endif
 
     CHECK(task_ids.count(task_id) != 0, IMPLEMENTED_BUT_INCORRECT, \
 	  "no record for task id %lld", task_id);
+
+    pthread_mutex_unlock(&thread_mutex);
+
     #pragma omp atomic update
-    tasks_active -= 1;
+    tasks_end += 1;
 }
 
 
@@ -91,53 +91,35 @@ on_ompt_event_task_end(ompt_task_id_t  task_id)
 void 
 init_test(ompt_function_lookup_t lookup)
 {
-  if (!register_callback(ompt_event_task_begin, 
-			 (ompt_callback_t) on_ompt_event_task_begin)) {
-    CHECK(false, FATAL, "failed to register ompt_event_task_begin");
+  if (!register_callback(ompt_event_implicit_task_begin, 
+			 (ompt_callback_t) on_ompt_event_implicit_task_begin)) {
+    CHECK(false, NOT_IMPLEMENTED, \
+          "failed to register ompt_event_implicit_task_begin");
   }
-  if (!register_callback(ompt_event_task_end, 
-			 (ompt_callback_t) on_ompt_event_task_end)) {
-    CHECK(false, FATAL, "failed to register ompt_event_task_begin");
+  if (!register_callback(ompt_event_implicit_task_end, 
+			 (ompt_callback_t) on_ompt_event_implicit_task_end)) {
+    CHECK(false, NOT_IMPLEMENTED, \
+          "failed to register ompt_event_implicit_task_begin");
   }
-}
-
-void dump_chain(int depth)
-{
-  ompt_task_id_t task_id = ompt_get_task_id(depth);
-  printf("level %d: task %lld\n", depth, task_id);
-  if (task_id != 0) dump_chain(depth+1); 
 }
 
 
 int
 regression_test(int argc, char** argv)
 {
-  omp_set_nested(1);
+  int nthreads;
   #pragma omp parallel num_threads(NUM_THREADS)
   {
-    #pragma omp master
+    #pragma omp master 
     {
-      #pragma omp task
-      {
-	serialwork(0);
-        #pragma omp task
-	{
-#if DEBUG
-          dump_chain(0);
-#endif
-	  serialwork(0);
-          #pragma omp task
-	  {
-#if DEBUG
-            dump_chain(0);
-#endif
-	    serialwork(1);
-	  }
-	}
-      }
+      nthreads = omp_get_num_threads();
     }
+    serialwork(0);
   }
-  CHECK(tasks_active == 0, IMPLEMENTED_BUT_INCORRECT, \
-	"unbalanced number of calls to begin and end callbacks");
+  CHECK(nthreads == tasks_begin && tasks_begin == tasks_end, IMPLEMENTED_BUT_INCORRECT, \
+	"wrong number of callbacks for implicit tasks begin/end: " \
+        "threads in region = %d, implicit task begin callbacks = %d, " \
+        "implicit task end callbacks = %d", nthreads, tasks_begin, tasks_end);
+
   return return_code;
 }

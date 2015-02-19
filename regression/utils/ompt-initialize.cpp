@@ -93,6 +93,11 @@ ompt_initialize( ompt_function_lookup_t lookup,
 
   init_test(lookup);
 
+  if (return_code == FATAL || 
+      return_code == NOT_IMPLEMENTED) {
+    _exit(return_code);
+  }
+
   return 1;
 }
 

@@ -27,7 +27,7 @@
 // macros
 //*****************************************************************************
 
-#define DEBUG 1
+#define DEBUG 0
 #define NUM_THREADS 4
 
 
@@ -52,6 +52,12 @@ on_ompt_event_task_begin(ompt_task_id_t parent_task_id,
 			 void *new_task_function)
 {
   pthread_mutex_lock(&thread_mutex);
+
+#if DEBUG
+  printf("task_begin %lld (parent %lld)\n", new_task_id, parent_task_id);
+#endif
+
+#if 0
   CHECK(ompt_get_task_id(0) == parent_task_id,				\
 	IMPLEMENTED_BUT_INCORRECT,					\
 	"task begin callback doesn't execute in parent's context: "	\
@@ -63,6 +69,7 @@ on_ompt_event_task_begin(ompt_task_id_t parent_task_id,
 	"task begin callback doesn't execute in parent's context: "	\
 	"current task frame %p, task begin parent_task_frame %p",	\
 	ompt_get_task_frame(0), parent_task_frame);
+#endif
 
   CHECK(task_id_to_parent_id_map.count(new_task_id) == 0, \
 	IMPLEMENTED_BUT_INCORRECT, "duplicate task ids");
@@ -114,12 +121,53 @@ init_test(ompt_function_lookup_t lookup)
 }
 
 
+void 
+parallel_regions(ompt_task_id_t serial_id, ompt_frame_t *serial_frame)
+{
+  #pragma omp parallel num_threads(NUM_THREADS)
+  {
+   // #pragma omp master
+    {
+      ompt_task_id_t master_id = ompt_get_task_id(0);
+      ompt_frame_t *master_frame = ompt_get_task_frame(0);
+#if DEBUG
+      print_level(1, master_id, serial_id, master_frame, serial_frame); 
+#endif
+      
+      #pragma omp parallel num_threads(NUM_THREADS)
+      {
+        // #pragma omp master
+        {
+	ompt_task_id_t  level1_id = ompt_get_task_id(0);
+	ompt_frame_t  *level1_frame = ompt_get_task_frame(0);
+#if DEBUG
+	print_level(2, level1_id, master_id, level1_frame, master_frame); 
+#endif
+	}
+      }
+    }
+  }
+}
+
+
 int
 regression_test(int argc, char** argv)
 {
+  omp_set_nested(1);
   ompt_task_id_t serial_id = ompt_get_task_id(0);
   ompt_frame_t *serial_frame = ompt_get_task_frame(0);
+
+
+#if DEBUG
   print_level(0, serial_id, 0, serial_frame, 0); 
+  printf("**** begin testing parallel regions ****\n");
+#endif
+
+  parallel_regions(serial_id, serial_frame);
+
+#if DEBUG
+  printf("**** done testing parallel regions ****\n");
+#endif
   
 #pragma omp parallel num_threads(NUM_THREADS)
   {

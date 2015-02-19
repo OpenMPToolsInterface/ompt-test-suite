@@ -311,6 +311,8 @@ int regression_test(int argc, char **argv) {
         sleep(1);
     }
 
+    CHECK(number_begin_events == 0, IMPLEMENTED_BUT_INCORRECT, "test case 6 (no update, only target data region): number of update_begin events not as expected (expected %d, observed %d)", 0, number_begin_events);
+
 
     //*************************************************************************
     // test case 7: nested data regions and updates, do some random updates
@@ -346,7 +348,6 @@ int regression_test(int argc, char **argv) {
         #pragma omp target update from(x[0:10])
     }
     
-
     CHECK(number_begin_events == 6, IMPLEMENTED_BUT_INCORRECT, "test case 7 (nested data regions and updates): number of update_begin events not as expected (expected %d, observed %d)", 6, number_begin_events);
 
 

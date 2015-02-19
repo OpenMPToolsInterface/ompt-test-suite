@@ -108,8 +108,8 @@ int regression_test(int argc, char **argv) {
     // variable to be copied between host and device
     int a;
 
-    // array to be copied between host and device
-    int *x;
+    // arrays to be copied between host and device
+    int *x, *y, *z;
 
     //*************************************************************************
     // test case 1: copy variable from host to device
@@ -138,6 +138,7 @@ int regression_test(int argc, char **argv) {
 
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 1 (copy variable from host to device): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
 
+
     //*************************************************************************
     // test case 2: copy variable from device to host
     //*************************************************************************
@@ -161,6 +162,7 @@ int regression_test(int argc, char **argv) {
     }
 
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 2 (copy variable from device to host): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
+
 
     //*************************************************************************
     // test case 3: copy array from host to device
@@ -194,6 +196,7 @@ int regression_test(int argc, char **argv) {
     }
 
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 3 (copy array from host to device): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
+
 
     //*************************************************************************
     // test case 4: copy array from device to host
@@ -229,48 +232,124 @@ int regression_test(int argc, char **argv) {
 
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 4 (copy array from device to host): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
 
-/*
-    int a;
-    // start value on host
+
+    //*************************************************************************
+    // test case 5: copy array and variable in both directions
+    //*************************************************************************
+
+    // reset update begin event counter
+    number_begin_events = 0;
+
     a = 1;
-    
-    // save old values for error checking
-    int a_old_device, a_old_host;
+    x = (int*) malloc(10*sizeof(int));
 
-    #pragma omp target data map(alloc: a, a_old_device)
+    for (int i=0; i < 10; i++) {
+        x[i] = i;
+    }
+
+    #pragma omp target data map (alloc: a, x[0:10])
     {
+        // copy both variable and array to device
+        #pragma omp target update to(a, x[0:10])
+
+        bool device_ok = true;
         #pragma omp target
         {
-            // modify a on device
-            a = 42;
-
-            // save modified a on device
-            a_old_device = a;
-        }
-
-        // save old a on host
-        a_old_host = a;
-        // copy new value to host
-        #pragma omp target update from(a)
-
-        CHECK(a_old_host != a, IMPLEMENTED_BUT_INCORRECT, "update from device to host not working correctly");
-
-        // modify a on host
-        a = 0;
-        // copy new value to device
-        #pragma omp target update to(a)
-    
-        bool device_ok = true; // CHECK-directive does not work in target region, so use bool variable
-        #pragma omp target
-        {
-            if (a_old_device == a) {
+            if (a != 1)
                 device_ok = false;
+
+            for (int i=0; i < 10; i++) {
+                if (x[i] != i)
+                    device_ok = false;
             }
         }
-        CHECK(device_ok, IMPLEMENTED_BUT_INCORRECT, "update from host to device not working correctly");
+        CHECK(device_ok, IMPLEMENTED_BUT_INCORRECT, "test case 5: copy from array and variable from host to device not working");
+
+        #pragma omp target
+        {
+            // modify variable and array on device
+            a = 2;
+
+            for (int i=0; i < 10; i++) {
+                x[i] = i+1;
+            }
+        }
+
+        // copy both variable and array to host
+        #pragma omp target update from(a, x[0:10])
+
+        bool host_ok = true;
+
+        if (a != 2)
+            host_ok = false;
+
+        for (int i=0; i < 10; i++) {
+            if (x[i] != i+1)
+                host_ok = false;
+        }
+
+        CHECK(host_ok, IMPLEMENTED_BUT_INCORRECT, "test case 5: copy from array and variable from device to host not working");
+        
     }
-*/
-    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_update_begin and target_update_end calls");
+  
+    CHECK(number_begin_events == 2, IMPLEMENTED_BUT_INCORRECT, "test case 5 (copy array and variable in both directions): number of update_begin events not as expected (expected %d, observed %d)", 2, number_begin_events);
+
+
+    //*************************************************************************
+    // test case 6: no update, just a simple target data region
+    // (test if runtime can distinguish target data events and target update
+    //  events)
+    //*************************************************************************
+    
+    // reset update begin event counter
+    number_begin_events = 0;
+
+    x = (int*) malloc(10 * sizeof(int));
+
+    #pragma omp target data map (tofrom: x[0:10])
+    {
+        sleep(1);
+    }
+
+
+    //*************************************************************************
+    // test case 7: nested data regions and updates, do some random updates
+    //*************************************************************************
+
+    x = (int*) malloc(10 * sizeof(int));
+    y = (int*) malloc(10 * sizeof(int));
+    a = 1;
+
+    for (int i=0; i < 10; i++) {
+        x[i] = i;
+    }
+
+    #pragma omp target data map(alloc: x[0:10])
+    {
+        // first level
+        #pragma omp target update to(x[0:10])
+
+        #pragma omp target data map(alloc: y[0:10])
+        {
+            // second level
+            #pragma omp target update to(y[0:10])
+
+            #pragma omp target data map(alloc: a)
+            {
+                // third level
+                #pragma omp target update to(a)
+                sleep(1);
+                #pragma omp target update from(a)
+            }
+            #pragma omp target update from(y[0:10])
+        }
+        #pragma omp target update from(x[0:10])
+    }
+    
+
+    CHECK(number_begin_events == 6, IMPLEMENTED_BUT_INCORRECT, "test case 7 (nested data regions and updates): number of update_begin events not as expected (expected %d, observed %d)", 6, number_begin_events);
+
+
 
     return return_code;
 #else

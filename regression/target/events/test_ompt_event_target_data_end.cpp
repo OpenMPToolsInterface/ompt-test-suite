@@ -52,6 +52,7 @@ static void on_ompt_event_target_data_begin(ompt_task_id_t task_id,
 
     // save task_id and target_id for current thread
     begin_task_id = task_id;
+    begin_target_id = target_id;
 
     count += 1;
     number_begin_events += 1;
@@ -74,6 +75,7 @@ static void on_ompt_event_target_data_end(ompt_task_id_t task_id,
     // check for correct target_id and task_id in target_end
     // (should be the same as in target_begin)
     CHECK(begin_task_id == task_id, IMPLEMENTED_BUT_INCORRECT, "task_ids not equal"); 
+    CHECK(begin_target_id == target_id, IMPLEMENTED_BUT_INCORRECT, "target_ids not equal"); 
 
     count -= 1;
 

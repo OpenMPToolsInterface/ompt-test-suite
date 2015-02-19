@@ -33,7 +33,8 @@ ALL_EXEC  := \
 ALL_DOT_O  := \
 	$(shell find mandatory -type f -name "*.o") \
 	$(shell find optional  -type f -name "*.o") \
-	$(shell find utils     -type f -name "*.o") 
+	$(shell find utils     -type f -name "*.o") \
+	$(shell find target    -type f -name "*.o") 
 
 
 # -----------------------------------------------------------------------------

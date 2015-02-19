@@ -104,12 +104,6 @@ void init_test(ompt_function_lookup_t lookup) {
 int regression_test(int argc, char **argv) {
 
 #if defined(_OPENMP) && (_OPENMP >= 201307)
-    // task_id=0 workaround
-    // TODO: fix in OMPT implementation
-    #pragma omp parallel    
-    {
-    }
-
     int a;
     // start value on host
     a = 1;

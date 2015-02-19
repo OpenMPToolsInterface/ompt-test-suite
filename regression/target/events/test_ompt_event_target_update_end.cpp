@@ -3,6 +3,7 @@
 //*****************************************************************************
 
 #include <omp.h>
+#include <stdio.h>
 
 
 //*****************************************************************************
@@ -25,6 +26,7 @@
 //*****************************************************************************
 
 int count = 0; // target_begin -> increased, target_end -> decreased
+int number_begin_events = 0;
 
 // save target_id and corresponding task_id for a target_begin 
 ompt_target_id_t begin_target_id;
@@ -54,6 +56,7 @@ static void on_ompt_event_target_update_begin(ompt_task_id_t task_id,
     begin_task_id = task_id;
 
     count += 1;
+    number_begin_events += 1;
 
     pthread_mutex_unlock(&thread_mutex);
 }
@@ -101,12 +104,132 @@ void init_test(ompt_function_lookup_t lookup) {
 int regression_test(int argc, char **argv) {
 
 #if defined(_OPENMP) && (_OPENMP >= 201307)
-    // task_id=0 workaround
-    // TODO: fix in OMPT implementation
-    #pragma omp parallel    
+
+    // variable to be copied between host and device
+    int a;
+
+    // array to be copied between host and device
+    int *x;
+
+    //*************************************************************************
+    // test case 1: copy variable from host to device
+    //*************************************************************************
+    
+    // reset update begin event counter
+    number_begin_events = 0;
+
+    a = 0;
+    #pragma omp target data map(alloc: a)
     {
+        // modify value on host
+        a = 1;
+
+        // copy value to device
+        #pragma omp target update to(a)
+
+        bool device_ok = true;
+        #pragma omp target
+        {
+            if (a != 1)
+                device_ok = false;     
+        }
+        CHECK(device_ok, IMPLEMENTED_BUT_INCORRECT, "test case 1: copy variable from host to device not working correctly");
     }
 
+    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 1 (copy variable from host to device): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
+
+    //*************************************************************************
+    // test case 2: copy variable from device to host
+    //*************************************************************************
+
+    // reset update begin event counter
+    number_begin_events = 0;
+
+    a = 0;
+    #pragma omp target data map(alloc: a)
+    {
+        #pragma omp target
+        {
+            a = 1;
+        }
+
+        // copy value to host 
+        #pragma omp target update from(a)
+
+
+        CHECK(a == 1, IMPLEMENTED_BUT_INCORRECT, "test case 2: copy variable from device to host not working correctly");
+    }
+
+    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 2 (copy variable from device to host): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
+
+    //*************************************************************************
+    // test case 3: copy array from host to device
+    //*************************************************************************
+
+    // reset update begin event counter
+    number_begin_events = 0;
+
+    x = (int*) malloc(10 * sizeof(int));
+
+    #pragma omp target data map(alloc: x[0:10])
+    {
+        // modify array on host
+        for (int i=0; i < 10; i++) {
+            x[i] = i;
+        }
+        
+        // copy array to device
+        #pragma omp target update to(x[0:10])
+
+        bool device_ok = true;
+        #pragma omp target
+        { 
+            for (int i=0; i < 10; i++) {
+                if (x[i] != i)
+                    device_ok = false;
+            }
+        }
+        CHECK(device_ok, IMPLEMENTED_BUT_INCORRECT, "test case 3: copy array from host to device not working correctly");
+
+    }
+
+    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 3 (copy array from host to device): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
+
+    //*************************************************************************
+    // test case 4: copy array from device to host
+    //*************************************************************************
+
+    // reset update begin event counter
+    number_begin_events = 0;
+
+    x = (int*) malloc(10 * sizeof(int));
+
+    #pragma omp target data map(alloc: x[0:10])
+    {
+        #pragma omp target
+        { 
+            // modify array on device 
+            for (int i=0; i < 10; i++) {
+                x[i] = i;
+            }
+           
+        }
+ 
+        // copy array to host 
+        #pragma omp target update from(x[0:10])
+
+
+        bool host_ok = true;
+        for (int i=0; i < 10; i++) {
+            if (x[i] != i)
+                host_ok = false;
+        }
+        CHECK(host_ok, IMPLEMENTED_BUT_INCORRECT, "test case 4: copy array from device to host not working correctly");
+    }
+
+    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 4 (copy array from device to host): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
+
+/*
     int a;
     // start value on host
     a = 1;
@@ -146,7 +269,7 @@ int regression_test(int argc, char **argv) {
         }
         CHECK(device_ok, IMPLEMENTED_BUT_INCORRECT, "update from host to device not working correctly");
     }
-
+*/
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_update_begin and target_update_end calls");
 
     return return_code;

@@ -25,14 +25,6 @@
 
 
 //*****************************************************************************
-// macros
-//*****************************************************************************
-
-#define DEBUG 0
-#define NUM_THREADS 4
-
-
-//*****************************************************************************
 // global data
 //*****************************************************************************
 
@@ -57,10 +49,19 @@ on_ompt_event_implicit_task_begin(ompt_parallel_id_t parallel_id,
     printf("implicit task_begin %lld (region %lld)\n", task_id, parallel_id);
 #endif
 
-    task_ids.insert(task_id);
+    std::set<ompt_task_id_t>::iterator iter = task_ids.find(task_id);
+
+    if (iter == task_ids.end()) {
+        task_ids.insert(task_id);
+        #pragma omp atomic update
+        tasks_begin += 1;
+    } else {
+        CHECK(FALSE, \
+            IMPLEMENTED_BUT_INCORRECT, \
+            "duplicate implicit task id %lld", *iter);
+    }
+
     pthread_mutex_unlock(&thread_mutex);
-    #pragma omp atomic update
-    tasks_begin += 1;
 }
 
 static void
@@ -73,13 +74,15 @@ on_ompt_event_implicit_task_end(ompt_parallel_id_t parallel_id,
     printf("implicit task_end   %lld (region %lld)\n", task_id, parallel_id);
 #endif
 
-    CHECK(task_ids.count(task_id) != 0, IMPLEMENTED_BUT_INCORRECT, \
-	  "no record for task id %lld", task_id);
+    if (task_ids.erase(task_id) != 0) {
+        #pragma omp atomic update
+        tasks_end += 1;
+    } else {
+        CHECK(FALSE, IMPLEMENTED_BUT_INCORRECT, \
+	      "no record for task id %lld", task_id);
+    }
 
     pthread_mutex_unlock(&thread_mutex);
-
-    #pragma omp atomic update
-    tasks_end += 1;
 }
 
 
@@ -107,6 +110,8 @@ init_test(ompt_function_lookup_t lookup)
 int
 regression_test(int argc, char** argv)
 {
+  omp_set_nested(NESTED_VALUE);
+
   int nthreads;
   #pragma omp parallel num_threads(NUM_THREADS)
   {
@@ -120,6 +125,32 @@ regression_test(int argc, char** argv)
 	"wrong number of callbacks for implicit tasks begin/end: " \
         "threads in region = %d, implicit task begin callbacks = %d, " \
         "implicit task end callbacks = %d", nthreads, tasks_begin, tasks_end);
+
+  int outer_threads, inner_threads;
+  for (outer_threads = 1; outer_threads <= NUM_THREADS; outer_threads++) {
+    for (inner_threads = 1; inner_threads <= NUM_THREADS; inner_threads++) {
+#if DEBUG
+      printf("outer_threads=%d, inner_threads=%d\n", outer_threads, inner_threads);
+#endif
+
+      tasks_begin = tasks_end = 0;
+
+      #pragma omp parallel num_threads(outer_threads)
+      {
+        #pragma omp parallel num_threads(inner_threads)
+        {
+          serialwork(0);
+        }
+      }
+
+      CHECK(tasks_begin == tasks_end, IMPLEMENTED_BUT_INCORRECT, \
+	    "wrong number of callbacks for implicit tasks begin/end: " \
+	        "outer_threads=%d, inner_threads=%d, " \
+            "implicit task begin callbacks = %d, " \
+            "implicit task end callbacks = %d", \
+            outer_threads, inner_threads, tasks_begin, tasks_end);
+    }
+  }
 
   return return_code;
 }

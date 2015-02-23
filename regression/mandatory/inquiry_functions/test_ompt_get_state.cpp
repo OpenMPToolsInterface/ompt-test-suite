@@ -264,7 +264,7 @@ regression_test(int argc, char **argv)
   //--------------------------------------------------------------------------
 #if defined(_OPENMP) && (_OPENMP >= 201307)
   monitor_prologue();
-  #pragma omp parallel
+  #pragma omp parallel num_threads(NUM_THREADS)
   {
     // use taskgroup if OMP 4.0 or later
     #pragma omp taskgroup
@@ -425,7 +425,7 @@ regression_test(int argc, char **argv)
 
   // can use a vector to check the correctness of the ordered construct
   std::vector<int> sequence; 
-  #pragma omp parallel for private(i) ordered schedule(dynamic)
+  #pragma omp parallel for private(i) ordered schedule(dynamic) num_threads(NUM_THREADS)
   for (i=0; i<1000; i++) 
     {
       if (ompt_get_thread_id() == master_thread_id) {

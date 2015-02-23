@@ -81,6 +81,9 @@ ifndef ($(compiler),)
   compiler := $(shell cat $(wildcard $(MEMOIZED_COMPILER) /dev/null))
 endif
 
+ifeq ($(compiler),)
+  compiler := $(CC)
+endif
 ifeq ($(compiler),icc)
   include Makefile.icc
 else ifeq ($(compiler),gcc)

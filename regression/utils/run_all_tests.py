@@ -36,6 +36,6 @@ try:
     code, out = execute_test_case(path)
     if len(out) != 0:
        print out,
-    print("Result: " + test.ljust(50)  + "Status: [%s]\n" % (code_to_status[code]))
+    print("Result: " + test.ljust(60)  + "Status: [%s]\n" % (code_to_status[code]))
 except:
     print "\nRegression tests were interrupted with a signal."

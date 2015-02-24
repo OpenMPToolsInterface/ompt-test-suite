@@ -296,7 +296,7 @@ int regression_test(int argc, char **argv) {
 
 
     //*************************************************************************
-    // test case 6: no update, just a simple target data region
+    // test case 6: no update, just simple target data region
     // (test if runtime can distinguish target data events and target update
     //  events)
     //*************************************************************************
@@ -305,8 +305,10 @@ int regression_test(int argc, char **argv) {
     number_begin_events = 0;
 
     x = (int*) malloc(10 * sizeof(int));
+    y = (int*) malloc(10 * sizeof(int));
+    a = 1;
 
-    #pragma omp target data map (tofrom: x[0:10])
+    #pragma omp target data map(tofrom: x[0:10])
     {
         sleep(1);
     }
@@ -315,7 +317,27 @@ int regression_test(int argc, char **argv) {
 
 
     //*************************************************************************
-    // test case 7: nested data regions and updates, do some random updates
+    // test case 7: no update, nested target data regions
+    // (test if runtime can distinguish target data events and target update
+    //  events)
+    //*************************************************************************
+    
+    // reset update begin event counter
+    number_begin_events = 0;
+
+    x = (int*) malloc(10 * sizeof(int));
+    a = 1;
+  
+    #pragma omp target data map(tofrom: x[0:10]) map(tofrom: a)
+    {
+        sleep(2);
+    }
+
+    CHECK(number_begin_events == 0, IMPLEMENTED_BUT_INCORRECT, "test case 7 (no update, nested target data region): number of update_begin events not as expected (expected %d, observed %d)", 0, number_begin_events);
+
+
+    //*************************************************************************
+    // test case 8: nested data regions and updates, do some random updates
     //*************************************************************************
 
     x = (int*) malloc(10 * sizeof(int));
@@ -348,7 +370,7 @@ int regression_test(int argc, char **argv) {
         #pragma omp target update from(x[0:10])
     }
     
-    CHECK(number_begin_events == 6, IMPLEMENTED_BUT_INCORRECT, "test case 7 (nested data regions and updates): number of update_begin events not as expected (expected %d, observed %d)", 6, number_begin_events);
+    CHECK(number_begin_events == 6, IMPLEMENTED_BUT_INCORRECT, "test case 8 (nested data regions and updates): number of update_begin events not as expected (expected %d, observed %d)", 6, number_begin_events);
 
 
 

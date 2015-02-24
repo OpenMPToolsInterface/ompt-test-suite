@@ -1,4 +1,11 @@
 //*****************************************************************************
+// system includes 
+//*****************************************************************************
+
+#include <stack>
+
+
+//*****************************************************************************
 // OpenMP runtime includes 
 //*****************************************************************************
 
@@ -27,9 +34,9 @@
 int count = 0; // target_begin -> increased, target_end -> decreased
 int number_begin_events = 0;
 
-// save target_id and corresponding task_id for a target_begin 
-ompt_target_id_t begin_target_id;
-ompt_task_id_t begin_task_id;
+// use stack to save task_ids and target_ids (especially for nested regions) 
+std::stack<ompt_task_id_t> task_id_stack;
+std::stack<ompt_target_id_t> target_id_stack;
 
 
 //*****************************************************************************
@@ -50,9 +57,9 @@ static void on_ompt_event_target_data_begin(ompt_task_id_t task_id,
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
     CHECK(task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "task_id not equal to ompt_get_task_id()");
 
-    // save task_id and target_id for current thread
-    begin_task_id = task_id;
-    begin_target_id = target_id;
+    // save task_id and target_id
+    task_id_stack.push(task_id);
+    target_id_stack.push(target_id);
 
     count += 1;
     number_begin_events += 1;
@@ -74,8 +81,11 @@ static void on_ompt_event_target_data_end(ompt_task_id_t task_id,
 
     // check for correct target_id and task_id in target_end
     // (should be the same as in target_begin)
-    CHECK(begin_task_id == task_id, IMPLEMENTED_BUT_INCORRECT, "task_ids not equal"); 
-    CHECK(begin_target_id == target_id, IMPLEMENTED_BUT_INCORRECT, "target_ids not equal"); 
+    CHECK(task_id_stack.top() == task_id, IMPLEMENTED_BUT_INCORRECT, "task_ids not equal"); 
+    CHECK(target_id_stack.top() == target_id, IMPLEMENTED_BUT_INCORRECT, "target_ids not equal"); 
+
+    task_id_stack.pop();
+    target_id_stack.pop();
 
     count -= 1;
 
@@ -217,57 +227,9 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 6 (multiple arrays): number of data_begin events does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
 
 
-/*
-    // task_id=0 workaround
 
-    // TODO: fix in OMPT implementation
-    #pragma omp parallel    
-    {
-    }
+    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_data_begin and target_data_end calls (count = %d)", count);
 
-    int a;
-    // start value on host
-    a = 1;
-    
-    // save old values for error checking
-    int a_old_device, a_old_host;
-
-    #pragma omp target data map(alloc: a, a_old_device)
-    {
-        #pragma omp target
-        {
-            // modify a on device
-            a = 42;
-
-            // save modified a on device
-            a_old_device = a;
-        }
-
-        // save old a on host
-        a_old_host = a;
-        // copy new value to host
-        #pragma omp target update from(a)
-
-        CHECK(a_old_host != a, IMPLEMENTED_BUT_INCORRECT, "update from device to host not working correctly");
-
-        // modify a on host
-        a = 0;
-        // copy new value to device
-        #pragma omp target update to(a)
-    
-        bool device_ok = true; // CHECK-directive does not work in target region, so use bool variable
-        #pragma omp target
-        {
-            if (a_old_device == a) {
-                device_ok = false;
-            }
-        }
-
-        CHECK(device_ok, IMPLEMENTED_BUT_INCORRECT, "update from host to device not working correctly");
-    }
-
-    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_data_begin and target_data_end calls");
-*/
     return return_code;
 #else
     CHECK(FALSE, NOT_IMPLEMENTED, "OpenMP 4.0 not supported; OpenMP TARGET feature not tested");

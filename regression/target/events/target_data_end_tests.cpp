@@ -19,14 +19,6 @@
 #include <ompt-regression.h>
 #include <ompt-initialize.h>
 
-
-//*****************************************************************************
-// macros
-//*****************************************************************************
-
-#define DEBUG 1
-
-
 //*****************************************************************************
 // global variables
 //*****************************************************************************
@@ -114,8 +106,11 @@ void init_test(ompt_function_lookup_t lookup) {
 int regression_test(int argc, char **argv) {
 
 #if defined(_OPENMP) && (_OPENMP >= 201307)
+    int a;
     int *x, *y, *z;
 
+
+#if (TEST == 1)
     // ************************************************************************
     // test case 1: empty data region
     // ************************************************************************
@@ -131,23 +126,26 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 1 (empty data region): number of data_begin events does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
 
 
+#elif (TEST == 2) 
     // ************************************************************************
-    // test case 2: alloc an array without passing a size
+    // test case 2: alloc variable 
     // ************************************************************************
 
     // reset counter
     number_begin_events = 0;
 
-    x = (int*) malloc(10 * sizeof(int));
 
-    #pragma omp target data map(alloc: x)
+    a = 1;
+    int b = 2;
+    #pragma omp target data map(alloc: a)
     {   
         sleep(1);
     } 
 
-    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 2 (alloc array without passing size): number of data_begin events does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
+    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 2 (alloc variable): number of data_begin events does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
 
 
+#elif (TEST == 3)
     // ************************************************************************
     // test case 3: copy (tofrom) array
     // ************************************************************************
@@ -165,6 +163,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 3 (tofrom: array): number of data_begin events does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
 
 
+#elif (TEST == 4)
     // ***********************************************************************
     // test case 4: copy (tofrom) array and variable together
     // ***********************************************************************
@@ -173,7 +172,7 @@ int regression_test(int argc, char **argv) {
     number_begin_events = 0;
 
     z = (int*) malloc(10 * sizeof(int));
-    int a = 1;
+    a = 1;
 
     #pragma omp target data map(tofrom: z[0:10], a)
     {
@@ -183,6 +182,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 4 (tofrom: array and variable): number of data_begin events does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
 
 
+#elif (TEST == 5)
     // ************************************************************************
     // test case 5: nested data region
     // ************************************************************************
@@ -207,6 +207,8 @@ int regression_test(int argc, char **argv) {
     
     CHECK(number_begin_events == 3, IMPLEMENTED_BUT_INCORRECT, "test case 5 (nested arrays): number of data_begin events does not match with number of data regions (expected %d, observed %d)", 3, number_begin_events);
 
+
+#elif (TEST == 6)
     // ************************************************************************
     // test case 6: multiple arrays 
     // ************************************************************************
@@ -226,7 +228,7 @@ int regression_test(int argc, char **argv) {
     
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 6 (multiple arrays): number of data_begin events does not match with number of data regions (expected %d, observed %d)", 1, number_begin_events);
 
-
+#endif
 
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_data_begin and target_data_end calls (count = %d)", count);
 

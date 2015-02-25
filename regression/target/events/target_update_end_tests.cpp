@@ -15,13 +15,6 @@
 
 
 //*****************************************************************************
-// macros
-//*****************************************************************************
-
-#define DEBUG 1
-
-
-//*****************************************************************************
 // global variables
 //*****************************************************************************
 
@@ -111,6 +104,8 @@ int regression_test(int argc, char **argv) {
     // arrays to be copied between host and device
     int *x, *y, *z;
 
+
+#if (TEST == 1)
     //*************************************************************************
     // test case 1: copy variable from host to device
     //*************************************************************************
@@ -139,6 +134,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 1 (copy variable from host to device): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
 
 
+#elif (TEST == 2)
     //*************************************************************************
     // test case 2: copy variable from device to host
     //*************************************************************************
@@ -164,6 +160,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 2 (copy variable from device to host): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
 
 
+#elif (TEST == 3)
     //*************************************************************************
     // test case 3: copy array from host to device
     //*************************************************************************
@@ -198,6 +195,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 3 (copy array from host to device): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
 
 
+#elif (TEST == 4)
     //*************************************************************************
     // test case 4: copy array from device to host
     //*************************************************************************
@@ -233,6 +231,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "test case 4 (copy array from device to host): number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
 
 
+#elif (TEST == 5)
     //*************************************************************************
     // test case 5: copy array and variable in both directions
     //*************************************************************************
@@ -295,6 +294,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 2, IMPLEMENTED_BUT_INCORRECT, "test case 5 (copy array and variable in both directions): number of update_begin events not as expected (expected %d, observed %d)", 2, number_begin_events);
 
 
+#elif (TEST == 6)
     //*************************************************************************
     // test case 6: no update, just simple target data region
     // (test if runtime can distinguish target data events and target update
@@ -316,6 +316,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 0, IMPLEMENTED_BUT_INCORRECT, "test case 6 (no update, only target data region): number of update_begin events not as expected (expected %d, observed %d)", 0, number_begin_events);
 
 
+#elif (TEST == 7)
     //*************************************************************************
     // test case 7: no update, nested target data regions
     // (test if runtime can distinguish target data events and target update
@@ -336,6 +337,7 @@ int regression_test(int argc, char **argv) {
     CHECK(number_begin_events == 0, IMPLEMENTED_BUT_INCORRECT, "test case 7 (no update, nested target data region): number of update_begin events not as expected (expected %d, observed %d)", 0, number_begin_events);
 
 
+#elif (TEST == 8)
     //*************************************************************************
     // test case 8: nested data regions and updates, do some random updates
     //*************************************************************************
@@ -369,10 +371,12 @@ int regression_test(int argc, char **argv) {
         }
         #pragma omp target update from(x[0:10])
     }
-    
+
     CHECK(number_begin_events == 6, IMPLEMENTED_BUT_INCORRECT, "test case 8 (nested data regions and updates): number of update_begin events not as expected (expected %d, observed %d)", 6, number_begin_events);
 
+#endif
 
+    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_update_begin and target_update_end calls (count = %d)", count);
 
     return return_code;
 #else

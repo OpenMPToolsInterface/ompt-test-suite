@@ -25,6 +25,7 @@
 //*****************************************************************************
 
 int count = 0; // target_begin -> increased, target_end -> decreased
+int number_begin_calls = 0;
 
 // save target_id and corresponding task_id for a target_begin 
 ompt_target_id_t begin_target_id;
@@ -57,6 +58,7 @@ static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
     begin_task_id = task_id;
 
     count += 1;
+    number_begin_calls += 1;
 
     pthread_mutex_unlock(&thread_mutex);
 }
@@ -104,45 +106,19 @@ void init_test(ompt_function_lookup_t lookup) {
 int regression_test(int argc, char **argv) {
 
 #if defined(_OPENMP) && (_OPENMP >= 201307)
-    int a;
-    // start value on host
-    a = 1;
-    
-    // save old values for error checking
-    int a_old_device, a_old_host;
+    int a = 1;
 
-    #pragma omp target data map(alloc: a, a_old_device)
+    #pragma omp target data map(alloc: a)
     {
         #pragma omp target
         {
-            // modify a on device
-            a = 42;
-
-            // save modified a on device
-            a_old_device = a;
+            a = 1;
         }
 
-        // save old a on host
-        a_old_host = a;
-        // copy new value to host
-        #pragma omp target update from(a)
-
-        CHECK(a_old_host != a, IMPLEMENTED_BUT_INCORRECT, "update from device to host not working correctly");
-
-        // modify a on host
-        a = 0;
-        // copy new value to device
         #pragma omp target update to(a)
-    
-        bool device_ok = true; // CHECK-directive does not work in target region, so use bool variable
-        #pragma omp target
-        {
-            if (a_old_device == a) {
-                device_ok = false;
-            }
-        }
-        CHECK(device_ok, IMPLEMENTED_BUT_INCORRECT, "update from host to device not working correctly");
-    }
+    } 
+
+    CHECK(number_begin_calls == 1, IMPLEMENTED_BUT_INCORRECT,  "number of data_map_begin events not as expected (expected: %d, oberved: %d)", 1, number_begin_calls);
 
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of data_map_begin and data_map_end calls");
 

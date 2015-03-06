@@ -3,6 +3,7 @@
 //*****************************************************************************
 
 #include <vector>
+#include <sys/time.h>
 
 //*****************************************************************************
 // OpenMP runtime includes 
@@ -33,6 +34,7 @@
 //*****************************************************************************
 
 int count = 0; // target_begin -> increased, target_end -> decreased
+struct timeval start_t, end_t;
 
 // save target_id and corresponding task_id for a target_begin (for each thread)
 std::vector<ompt_target_id_t> target_ids(NUM_THREADS, 0);
@@ -63,12 +65,18 @@ static void on_ompt_event_target_invoke_begin(ompt_task_id_t task_id,
 
     count += 1;
 
+    // time measurement of target invoke start/end difference
+    gettimeofday(&start_t, NULL);
+
     pthread_mutex_unlock(&thread_mutex);
 }
 
 static void on_ompt_event_target_invoke_end(ompt_task_id_t task_id,
                   ompt_target_id_t target_id) {
     pthread_mutex_lock(&thread_mutex);
+
+    // time measurement of target invoke start/end difference
+    gettimeofday(&end_t, NULL);
 
 #if DEBUG
     printf("end: task_id = %lld, target_id = %lld\n", task_id, target_id);
@@ -121,7 +129,23 @@ int regression_test(int argc, char **argv) {
         }
     }
 
-    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of target_begin and target_end calls");
+    CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,
+         "not the same number of target_begin and target_end calls");
+
+
+    // target invoke start and end time difference test
+    #pragma omp target
+    {
+        sleep(1);
+    }
+
+    struct timeval time_diff;
+    timersub(&end_t, &start_t, &time_diff);
+
+    CHECK(time_diff.tv_sec > 1 || (time_diff.tv_sec == 1 && time_diff.tv_usec > 0),
+        IMPLEMENTED_BUT_INCORRECT,
+        "target invoke end too early (expected: > 1s, observed: %ld.%06lds)",
+        (long int) time_diff.tv_sec, (long int) time_diff.tv_usec);
 
     return return_code;
 #else

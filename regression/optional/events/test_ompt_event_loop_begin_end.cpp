@@ -55,6 +55,16 @@ on_ompt_event_loop_begin(ompt_parallel_id_t parallel_id,
     printf("loop_begin %lld (parallel %lld)\n", task_id, parallel_id);
 #endif
 
+    ompt_parallel_id_t inquiry_parallel_id = ompt_get_parallel_id(0);
+    CHECK(parallel_id == inquiry_parallel_id, IMPLEMENTED_BUT_INCORRECT, \
+        "parallel id from parameter does not match inquiry function (%d vs %d)", \
+        parallel_id, inquiry_parallel_id);
+
+    ompt_task_id_t inquiry_task_id = ompt_get_task_id(0);
+    CHECK(task_id == inquiry_task_id, IMPLEMENTED_BUT_INCORRECT, \
+        "task id from parameter does not match inquiry function (%d vs %d)", \
+        task_id, inquiry_task_id);
+
     if (task_id_to_parallel_id_map.count(task_id) == 0) {
         task_id_to_parallel_id_map[task_id] = parallel_id;
 

@@ -126,7 +126,7 @@ regression_test(int argc, char** argv)
         "threads in region = %d, implicit task begin callbacks = %d, " \
         "implicit task end callbacks = %d", nthreads, tasks_begin, tasks_end);
 
-  int outer_threads, inner_threads;
+  int outer_threads, inner_threads, i;
   for (outer_threads = 1; outer_threads <= NUM_THREADS; outer_threads++) {
     for (inner_threads = 1; inner_threads <= NUM_THREADS; inner_threads++) {
 #if DEBUG
@@ -140,6 +140,31 @@ regression_test(int argc, char** argv)
         #pragma omp parallel num_threads(inner_threads)
         {
           serialwork(0);
+        }
+      }
+
+      // special case for gcc; use schedule(runtime) to force library call
+      #pragma omp parallel num_threads(outer_threads)
+      {
+        #pragma omp parallel for schedule(runtime) num_threads(inner_threads)
+        for (i = 0; i < NUM_THREADS; i++) {
+          serialwork(0);
+        }
+      }
+
+      // special case for gcc
+      #pragma omp parallel num_threads(outer_threads)
+      {
+        #pragma omp parallel sections num_threads(inner_threads)
+        {
+          #pragma omp section
+          {
+            serialwork(0);
+          }
+          #pragma omp section
+          {
+            serialwork(0);
+          }
         }
       }
 

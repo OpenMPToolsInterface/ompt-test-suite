@@ -28,6 +28,7 @@
 //*****************************************************************************
 
 #define DEBUG 0
+#define NUM_THREADS 4
 
 
 
@@ -98,7 +99,7 @@ init_test(ompt_function_lookup_t lookup)
 int
 regression_test(int argc, char** argv)
 {
-  #pragma omp parallel 
+  #pragma omp parallel num_threads(NUM_THREADS)
   {
     #pragma omp atomic update
     nthreads_expected += 1;

@@ -49,7 +49,7 @@
 //*****************************************************************************
     
 #define macro( fn ) fn ## _t fn;
-FOREACH_OMPT_FN( macro )
+FOREACH_OMPT_INQUIRY_FN( macro )
 #undef macro
 
 
@@ -88,7 +88,7 @@ ompt_initialize( ompt_function_lookup_t lookup,
 {
   // initialize OMPT function pointers
 #define macro( fn ) DEFINE_OMPT_FN_PTR( lookup, fn )
-  FOREACH_OMPT_FN( macro )
+  FOREACH_OMPT_INQUIRY_FN( macro )
 #undef macro
 
   init_test(lookup);

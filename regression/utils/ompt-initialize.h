@@ -17,7 +17,7 @@
 // OMPT function pointers 
 //-----------------------------------------------------------------------------
 #define macro( fn ) extern fn ## _t fn;
-FOREACH_OMPT_FN( macro )
+FOREACH_OMPT_INQUIRY_FN( macro )
 #undef macro
 
 

@@ -104,7 +104,7 @@ on_ompt_event_parallel_end
 	  "doesn't execute in parent's context", parallel_id);
     CHECK(ompt_get_task_frame(0) == serial_task_frame,			\
 	  IMPLEMENTED_BUT_INCORRECT,					\
-	  "parallel end callback for region %lld"
+	  "parallel end callback for region %lld "
 	  "doesn't execute in parent's context", parallel_id);
   }
 }

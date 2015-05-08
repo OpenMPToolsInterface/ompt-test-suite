@@ -1,0 +1,1 @@
+This project is a list of OpenMP test cases that test the OMPT runtime support in a given OpenMP runtime. This suite can be tested with any compiler/runtime that supports the OMPT specification. For more details, see OMPT at http://openmp.org

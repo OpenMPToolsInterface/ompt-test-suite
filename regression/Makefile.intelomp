@@ -12,7 +12,7 @@ LIB = $(LIB_DIR)/libiomp5.so
 
 LIBS = -Wl,-rpath=$(LIB_DIR) $(LIB) -lm
 
-TARGET_LIBDIR=$(INTEL_OMP_ROOT)/itt/offload/build/host
+TARGET_LIBDIR=$(INTEL_OMP_ROOT)/lib/intel64
 TARGET_LIB =$(TARGET_LIBDIR)/liboffload.so
 LIBS += -Wl,-rpath=$(TARGET_LIBDIR) $(TARGET_LIB)
 

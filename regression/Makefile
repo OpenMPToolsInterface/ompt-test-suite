@@ -79,6 +79,9 @@ ifeq ($(compiler),)
   compiler := $(CC)
 endif
 ifeq ($(compiler),icc)
+  ifeq ($(arch),mic)
+    ARCH_FLAGS=-mmic
+  endif
   include Makefile.icc
 else ifeq ($(compiler),gcc)
   include Makefile.gcc
@@ -140,6 +143,7 @@ else
   LEVEL=0
 endif
 
+BASE_FLAGS += $(ARCH_FLAGS)
 BASE_FLAGS += -O$(LEVEL)
 BASE_FLAGS += -DOMPT_DEBUG -g
 BASE_FLAGS += $(INCLUDES) 

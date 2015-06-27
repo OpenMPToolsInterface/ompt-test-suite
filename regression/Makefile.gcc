@@ -16,4 +16,4 @@ OMPFLAGS = -fopenmp
 # set up Intel OpenMP runtime
 # ----------------------------------
 
-include Makefile.intelomp
+include Makefile.llvmomp

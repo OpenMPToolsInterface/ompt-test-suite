@@ -75,12 +75,9 @@ on_ompt_event_parallel_begin
         "parallel_id = %lld", parallel_id);
 
   CHECK(parallel_id != 0,		\
-	IMPLEMENTED_BUT_INCORRECT, \
+        IMPLEMENTED_BUT_INCORRECT,			  \
         "parallel region id = 0 in event_parallel_begin " \
-	"parent_task_id = %lld", parent_task_id);
-
-  CHECK(parallel_id_to_task_id_map.count(parallel_id) == 0,		\
-	IMPLEMENTED_BUT_INCORRECT, "duplicated parallel region ids");
+        "parent_task_id = %lld", parent_task_id);
 
   CHECK(requested_team_size == NUM_THREADS,				\
 	IMPLEMENTED_BUT_INCORRECT, "wrong requested team size");
@@ -91,6 +88,10 @@ on_ompt_event_parallel_begin
          parallel_id, parent_task_id);
   dump_chain(0);
 #endif
+
+  CHECK(parallel_id_to_task_id_map.count(parallel_id) == 0,		\
+	IMPLEMENTED_BUT_INCORRECT, "duplicate parallel region id in task map");
+
   parallel_id_to_task_id_map[parallel_id] = parent_task_id;
   parallel_id_to_task_frame_map[parallel_id] = parent_task_frame;
 
@@ -100,7 +101,7 @@ on_ompt_event_parallel_begin
   
   CHECK(iter == parallel_id_set.end(), \
         IMPLEMENTED_BUT_INCORRECT, \
-        "duplicate parallel region id %lld", *iter);
+        "duplicate parallel region id %lld in region set", *iter);
 
   // record that this region id has been seen
   parallel_id_set.insert(parallel_id);

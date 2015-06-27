@@ -52,9 +52,10 @@ on_ompt_event_implicit_task_begin(ompt_parallel_id_t parallel_id,
 
     std::set<ompt_task_id_t>::iterator iter = all_task_ids.find(task_id);
 
+    active_task_ids.insert(task_id);
+
     if (iter == all_task_ids.end()) {
         all_task_ids.insert(task_id);
-        active_task_ids.insert(task_id);
         #pragma omp atomic update
         tasks_begin += 1;
     } else {

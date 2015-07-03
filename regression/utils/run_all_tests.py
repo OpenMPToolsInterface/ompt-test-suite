@@ -33,8 +33,16 @@ try:
   for test, path in name_to_path:
     print('Running test ' + test + ' ...')
     code, out = execute_test_case(path)
+
+    # if code is out of range, it becomes fatal
+    if code > 255:
+      code = 252;
+    elif code < 252:
+      if code != 0:
+        code = 252;
+
     if len(out) != 0:
        print out,
     print("Result: " + test.ljust(60)  + "Status: [%s]\n" % (code_to_status[code]))
 except:
-    print "\nRegression tests were interrupted with a signal."
+  print "\nRegression tests were interrupted with a signal."

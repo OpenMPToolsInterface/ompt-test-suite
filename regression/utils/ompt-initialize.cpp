@@ -86,6 +86,9 @@ ompt_initialize( ompt_function_lookup_t lookup,
                  const char*            runtime_version,
                  unsigned int           ompt_version )
 {
+  // inform regression testing harness that initialization has occurred.
+  ompt_initialized = 1;
+
   // initialize OMPT function pointers
 #define macro( fn ) DEFINE_OMPT_FN_PTR( lookup, fn )
   FOREACH_OMPT_INQUIRY_FN( macro )

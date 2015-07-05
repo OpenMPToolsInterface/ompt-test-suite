@@ -25,6 +25,7 @@ pthread_mutex_t assert_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int return_code = CORRECT;
 const char *regression_test_name = "";
+int ompt_initialized = 0;
 
 
 
@@ -77,6 +78,13 @@ main(int argc, char **argv)
 
   // force initialization of the openmp runtime system
   openmp_init();
+
+  CHECK(ompt_initialized, FATAL, 
+        "no call to ompt_initialize. test aborted."); 
+
+ if (return_code == FATAL || return_code == NOT_IMPLEMENTED) {
+    _exit(return_code);
+  }
 
   // execute the user regression test
   return regression_test(argc, argv);

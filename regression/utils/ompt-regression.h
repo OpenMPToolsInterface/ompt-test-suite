@@ -57,6 +57,7 @@ extern pthread_mutex_t assert_mutex;
 
 extern const char *regression_test_name;
 extern int return_code;
+extern int ompt_initialized;
 
 
 

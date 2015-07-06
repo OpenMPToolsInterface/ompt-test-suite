@@ -28,7 +28,8 @@
 // global data
 //*****************************************************************************
 
-std::set<ompt_task_id_t> task_ids;
+std::set<ompt_task_id_t> active_task_ids;
+std::set<ompt_task_id_t> all_task_ids;
 
 int tasks_begin = 0;
 int tasks_end = 0;
@@ -49,10 +50,12 @@ on_ompt_event_implicit_task_begin(ompt_parallel_id_t parallel_id,
     printf("implicit task_begin %lld (region %lld)\n", task_id, parallel_id);
 #endif
 
-    std::set<ompt_task_id_t>::iterator iter = task_ids.find(task_id);
+    std::set<ompt_task_id_t>::iterator iter = all_task_ids.find(task_id);
 
-    if (iter == task_ids.end()) {
-        task_ids.insert(task_id);
+    active_task_ids.insert(task_id);
+
+    if (iter == all_task_ids.end()) {
+        all_task_ids.insert(task_id);
         #pragma omp atomic update
         tasks_begin += 1;
     } else {
@@ -74,7 +77,7 @@ on_ompt_event_implicit_task_end(ompt_parallel_id_t parallel_id,
     printf("implicit task_end   %lld (region %lld)\n", task_id, parallel_id);
 #endif
 
-    if (task_ids.erase(task_id) != 0) {
+    if (active_task_ids.erase(task_id) != 0) {
         #pragma omp atomic update
         tasks_end += 1;
     } else {

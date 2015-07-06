@@ -48,7 +48,7 @@
 // global variables
 //*****************************************************************************
     
-#define macro( fn ) fn ## _t fn;
+#define macro( fn ) fn ## _t fn = 0;
 FOREACH_OMPT_INQUIRY_FN( macro )
 #undef macro
 
@@ -62,17 +62,28 @@ FOREACH_OMPT_INQUIRY_FN( macro )
 void
 quit_on_init_failure()
 {
-  if (return_code == NOT_IMPLEMENTED) exit(return_code);
+  if (return_code == FATAL || 
+      return_code == NOT_IMPLEMENTED) {
+    _exit(return_code);
+  }
 }
 
 
 int
 register_callback(ompt_event_t e, ompt_callback_t c) 
 {
-  int code = ompt_set_callback(e, c);
+  int code;
+
+  CHECK(ompt_set_callback, FATAL, "ompt_set_callback unavailable. test aborted");
+
+  quit_on_init_failure();
+
+  code = ompt_set_callback(e, c);
+
   if (code != ompt_set_result_event_may_occur_callback_always) {
     return FALSE;
   }
+
   return TRUE;
 }
 
@@ -86,6 +97,9 @@ ompt_initialize( ompt_function_lookup_t lookup,
                  const char*            runtime_version,
                  unsigned int           ompt_version )
 {
+  // inform regression testing harness that initialization has occurred.
+  ompt_initialized = 1;
+
   // initialize OMPT function pointers
 #define macro( fn ) DEFINE_OMPT_FN_PTR( lookup, fn )
   FOREACH_OMPT_INQUIRY_FN( macro )
@@ -93,10 +107,7 @@ ompt_initialize( ompt_function_lookup_t lookup,
 
   init_test(lookup);
 
-  if (return_code == FATAL || 
-      return_code == NOT_IMPLEMENTED) {
-    _exit(return_code);
-  }
+  quit_on_init_failure();
 
   return 1;
 }

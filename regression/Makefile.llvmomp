@@ -1,13 +1,13 @@
-ifndef INTEL_OMP_ROOT
-  $(error You must define INTEL_OMP_ROOT so that the OpenMP library version providing the OMPT API can be found)
+ifndef LLVM_OMP_ROOT
+  $(error You must define LLVM_OMP_ROOT so that the OpenMP library version providing the OMPT API can be found)
 endif
 
 # ----------------------------------
 # set up OpenMP runtime
 # ----------------------------------
 
-LIB_DIR = $(INTEL_OMP_ROOT)/lib
-LIB = $(LIB_DIR)/libiomp5.so
+LIB_DIR = $(LLVM_OMP_ROOT)/lib
+LIB = $(LIB_DIR)/libomp.so
 
 
 LIBS = -Wl,-rpath=$(LIB_DIR) $(LIB) -lm
@@ -19,4 +19,4 @@ LIBS += -Wl,-rpath=$(TARGET_LIBDIR) $(TARGET_LIB)
 # ----------------------------------
 # include path for ompt.h and omp.h
 # ----------------------------------
-INCLUDES = -I$(INTEL_OMP_ROOT)/include
+INCLUDES = -I$(LLVM_OMP_ROOT)/include

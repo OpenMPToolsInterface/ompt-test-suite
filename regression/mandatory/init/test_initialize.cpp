@@ -56,7 +56,7 @@ int ompt_initialize(ompt_function_lookup_t lookup,
 {
 #if DEBUG
   printf("ompt_initialize(lookup = %p, runtime_version = %s, "
-         "ompt_version = %d)\n", runtime_version, ompt_version);
+         "ompt_version = %d)\n", lookup, runtime_version, ompt_version);
 #endif
   ompt_initialized = 1;
   return 1;

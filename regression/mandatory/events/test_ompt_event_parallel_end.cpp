@@ -64,8 +64,8 @@ on_ompt_event_parallel_begin
 {
   pthread_mutex_lock(&thread_mutex);
 #if DEBUG
-  printf("begin parallel: parallel_id = %lld, "
-	 "parent_task_frame %p, parent_task_id = %lld\n", 
+  printf("begin parallel: parallel_id = %lu, "
+	 "parent_task_frame %p, parent_task_id = %lu\n", 
 	 parallel_id, parent_task_frame, parent_task_id);
 #endif
   parallel_id_to_task_id[parallel_id] = parent_task_id;
@@ -82,7 +82,7 @@ on_ompt_event_parallel_end
 {
   pthread_mutex_lock(&thread_mutex);
 #if DEBUG
-  printf("end parallel: parallel_id = %lld, task_id = %lld\n", 
+  printf("end parallel: parallel_id = %lu, task_id = %lu\n", 
 	 parallel_id, task_id);
 #endif
   CHECK(parallel_id_to_task_id.count(parallel_id) != 0,	  \
@@ -90,7 +90,7 @@ on_ompt_event_parallel_end
 	"no record found for parallel id");
   
   CHECK(task_ids.count(task_id) != 0, IMPLEMENTED_BUT_INCORRECT,	\
-	"end for task_id %lld with no matching begin", task_id);
+	"end for task_id %lu with no matching begin", task_id);
   
   parallel_id_to_task_id.erase(parallel_id);
   task_ids.erase(task_id);
@@ -100,11 +100,11 @@ on_ompt_event_parallel_end
   if (test_enclosing_context) {
     CHECK(ompt_get_task_id(0) == serial_task_id,			\
 	  IMPLEMENTED_BUT_INCORRECT,					\
-	  "parallel end callback for region %lld "			\
+	  "parallel end callback for region %lu "			\
 	  "doesn't execute in parent's context", parallel_id);
     CHECK(ompt_get_task_frame(0) == serial_task_frame,			\
 	  IMPLEMENTED_BUT_INCORRECT,					\
-	  "parallel end callback for region %lld "
+	  "parallel end callback for region %lu "
 	  "doesn't execute in parent's context", parallel_id);
   }
 }
@@ -136,7 +136,7 @@ regression_test(int argc, char** argv)
   serial_task_frame = ompt_get_task_frame(0);
   
 #if DEBUG
-  printf("serial_task_id = %lld, serial_task_frame = %p\n", 
+  printf("serial_task_id = %lu, serial_task_frame = %p\n", 
 	 serial_task_id, serial_task_frame);
 #endif
 

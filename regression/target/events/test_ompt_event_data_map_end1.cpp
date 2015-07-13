@@ -46,7 +46,7 @@ static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("task_id = %lld, target_id = %lld, data_map_id = %lld, device_id = %lld, sync_type = %lld, map_type = %lld, bytes = %lld\n",
+    printf("task_id = %lu, target_id = %lu, data_map_id = %lu, device_id = %lu, sync_type = %u, map_type = %u, bytes = %lu\n",
         task_id, target_id, data_map_id, device_id, sync_type, map_type, bytes);
 #endif
 
@@ -68,7 +68,7 @@ static void on_ompt_event_data_map_end(ompt_task_id_t task_id,
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("end: task_id = %lld, target_id = %lld\n", task_id, target_id);
+    printf("end: task_id = %lu, target_id = %lu\n", task_id, target_id);
 #endif
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");

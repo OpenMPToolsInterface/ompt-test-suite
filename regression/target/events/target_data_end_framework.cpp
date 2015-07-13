@@ -50,7 +50,7 @@ static void on_ompt_event_target_data_begin(ompt_task_id_t task_id,
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("begin: task_id = %lld, target_id = %lld, device_id = %lld, target_function = %p\n",
+    printf("begin: task_id = %lu, target_id = %lu, device_id = %lu, target_function = %p\n",
         task_id, target_id, device_id, target_function);
 #endif
 
@@ -72,7 +72,7 @@ static void on_ompt_event_target_data_end(ompt_task_id_t task_id,
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("end: task_id = %lld, target_id = %lld\n",
+    printf("end: task_id = %lu, target_id = %lu\n",
         task_id, target_id);
 #endif
 

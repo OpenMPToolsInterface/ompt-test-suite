@@ -91,10 +91,12 @@ ifeq ($(compiler),icc)
   include Makefile.icc
 else ifeq ($(compiler),gcc)
   include Makefile.gcc
+else ifeq ($(compiler),clang)
+  include Makefile.clang
 else ifeq ($(compiler),xlc)
   include Makefile.xlc
 else
-  $(error Need to specify compiler argument: make compiler=icc, make compiler=gcc, or make compiler=xlc)
+  $(error Need to specify compiler argument: make compiler=icc, make compiler=gcc, make compiler=clang or make compiler=xlc)
 endif
 
 

@@ -15,7 +15,7 @@ OMPFLAGS 	= -openmp
 
 
 # ----------------------------------
-# set up OpenMP runtime
+# set up LLVM OpenMP runtime
 # ----------------------------------
 
 include Makefile.llvmomp

@@ -9,10 +9,12 @@ CXX = clang++ -gdwarf-3
 # compiler flags for OpenMP
 # ----------------------------------
 
-OMPFLAGS = -fopenmp
+OMPFLAGS = -fopenmp -omptargets=nvptx64sm_35-nvidia-cuda
 
 # ----------------------------------
 # set up LLVM OpenMP runtime
 # ----------------------------------
 
 include Makefile.llvmomp
+
+LIBS += -lomptarget

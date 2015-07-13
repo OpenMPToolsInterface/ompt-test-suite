@@ -1,5 +1,6 @@
 *.exe
 *.o
+*.o.*
 
 .memoized_compiler
 utils/libutil.a

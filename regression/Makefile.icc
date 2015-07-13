@@ -19,3 +19,7 @@ OMPFLAGS 	= -openmp
 # ----------------------------------
 
 include Makefile.llvmomp
+
+TARGET_LIBDIR=$(LLVM_OMP_ROOT)/lib/intel64
+TARGET_LIB =$(TARGET_LIBDIR)/liboffload.so
+LIBS += -Wl,-rpath=$(TARGET_LIBDIR) $(TARGET_LIB)

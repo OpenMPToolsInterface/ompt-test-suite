@@ -47,7 +47,7 @@ on_ompt_event_implicit_task_begin(ompt_parallel_id_t parallel_id,
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("implicit task_begin %lld (region %lld)\n", task_id, parallel_id);
+    printf("implicit task_begin %lu (region %lu)\n", task_id, parallel_id);
 #endif
 
     std::set<ompt_task_id_t>::iterator iter = all_task_ids.find(task_id);
@@ -61,7 +61,7 @@ on_ompt_event_implicit_task_begin(ompt_parallel_id_t parallel_id,
     } else {
         CHECK(FALSE, \
             IMPLEMENTED_BUT_INCORRECT, \
-            "duplicate implicit task id %lld", *iter);
+            "duplicate implicit task id %lu", *iter);
     }
 
     pthread_mutex_unlock(&thread_mutex);
@@ -74,7 +74,7 @@ on_ompt_event_implicit_task_end(ompt_parallel_id_t parallel_id,
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("implicit task_end   %lld (region %lld)\n", task_id, parallel_id);
+    printf("implicit task_end   %lu (region %lu)\n", task_id, parallel_id);
 #endif
 
     if (active_task_ids.erase(task_id) != 0) {
@@ -82,7 +82,7 @@ on_ompt_event_implicit_task_end(ompt_parallel_id_t parallel_id,
         tasks_end += 1;
     } else {
         CHECK(FALSE, IMPLEMENTED_BUT_INCORRECT, \
-	      "no record for task id %lld", task_id);
+	      "no record for task id %lu", task_id);
     }
 
     pthread_mutex_unlock(&thread_mutex);

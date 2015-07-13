@@ -61,6 +61,12 @@ void init_test(ompt_function_lookup_t lookup) {
 int regression_test(int argc, char **argv) {
 
 #if defined(_OPENMP) && (_OPENMP >= 201307)
+    // empty data region
+    #pragma omp target data
+    {
+        sleep(1);
+    }
+
     return return_code;
 #else
     CHECK(FALSE, NOT_IMPLEMENTED, "OpenMP 4.0 not supported; OpenMP TARGET feature not tested");

@@ -34,6 +34,7 @@
 //*****************************************************************************
 
 int count = 0; // target_begin -> increased, target_end -> decreased
+int number_begin_events = 0;
 struct timeval start_t, end_t;
 
 // save target_id and corresponding task_id for a target_begin (for each thread)
@@ -64,6 +65,7 @@ static void on_ompt_event_target_invoke_begin(ompt_task_id_t task_id,
     task_ids[ompt_get_thread_id()] = task_id;
 
     count += 1;
+    number_begin_events += 1;
 
     // time measurement of target invoke start/end difference
     gettimeofday(&start_t, NULL);
@@ -132,6 +134,7 @@ int regression_test(int argc, char **argv) {
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,
          "not the same number of target_begin and target_end calls");
 
+    CHECK(number_begin_events == 2*NUM_THREADS, IMPLEMENTED_BUT_INCORRECT,  "number of target_begin events not as expected (expected: %d, oberved: %d)", 2*NUM_THREADS, number_begin_events);
 
     // target invoke start and end time difference test
     #pragma omp target

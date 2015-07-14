@@ -32,7 +32,7 @@ static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
                 ompt_data_map_t map_type,
                 ompt_data_size_t bytes) {
 #if DEBUG
-    printf("task_id = %lu, target_id = %lu, data_map_id = %lu, device_id = %lu, sync_type = %u, map_type = %u, bytes = %lu\n",
+    printf("task_id = %" PRIu64 ", target_id = %" PRIu64 ", data_map_id = %" PRIu64 ", device_id = %" PRIu64 ", sync_type = %u, map_type = %u, bytes = %" PRIu64 "\n",
         task_id, target_id, data_map_id, device_id, sync_type, map_type, bytes);
 #endif
 

@@ -29,7 +29,7 @@ static void on_ompt_event_target_invoke_begin(ompt_task_id_t task_id,
                 ompt_target_device_id_t device_id,
                 void* target_function) {
 #if DEBUG
-    printf("task_id = %lu, target_id = %lu, device_id = %lu, target_function = %p\n",
+    printf("task_id = %" PRIu64 ", target_id = %" PRIu64 ", device_id = %" PRIu64 ", target_function = %p\n",
         task_id, target_id, device_id, target_function);
 #endif
 

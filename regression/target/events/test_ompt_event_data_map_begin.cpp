@@ -21,6 +21,13 @@
 
 
 //*****************************************************************************
+// global variables
+//*****************************************************************************
+
+int number_begin_events = 0;
+
+
+//*****************************************************************************
 // private operations
 //*****************************************************************************
 
@@ -38,6 +45,10 @@ static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
     CHECK(task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "task_id not equal to ompt_get_task_id()");
+
+    pthread_mutex_lock(&thread_mutex);
+    number_begin_events += 1;
+    pthread_mutex_unlock(&thread_mutex);
 }
 
 
@@ -68,6 +79,8 @@ int regression_test(int argc, char **argv) {
         
         #pragma omp target update from(a)
     }
+
+    CHECK(number_begin_events == 2, IMPLEMENTED_BUT_INCORRECT,  "number of data_map_begin events not as expected (expected: %d, oberved: %d)", 2, number_begin_events);
 
     return return_code;
 #else

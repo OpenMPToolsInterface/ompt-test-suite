@@ -52,17 +52,17 @@ on_ompt_event_loop_begin(ompt_parallel_id_t parallel_id,
 {
     pthread_mutex_lock(&thread_mutex);
 #if DEBUG
-    printf("loop_begin %lu (parallel %lu)\n", task_id, parallel_id);
+    printf("loop_begin %" PRIu64 " (parallel %" PRIu64 ")\n", task_id, parallel_id);
 #endif
 
     ompt_parallel_id_t inquiry_parallel_id = ompt_get_parallel_id(0);
     CHECK(parallel_id == inquiry_parallel_id, IMPLEMENTED_BUT_INCORRECT, \
-        "parallel id from parameter does not match inquiry function (%lu vs %lu)", \
+        "parallel id from parameter does not match inquiry function (%" PRIu64 " vs %" PRIu64 ")", \
         parallel_id, inquiry_parallel_id);
 
     ompt_task_id_t inquiry_task_id = ompt_get_task_id(0);
     CHECK(task_id == inquiry_task_id, IMPLEMENTED_BUT_INCORRECT, \
-        "task id from parameter does not match inquiry function (%lu vs %lu)", \
+        "task id from parameter does not match inquiry function (%" PRIu64 " vs %" PRIu64 ")", \
         task_id, inquiry_task_id);
 
     if (task_id_to_parallel_id_map.count(task_id) == 0) {
@@ -72,7 +72,7 @@ on_ompt_event_loop_begin(ompt_parallel_id_t parallel_id,
         loop_begin += 1;
     } else {
         CHECK(FALSE, IMPLEMENTED_BUT_INCORRECT, \
-            "duplicate task id %lu", task_id);
+            "duplicate task id %" PRIu64, task_id);
     }
 
     pthread_mutex_unlock(&thread_mutex);
@@ -84,13 +84,13 @@ on_ompt_event_loop_end(ompt_parallel_id_t parallel_id,
 {
     pthread_mutex_lock(&thread_mutex);
 #if DEBUG
-    printf("loop_end %lu (parallel %lu)\n", task_id, parallel_id);
+    printf("loop_end %" PRIu64 " (parallel %" PRIu64 ")\n", task_id, parallel_id);
 #endif
 
     if (task_id_to_parallel_id_map.count(task_id) == 1) {
         CHECK(task_id_to_parallel_id_map[task_id] == parallel_id,
             IMPLEMENTED_BUT_INCORRECT, \
-            "unmatching task and parallel id (%lu in %lu)", task_id, parallel_id);
+            "unmatching task and parallel id (%" PRIu64 " in %" PRIu64 ")", task_id, parallel_id);
 
         task_id_to_parallel_id_map.erase(task_id);
 
@@ -98,7 +98,7 @@ on_ompt_event_loop_end(ompt_parallel_id_t parallel_id,
         loop_end += 1;
     } else {
         CHECK(FALSE, IMPLEMENTED_BUT_INCORRECT, \
-            "no record for task id %lu", task_id);
+            "no record for task id %" PRIu64, task_id);
     }
 
     pthread_mutex_unlock(&thread_mutex);

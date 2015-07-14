@@ -56,7 +56,7 @@ on_ompt_event_task_begin(ompt_task_id_t parent_task_id,
 {
 #if DEBUG
     pthread_mutex_lock(&assert_mutex);
-    printf("task_begin %lu (parent %lu)\n", new_task_id, parent_task_id);
+    printf("task_begin %" PRIu64 " (parent %" PRIu64 ")\n", new_task_id, parent_task_id);
     pthread_mutex_unlock(&assert_mutex);
 #endif
 
@@ -72,12 +72,12 @@ on_ompt_event_task_end(ompt_task_id_t  task_id)
 {
 #if DEBUG
     pthread_mutex_lock(&assert_mutex);
-    printf("task_end %lu\n", task_id);
+    printf("task_end %" PRIu64 "\n", task_id);
     pthread_mutex_unlock(&assert_mutex);
 #endif
 
     CHECK(task_ids.count(task_id) != 0, IMPLEMENTED_BUT_INCORRECT, \
-	  "no record for task id %lu", task_id);
+	  "no record for task id %" PRIu64, task_id);
     #pragma omp atomic update
     tasks_active -= 1;
 }
@@ -104,7 +104,7 @@ init_test(ompt_function_lookup_t lookup)
 void dump_chain(int depth)
 {
   ompt_task_id_t task_id = ompt_get_task_id(depth);
-  printf("level %d: task %lu\n", depth, task_id);
+  printf("level %d: task %" PRIu64 "\n", depth, task_id);
   if (task_id != 0) dump_chain(depth+1); 
 }
 

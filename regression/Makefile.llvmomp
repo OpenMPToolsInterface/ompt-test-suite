@@ -6,7 +6,7 @@ endif
 # set up OpenMP runtime
 # ----------------------------------
 
-LIB_DIR = $(LLVM_OMP_ROOT)/lib
+LIB_DIR = $(LLVM_OMP_ROOT)/lib$(LLVM_OMP_LIBDIR_SUFFIX)
 LIB = $(LIB_DIR)/libomp.so
 
 LIBS = -Wl,-rpath=$(LIB_DIR) $(LIB) -lm

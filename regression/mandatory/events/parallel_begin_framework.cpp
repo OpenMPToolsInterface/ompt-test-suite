@@ -55,7 +55,7 @@ void dump_chain(int depth)
   if (task_id == id_to_observe) {
     ompt_task_id_t another_id = ompt_get_task_id(depth);
   }
-  printf("level %d: task %lld\n", depth, task_id);
+  printf("level %d: task %" PRIu64 "\n", depth, task_id);
   if (task_id != 0) dump_chain(depth+1);
 }
 
@@ -72,19 +72,19 @@ on_ompt_event_parallel_begin
   CHECK(parent_task_id != 0,		\
 	IMPLEMENTED_BUT_INCORRECT, \
         "parent task id = 0 in event_parallel_begin " \
-        "parallel_id = %lld", parallel_id);
+        "parallel_id = %" PRIu64, parallel_id);
 
   CHECK(parallel_id != 0,		\
         IMPLEMENTED_BUT_INCORRECT,			  \
         "parallel region id = 0 in event_parallel_begin " \
-        "parent_task_id = %lld", parent_task_id);
+        "parent_task_id = %" PRIu64, parent_task_id);
 
   CHECK(requested_team_size == NUM_THREADS,				\
 	IMPLEMENTED_BUT_INCORRECT, "wrong requested team size");
   
   pthread_mutex_lock(&thread_mutex);
 #if DEBUG
-  printf("begin: parallel region id = %lld, parent_task_id = %lld\n", 
+  printf("begin: parallel region id = %" PRIu64 ", parent_task_id = %" PRIu64 "\n", 
          parallel_id, parent_task_id);
   dump_chain(0);
 #endif
@@ -101,7 +101,7 @@ on_ompt_event_parallel_begin
   
   CHECK(iter == parallel_id_set.end(), \
         IMPLEMENTED_BUT_INCORRECT, \
-        "duplicate parallel region id %lld in region set", *iter);
+        "duplicate parallel region id %" PRIu64 " in region set", *iter);
 
   // record that this region id has been seen
   parallel_id_set.insert(parallel_id);
@@ -129,7 +129,7 @@ check_implicit_task_id(ompt_task_id_t task_id)
 
   CHECK(iter == task_id_set.end(), \
         IMPLEMENTED_BUT_INCORRECT, \
-        "duplicate implicit task id %lld", *iter);
+        "duplicate implicit task id %" PRIu64, *iter);
 
   // record that this task id has been seen
   task_id_set.insert(task_id);
@@ -158,8 +158,8 @@ fib_region_nesting(int n, int depth)
 #if DEBUG
     {
       pthread_mutex_lock(&thread_mutex);
-      printf("%*s enter region id %lld, task id = %lld, "
-	     "parent task id %lld (threads = %d)\n", 
+      printf("%*s enter region id %" PRIu64 ", task id = %" PRIu64 ", "
+	     "parent task id %" PRIu64 " (threads = %d)\n", 
 	     depth * 2, "", parallel_id, task_id, 
 	     parent_task_id, omp_get_num_threads());
       pthread_mutex_unlock(&thread_mutex);
@@ -173,14 +173,14 @@ fib_region_nesting(int n, int depth)
     pthread_mutex_lock(&thread_mutex);
     CHECK(parent_task_id == parallel_id_to_task_id_map[parallel_id],	\
 	  IMPLEMENTED_BUT_INCORRECT,					\
-	  "ompt_get_task_id(1) = %lld does not match task %lld that created " \
-	  "region ompt_get_parallel_id(0)=%lld", parent_task_id, \
+	  "ompt_get_task_id(1) = %" PRIu64 " does not match task %" PRIu64 " that created " \
+	  "region ompt_get_parallel_id(0)=%" PRIu64, parent_task_id, \
           parallel_id_to_task_id_map[parallel_id], parallel_id);
     
     CHECK(parent_frame == parallel_id_to_task_frame_map[parallel_id],	\
 	  IMPLEMENTED_BUT_INCORRECT,					\
 	  "ompt_get_task_frame(1) = %p does not match task that created " \
-	  "region ompt_get_parallel_id(0)=%lld", parent_frame, parallel_id);
+	  "region ompt_get_parallel_id(0)=%" PRIu64, parent_frame, parallel_id);
     pthread_mutex_unlock(&thread_mutex);
     
     fib_region_nesting(n - 1, depth + 1);
@@ -189,7 +189,7 @@ fib_region_nesting(int n, int depth)
 #if DEBUG
     {
       pthread_mutex_lock(&thread_mutex);
-      printf("%*s exit region id %lld, task id = %lld, parent task id %lld\n", 
+      printf("%*s exit region id %" PRIu64 ", task id = %" PRIu64 ", parent task id %" PRIu64 "\n", 
 	     depth * 2, "", parallel_id, task_id, parent_task_id);
       pthread_mutex_unlock(&thread_mutex);
     }
@@ -263,7 +263,7 @@ simple_nested_region()
       CHECK(ompt_get_task_id(1) == parallel_id_to_task_id_map[level2_parallel_id], \
             IMPLEMENTED_BUT_INCORRECT, \
 	    "level 2 parent task id does not match: " \
-            "expected parent %lld, ompt_get_task_id(1) = %lld", \
+            "expected parent %" PRIu64 ", ompt_get_task_id(1) = %" PRIu64, \
             parallel_id_to_task_id_map[level2_parallel_id], ompt_get_task_id(1));
 
       CHECK(ompt_get_task_frame(1) == parallel_id_to_task_frame_map[level2_parallel_id], 

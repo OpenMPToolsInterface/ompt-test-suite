@@ -57,7 +57,7 @@ on_ompt_event_thread_begin(ompt_thread_type_t thread_type,
   nthreads_created += 1;
   
 #if DEBUG
-  printf("thread_id = %d thread_type = %d\n", thread_id, thread_type);
+  printf("thread_id = %" PRIu64 " thread_type = %d\n", thread_id, thread_type);
   fflush(NULL);
 #endif
   

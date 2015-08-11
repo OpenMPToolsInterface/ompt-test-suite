@@ -73,13 +73,13 @@ regression_test(int argc, char **argv)
 	  "in parallel region at level 1, expect a non-zero region id");
     
     CHECK(my_ompt_get_parallel_id(1) == 0, IMPLEMENTED_BUT_INCORRECT,	\
-	  "in parallel region %lld at level 1, "			\
-	  "expect region id 0 at depth 1; got %lld",			\
+	  "in parallel region %" PRIu64 " at level 1, "				\
+	  "expect region id 0 at depth 1; got %" PRIu64,			\
 	  L1, my_ompt_get_parallel_id(1));
     
     CHECK(my_ompt_get_parallel_id(2) == 0, IMPLEMENTED_BUT_INCORRECT,	\
-	  "in parallel region %lld at level 1, "			\
-	  "expect an undefined region id at depth 2; got %lld",		\
+	  "in parallel region %" PRIu64 " at level 1, "				\
+	  "expect an undefined region id at depth 2; got %" PRIu64,		\
 	  L1, my_ompt_get_parallel_id(2));
     
     
@@ -93,14 +93,14 @@ regression_test(int argc, char **argv)
       
       CHECK(L1 == my_ompt_get_parallel_id(1),				\
 	    IMPLEMENTED_BUT_INCORRECT,					\
-	    "in parallel region %lld at level 2, "			\
-	    "expect region id %lld at depth 1; got %lld",		\
+	    "in parallel region %" PRIu64 " at level 2, "			\
+	    "expect region id %" PRIu64 " at depth 1; got %" PRIu64,			\
 	    L2, L1, my_ompt_get_parallel_id(1));
       
       CHECK(L0 == my_ompt_get_parallel_id(2),				\
 	    IMPLEMENTED_BUT_INCORRECT,					\
-	    "in parallel region %lld at level 2, "			\
-	    "expect region id %lld at depth 2; got %lld",		\
+	    "in parallel region %" PRIu64 " at level 2, "			\
+	    "expect region id %" PRIu64 " at depth 2; got %" PRIu64,			\
 	    L2, L0, my_ompt_get_parallel_id(2));
       
 #pragma omp parallel num_threads(NUM_THREADS)
@@ -110,29 +110,29 @@ regression_test(int argc, char **argv)
 	CHECK(L3 != 0, IMPLEMENTED_BUT_INCORRECT,			\
 	      "in parallel region at level 3, expect a non-zero region id");
 	
-	CHECK(L2 == my_ompt_get_parallel_id(1),		    \
-	      IMPLEMENTED_BUT_INCORRECT,		    \
-	      "in parallel region %lld at level 3, "	    \
-	      "expect region id %lld at depth 1; got %lld", \
+	CHECK(L2 == my_ompt_get_parallel_id(1),				\
+	      IMPLEMENTED_BUT_INCORRECT,				\
+	      "in parallel region %" PRIu64 " at level 3, "			\
+	      "expect region id %" PRIu64 " at depth 1; got %" PRIu64,		\
 	      L3, L2, my_ompt_get_parallel_id(1));
 	
 	CHECK(L1 == my_ompt_get_parallel_id(2),				\
 	      IMPLEMENTED_BUT_INCORRECT,				\
-	      "in parallel region %lld at level 3, "			\
-	      "expect region id %lld at depth 2; got %lld",		\
+	      "in parallel region %" PRIu64 " at level 3, "			\
+	      "expect region id %" PRIu64 " at depth 2; got %" PRIu64,		\
 	      L3, L1, my_ompt_get_parallel_id(1));
 	
 	CHECK(L0 == my_ompt_get_parallel_id(3),				\
 	      IMPLEMENTED_BUT_INCORRECT,				\
-	      "in parallel region %lld at level 3, "			\
-	      "expect region id %lld at depth 3; got %lld",		\
+	      "in parallel region %" PRIu64 " at level 3, "			\
+	      "expect region id %" PRIu64 " at depth 3; got %" PRIu64,		\
 	      L3, L0, my_ompt_get_parallel_id(3));
 	
 	CHECK(L0 != L1 && L1 != L2 && L2 != L3,				\
 	      IMPLEMENTED_BUT_INCORRECT,				\
-	      "in parallel region %lld at level 3, "			\
+	      "in parallel region %" PRIu64 " at level 3, "			\
 	      "expect to see a different id at each level; "		\
-	      "saw %lld [%lld [%lld [%lld]]]", L3, L0, L1, L2, L3);
+	      "saw %" PRIu64 " [%" PRIu64 " [%" PRIu64 " [%" PRIu64 "]]]", L3, L0, L1, L2, L3);
       }
     }
   }
@@ -141,7 +141,7 @@ regression_test(int argc, char **argv)
   
   CHECK(L0 == 0, IMPLEMENTED_BUT_INCORRECT,				\
 	"after outermost parallel region, ompt_get_parallel_id "	\
-	"should return 0; got %lld", L0);
+	"should return 0; got %" PRIu64, L0);
 
   return return_code;
 }

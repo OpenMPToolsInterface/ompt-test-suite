@@ -8,6 +8,11 @@ MEMOIZED_OMP_LIB = .memoized_omp_lib
 MEMOIZED_OMP_RPATH = .memoized_omp_rpath
 MEMOIZED_OMP_COMPILER = .memoized_omp_compiler
 
+MEMOS = \
+	$(MEMOIZED_OMP_ROOT) \
+	$(MEMOIZED_OMP_LIB) \
+	$(MEMOIZED_OMP_RPATH) \
+	$(MEMOIZED_OMP_COMPILER)
 
 # -----------------------------------------------------------------------------
 #  use the memoized runtime library if one exists and none is specified
@@ -25,13 +30,8 @@ ifeq ($(lib),)
 endif
 
 ifeq ($(rpath),)
-  openmp := $(shell cat $(wildcard $(MEMOIZED_OMP_RPATH) /dev/null))
+  rpath := $(shell cat $(wildcard $(MEMOIZED_OMP_RPATH) /dev/null))
 endif
-
-ifeq ($(openmp),)
- $(error Usage: make openmp=/path/to/openmp/root [lib=libname.so])
-endif
-
 
 ifneq ($(lib),)
 LIBRARY_NAME=$(lib)
@@ -41,27 +41,29 @@ endif
 
 
 ifneq ($(compiler),)
-CXX=$(PRELINK) $(compiler)
+CXX=$(compiler)
 else
-CXX=$(PRELINK) $(DEFAULT_COMPILER)
+CXX=$(DEFAULT_COMPILER)
 endif
 
 
 # -----------------------------------------------------------------------------
 #  set up the runtime
 # -----------------------------------------------------------------------------
+ifneq ($(openmp),)
 OMP_ROOT=$(openmp)
-OMP_INCLUDE = $(OMP_ROOT)/include
+OMP_INCLUDE = -I$(OMP_ROOT)/include
 
 ifeq ($(rpath),yes)
 OMP_LIBRARY = $(OMP_ROOT)/lib/$(LIBRARY_NAME) 
 LDFLAGS = -Wl,-rpath=$(OMP_ROOT)/lib $(OMP_LIBRARY)
 endif
+endif
 
 # -----------------------------------------------------------------------------
 #  compiler flags
 # -----------------------------------------------------------------------------
-CXXFLAGS=-fopenmp -O3 -g -I$(OMP_INCLUDE)
+CXXFLAGS=-fopenmp -O3 -g
 
 
 O=regiontest looptest parallelsections
@@ -81,31 +83,28 @@ memoize:
 #
 # regiontest
 #
-regiontest: regiontest.cpp Makefile
-	$(CXX) $(CXXFLAGS) regiontest.cpp -o regiontest $(LDFLAGS)
+regiontest: regiontest.o Makefile
+	$(PRELINK) $(CXX) $(CXXFLAGS) regiontest.o -o regiontest $(LDFLAGS)
+
+regiontest.o:
+	$(CXX) -c $(CXXFLAGS) regiontest.cpp
 
 #
 # looptest
 #
 looptest: looptest.cpp Makefile
-	$(CXX) $(CXXFLAGS) looptest.cpp -o looptest $(LDFLAGS)
+	$(PRELINK) $(CXX) $(CXXFLAGS) looptest.cpp -o looptest $(LDFLAGS)
 
-
-#
-# testframes
-#
-testframes: testframes.cpp Makefile
-	$(CXX) $(CXXFLAGS) testframes.cpp -o testframes $(LDFLAGS)
 
 #
 # parallelsections
 #
 parallelsections: parallelsections.cpp Makefile
-	$(CXX) $(CXXFLAGS) parallelsections.cpp -o parallelsections $(LDFLAGS)
+	$(PRELINK) $(CXX) $(CXXFLAGS) parallelsections.cpp -o parallelsections $(LDFLAGS)
 
 
 clean:
 	/bin/rm -rf $(O) *.o
 
 veryclean: clean
-	/bin/rm -rf hpctoolkit-* *.hpcstruct .memoized_openmp .memoize_openmp_lib
+	/bin/rm -rf hpctoolkit-* *.hpcstruct $(MEMOS)

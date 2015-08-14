@@ -115,6 +115,9 @@ int regression_test(int argc, char **argv) {
 
     #pragma omp target data map(alloc: a, a_old_device)
     {
+        // save old a on host
+        a_old_host = a;
+
         #pragma omp target
         {
             // modify a on device
@@ -124,8 +127,6 @@ int regression_test(int argc, char **argv) {
             a_old_device = a;
         }
 
-        // save old a on host
-        a_old_host = a;
         // copy new value to host
         #pragma omp target update from(a)
 

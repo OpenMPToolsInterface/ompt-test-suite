@@ -24,12 +24,11 @@
 // global variables
 //*****************************************************************************
 
-int count = 0; // target_begin -> increased, target_end -> decreased
+int count = 0; // target_task_begin -> increased, target_task_end -> decreased
 int number_begin_events = 0;
 
-// use stack to save task_ids and target_ids (especially for nested regions) 
+// use stack to save task_ids (especially for nested regions) 
 std::stack<ompt_task_id_t> task_id_stack;
-std::stack<ompt_target_id_t> target_id_stack;
 
 
 //*****************************************************************************
@@ -44,22 +43,20 @@ void data_end_test();
 //*****************************************************************************
 
 static void on_ompt_event_target_data_begin(ompt_task_id_t task_id,
-                ompt_target_id_t target_id,
-                ompt_target_device_id_t device_id,
+                int device_id,
                 void* target_function) {
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("begin: task_id = %" PRIu64 ", target_id = %" PRIu64 ", device_id = %" PRIu64 ", target_function = %p\n",
-        task_id, target_id, device_id, target_function);
+    printf("begin: task_id = %" PRIu64 ", device_id = %" PRIu64 ", target_function = %p\n",
+        task_id, device_id, target_function);
 #endif
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
     CHECK(task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "task_id not equal to ompt_get_task_id()");
 
-    // save task_id and target_id
+    // save task_id and
     task_id_stack.push(task_id);
-    target_id_stack.push(target_id);
 
     count += 1;
     number_begin_events += 1;
@@ -67,25 +64,22 @@ static void on_ompt_event_target_data_begin(ompt_task_id_t task_id,
     pthread_mutex_unlock(&thread_mutex);
 }
 
-static void on_ompt_event_target_data_end(ompt_task_id_t task_id,
-                  ompt_target_id_t target_id) {
+static void on_ompt_event_target_data_end(ompt_task_id_t task_id) {
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("end: task_id = %" PRIu64 ", target_id = %" PRIu64 "\n",
-        task_id, target_id);
+    printf("end: task_id = %" PRIu64 "\n",
+        task_id);
 #endif
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
     CHECK(task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "task_id not equal to ompt_get_task_id()");
 
-    // check for correct target_id and task_id in target_end
-    // (should be the same as in target_begin)
+    // check for correct task_id in target_task_end
+    // (should be the same as in target_task_begin)
     CHECK(task_id_stack.top() == task_id, IMPLEMENTED_BUT_INCORRECT, "task_ids not equal"); 
-    CHECK(target_id_stack.top() == target_id, IMPLEMENTED_BUT_INCORRECT, "target_ids not equal"); 
 
     task_id_stack.pop();
-    target_id_stack.pop();
 
     count -= 1;
 

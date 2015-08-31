@@ -31,16 +31,16 @@ int number_begin_events = 0;
 // private operations
 //*****************************************************************************
 
-static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
-                ompt_target_id_t target_id,
-                ompt_data_map_id_t data_map_id,
-                ompt_target_device_id_t device_id,
-                ompt_target_sync_t sync_type,
-                ompt_data_map_t map_type,
-                ompt_data_size_t bytes) {
+static void on_ompt_event_target_data_map_begin(ompt_task_id_t task_id,
+                int device_id,
+                void *host_addr,
+                void *device_addr,
+                size_t bytes,
+                uint32_t mapping_flags,
+                void *target_map_code) {
 #if DEBUG
-    printf("task_id = %" PRIu64 ", target_id = %" PRIu64 ", data_map_id = %" PRIu64 ", device_id = %" PRIu64 ", sync_type = %u, map_type = %u, bytes = %" PRIu64 "\n",
-        task_id, target_id, data_map_id, device_id, sync_type, map_type, bytes);
+    printf("task_id = %" PRIu64 ", device_id = %" PRIu64 ", host_addr = %p, device_addr = %p, bytes = %" PRIu64 ", mapping_flags = %" PRIu32 ", target_map_code = %p\n",
+        task_id, device_id, host_addr, device_addr, bytes, mapping_flags, target_map_code);
 #endif
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
@@ -59,8 +59,8 @@ static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
 void init_test(ompt_function_lookup_t lookup) {
 
 #if defined(_OPENMP) && (_OPENMP >= 201307)
-    if (!register_callback(ompt_event_data_map_begin, (ompt_callback_t) on_ompt_event_data_map_begin)) {
-        CHECK(false, FATAL, "failed to register ompt_event_data_map_begin");
+    if (!register_callback(ompt_event_target_data_map_begin, (ompt_callback_t) on_ompt_event_target_data_map_begin)) {
+        CHECK(false, FATAL, "failed to register ompt_event_target_data_map_begin");
     }
 #endif
 

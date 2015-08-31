@@ -24,11 +24,10 @@
 // global variables
 //*****************************************************************************
 
-int count = 0; // target_begin -> increased, target_end -> decreased
+int count = 0; // target_data_map_begin -> increased, target_data_map_end -> decreased
 int number_begin_calls = 0;
 
-// save target_id and corresponding task_id for a target_begin 
-ompt_target_id_t begin_target_id;
+// save task_id for a target_data_map_begin 
 ompt_task_id_t begin_task_id;
 
 
@@ -36,25 +35,24 @@ ompt_task_id_t begin_task_id;
 // private operations
 //*****************************************************************************
 
-static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
-                ompt_target_id_t target_id,
-                ompt_data_map_id_t data_map_id,
-                ompt_target_device_id_t device_id,
-                ompt_target_sync_t sync_type,
-                ompt_data_map_t map_type,
-                ompt_data_size_t bytes) {
-    pthread_mutex_lock(&thread_mutex);
-
+static void on_ompt_event_target_data_map_begin(ompt_task_id_t task_id,
+                int device_id,
+                void *host_addr,
+                void *device_addr,
+                size_t bytes,
+                uint32_t mapping_flags,
+                void *target_map_code) {
 #if DEBUG
-    printf("task_id = %" PRIu64 ", target_id = %" PRIu64 ", data_map_id = %" PRIu64 ", device_id = %" PRIu64 ", sync_type = %u, map_type = %u, bytes = %" PRIu64 "\n",
-        task_id, target_id, data_map_id, device_id, sync_type, map_type, bytes);
+    printf("task_id = %" PRIu64 ", device_id = %" PRIu64 ", host_addr = %p, device_addr = %p, bytes = %" PRIu64 ", mapping_flags = %" PRIu32 ", target_map_code = %p\n",
+        task_id, device_id, host_addr, device_addr, bytes, mapping_flags, target_map_code);
 #endif
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
     CHECK(task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "task_id not equal to ompt_get_task_id()");
 
-    // save task_id and target_id for current thread
-    begin_target_id = target_id;
+    pthread_mutex_lock(&thread_mutex);
+
+    // save task_id for current thread
     begin_task_id = task_id;
 
     count += 1;
@@ -63,20 +61,18 @@ static void on_ompt_event_data_map_begin(ompt_task_id_t task_id,
     pthread_mutex_unlock(&thread_mutex);
 }
 
-static void on_ompt_event_data_map_end(ompt_task_id_t task_id,
-                  ompt_target_id_t target_id) {
+static void on_ompt_event_target_data_map_end(ompt_task_id_t task_id) {
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("end: task_id = %" PRIu64 ", target_id = %" PRIu64 "\n", task_id, target_id);
+    printf("end: task_id = %" PRIu64 "\n", task_id);
 #endif
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
     CHECK(task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "task_id not equal to ompt_get_task_id()");
 
-    // check for correct target_id and task_id in target_end
-    // (should be the same as in target_begin for current thread)
-    CHECK(begin_target_id == target_id, IMPLEMENTED_BUT_INCORRECT, "target_ids not equal");
+    // check for correct task_id in target_data_map_end
+    // (should be the same as in target_data_map_begin for current thread)
     CHECK(begin_task_id == task_id, IMPLEMENTED_BUT_INCORRECT, "task_ids not equal"); 
 
     count -= 1;
@@ -92,12 +88,12 @@ static void on_ompt_event_data_map_end(ompt_task_id_t task_id,
 void init_test(ompt_function_lookup_t lookup) {
 
 #if defined(_OPENMP) && (_OPENMP >= 201307)
-    if (!register_callback(ompt_event_data_map_begin, (ompt_callback_t) on_ompt_event_data_map_begin)) {
-        CHECK(false, FATAL, "failed to register ompt_event_data_map_begin");
+    if (!register_callback(ompt_event_target_data_map_begin, (ompt_callback_t) on_ompt_event_target_data_map_begin)) {
+        CHECK(false, FATAL, "failed to register ompt_event_target_data_map_begin");
     }
 
-    if (!register_callback(ompt_event_data_map_end, (ompt_callback_t) on_ompt_event_data_map_end)) {
-        CHECK(false, FATAL, "failed to register ompt_event_data_map_end");
+    if (!register_callback(ompt_event_target_data_map_end, (ompt_callback_t) on_ompt_event_target_data_map_end)) {
+        CHECK(false, FATAL, "failed to register ompt_event_target_data_map_end");
     }
 #endif
 

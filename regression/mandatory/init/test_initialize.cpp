@@ -36,34 +36,27 @@
 //*****************************************************************************
 
 extern "C" {
-#ifdef OMPT_V2013_07
 
-int ompt_initialize(void)
-{
-#if DEBUG
-  printf("ompt_initialize(void) called\n");
-#endif
-  ompt_initialized = 1;
-  return 1;
-}
-
-
-#else
-
-int ompt_initialize(ompt_function_lookup_t lookup, 
-                    const char *runtime_version, 
-                    unsigned int ompt_version)
+void 
+ompt_initialize(ompt_function_lookup_t lookup, 
+                const char *runtime_version, 
+                unsigned int ompt_version)
 {
 #if DEBUG
   printf("ompt_initialize(lookup = %p, runtime_version = %s, "
          "ompt_version = %d)\n", lookup, runtime_version, ompt_version);
 #endif
   ompt_initialized = 1;
-  return 1;
 }
 
 
-#endif
+ompt_initialize_t 
+ompt_tool(void)
+{
+  return ompt_initialize;
+}
+
+
 };
 
 

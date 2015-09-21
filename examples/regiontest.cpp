@@ -1,3 +1,5 @@
+#define __STDC_FORMAT_MACROS
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <omp.h>
@@ -20,7 +22,7 @@ int main(int argc, char **argv)
 		result[tid] = fib(40-tid);
 	}
 	for(i=0;i<NTHREADS;i++) {
-		printf("%lld ", result[i]);
+		printf("%" PRIu64 " ", result[i]);
 	}
 	printf("\n");
 }

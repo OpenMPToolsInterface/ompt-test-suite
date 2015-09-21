@@ -1,3 +1,5 @@
+#define __STDC_FORMAT_MACROS
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <omp.h>
@@ -50,6 +52,6 @@ int main(int argc, char **argv)
   testdynamic();
   testguided();
 
-  for(int i=0;i< NBOUND;i++) printf("%lld ", result[i]);
+  for(int i=0;i< NBOUND;i++) printf("%" PRIu64 " ", result[i]);
   printf("\n");
 }

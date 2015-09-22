@@ -92,7 +92,7 @@ extern "C" {
 
 // this must have a C-style interface because that is what an 
 // OpenMP runtime expects
-int
+void
 ompt_initialize( ompt_function_lookup_t lookup,
                  const char*            runtime_version,
                  unsigned int           ompt_version )
@@ -108,8 +108,15 @@ ompt_initialize( ompt_function_lookup_t lookup,
   init_test(lookup);
 
   quit_on_init_failure();
-
-  return 1;
 }
+
+
+ompt_initialize_t
+ompt_tool()
+{
+  return ompt_initialize;
+}
+
+
 
 };

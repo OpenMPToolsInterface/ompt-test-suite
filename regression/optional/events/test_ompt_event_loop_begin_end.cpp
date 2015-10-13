@@ -165,7 +165,7 @@ init_test(ompt_function_lookup_t lookup)
     }
     if (!register_callback(ompt_event_loop_end,
         (ompt_callback_t) on_ompt_event_loop_end)) {
-        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_loop_begin");
+        CHECK(FALSE, NOT_IMPLEMENTED, "failed to register ompt_event_loop_end");
     }
 }
 

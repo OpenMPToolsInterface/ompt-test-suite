@@ -52,6 +52,7 @@ static void on_ompt_event_target_update_begin(ompt_task_id_t parent_task_id,
 
     pthread_mutex_lock(&thread_mutex);
     number_begin_events += 1;
+    count += 1;
 
     // save target_task_id for current thread
     begin_task_id = target_task_id;

@@ -47,6 +47,6 @@ void update_end_test() {
         #pragma omp target update from(x[0:10])
     }
 
-    CHECK(number_begin_events == 6, IMPLEMENTED_BUT_INCORRECT, "nested data regions and updates: number of update_begin events not as expected (expected %d, observed %d)", 6, number_begin_events);
+    CHECK(number_begin_events == 6, IMPLEMENTED_BUT_INCORRECT, "nested data regions and updates: number of target_task_begin events with task_type = ompt_target_task_update not as expected (expected %d, observed %d)", 6, number_begin_events);
 
 }

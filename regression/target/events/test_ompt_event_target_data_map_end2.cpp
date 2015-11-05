@@ -26,9 +26,10 @@
 
 int count = 0; // target_data_map_begin -> increased, target_data_map_end -> decreased
 int number_begin_calls = 0;
+int number_items = 0;
 
-// save task_id for a target_data_map_begin 
-ompt_task_id_t begin_task_id;
+// save map_id for a target_data_map_begin 
+ompt_target_activity_id_t begin_map_id;
 
 
 //*****************************************************************************
@@ -37,14 +38,12 @@ ompt_task_id_t begin_task_id;
 
 static void on_ompt_event_target_data_map_begin(ompt_task_id_t task_id,
                 int device_id,
-                void *host_addr,
-                void *device_addr,
-                size_t bytes,
-                uint32_t mapping_flags,
-                void *target_map_code) {
+                ompt_target_map_entry_t *items,
+                uint32_t nitems,
+                ompt_target_activity_id_t map_id) {
 #if DEBUG
-    printf("task_id = %" PRIu64 ", device_id = %" PRIu64 ", host_addr = %p, device_addr = %p, bytes = %" PRIu64 ", mapping_flags = %" PRIu32 ", target_map_code = %p\n",
-        task_id, device_id, host_addr, device_addr, bytes, mapping_flags, target_map_code);
+    printf("task_id = %" PRIu64 ", device_id = %d, nitems = %" PRIu32 ", map_id = %" PRIu64 "\n",
+        task_id, device_id, nitems, map_id);
 #endif
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
@@ -53,27 +52,26 @@ static void on_ompt_event_target_data_map_begin(ompt_task_id_t task_id,
     pthread_mutex_lock(&thread_mutex);
 
     // save task_id for current thread
-    begin_task_id = task_id;
+    begin_map_id = map_id;
 
     count += 1;
     number_begin_calls += 1;
+    number_items += nitems;
 
     pthread_mutex_unlock(&thread_mutex);
 }
 
-static void on_ompt_event_target_data_map_end(ompt_task_id_t task_id) {
+static void on_ompt_event_target_data_map_end(int device_id,
+                ompt_target_activity_id_t map_id) {
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("end: task_id = %" PRIu64 "\n", task_id);
+    printf("end: device_id = %d, map_id = %" PRIu64 "\n", device_id, map_id);
 #endif
 
-    CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");
-    CHECK(task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "task_id not equal to ompt_get_task_id()");
-
-    // check for correct task_id in target_data_map_end
+    // check for correct map_id in target_data_map_end
     // (should be the same as in target_data_map_begin for current thread)
-    CHECK(begin_task_id == task_id, IMPLEMENTED_BUT_INCORRECT, "task_ids not equal"); 
+    CHECK(begin_map_id == map_id, IMPLEMENTED_BUT_INCORRECT, "map_ids not equal"); 
 
     count -= 1;
 
@@ -115,6 +113,7 @@ int regression_test(int argc, char **argv) {
     } 
 
     CHECK(number_begin_calls == 1, IMPLEMENTED_BUT_INCORRECT,  "number of data_map_begin events not as expected (expected: %d, oberved: %d)", 1, number_begin_calls);
+    CHECK(number_items == 1, IMPLEMENTED_BUT_INCORRECT,  "total sum of nitems not as expected (expected: %d, oberved: %d)", 1, number_items);
 
     CHECK(count == 0, IMPLEMENTED_BUT_INCORRECT,  "not the same number of data_map_begin and data_map_end calls");
 

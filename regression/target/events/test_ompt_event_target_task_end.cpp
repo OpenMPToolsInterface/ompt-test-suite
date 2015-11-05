@@ -45,23 +45,24 @@ std::vector<ompt_task_id_t> target_task_ids(NUM_THREADS, 0);
     
 static void on_ompt_event_target_task_begin(ompt_task_id_t parent_task_id,
                 ompt_frame_t *parent_task_frame,
-                ompt_task_id_t target_task_id,
+                ompt_task_id_t host_task_id,
                 int device_id,
-                void *target_task_function) {
+                void *target_task_code,
+                ompt_target_task_type_t task_type) {
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
-    printf("parent_task_id = %" PRIu64 ", parent_task_frame = %p, target_task_id = %" PRIu64 ", device_id = %" PRIu64 ", target_task_function = %p\n",
-        parent_task_id, parent_task_frame, target_task_id, device_id, target_task_function);
+    printf("parent_task_id = %" PRIu64 ", parent_task_frame = %p, host_task_id = %" PRIu64 ", device_id = %" PRIu64 ", target_task_function = %p\n",
+        parent_task_id, parent_task_frame, host_task_id, device_id, target_task_function);
 #endif
 
     CHECK(parent_task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid parent_task_id");
-    CHECK(target_task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid target_task_id");
-    CHECK(target_task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "target_task_id not equal to ompt_get_task_id()");
-
+    CHECK(host_task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid host_task_id");
+    CHECK(host_task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "host_task_id not equal to ompt_get_task_id()");
+    CHECK(task_type == ompt_target_task_target, IMPLEMENTED_BUT_INCORRECT, "task_type not ompt_target_task_update");
 
     // save task_id for current thread
-    target_task_ids[ompt_get_thread_id()] = target_task_id;
+    target_task_ids[ompt_get_thread_id()] = host_task_id;
 
     count += 1;
     number_begin_events += 1;
@@ -69,20 +70,20 @@ static void on_ompt_event_target_task_begin(ompt_task_id_t parent_task_id,
     pthread_mutex_unlock(&thread_mutex);
 }
 
-static void on_ompt_event_target_task_end(ompt_task_id_t target_task_id) {
+static void on_ompt_event_target_task_end(ompt_task_id_t host_task_id) {
     pthread_mutex_lock(&thread_mutex);
 
 #if DEBUG
     printf("end: target_task_id = %" PRIu64 "\n", target_task_id);
 #endif
 
-    CHECK(target_task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid target_task_id");
-    CHECK(target_task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "target_task_id not equal to ompt_get_task_id()");
+    CHECK(host_task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid host_task_id");
+    CHECK(host_task_id == ompt_get_task_id(0), IMPLEMENTED_BUT_INCORRECT, "host_task_id not equal to ompt_get_task_id()");
 
 
     // check for correct task_id in target_task_end
     // (should be the same as in target_task_begin for current thread)
-    CHECK(target_task_ids[ompt_get_thread_id()] == target_task_id, IMPLEMENTED_BUT_INCORRECT, "task_ids not equal");
+    CHECK(target_task_ids[ompt_get_thread_id()] == host_task_id, IMPLEMENTED_BUT_INCORRECT, "task_ids not equal");
 
     count -= 1;
 

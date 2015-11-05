@@ -69,6 +69,6 @@ void update_end_test() {
         
     }
   
-    CHECK(number_begin_events == 2, IMPLEMENTED_BUT_INCORRECT, "copy array and variable in both directions: number of update_begin events not as expected (expected %d, observed %d)", 2, number_begin_events);
+    CHECK(number_begin_events == 2, IMPLEMENTED_BUT_INCORRECT, "copy array and variable in both directions: number of target_task_begin events with task_type = ompt_target_task_update not as expected (expected %d, observed %d)", 2, number_begin_events);
 
 }

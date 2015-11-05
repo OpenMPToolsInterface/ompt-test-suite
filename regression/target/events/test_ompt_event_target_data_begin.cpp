@@ -40,10 +40,10 @@ int number_begin_events = 0;
 
 static void on_ompt_event_target_data_begin(ompt_task_id_t task_id,
                 int device_id,
-                void* target_function) {
+                void* codeptr_ra) {
 #if DEBUG
-    printf("task_id = %" PRIu64 ", device_id = %" PRIu64 ", target_function = %p\n",
-        task_id, device_id, target_function);
+    printf("task_id = %" PRIu64 ", device_id = %" PRIu64 ", codeptr_ra = %p\n",
+        task_id, device_id, codeptr_ra);
 #endif
 
     CHECK(task_id > 0, IMPLEMENTED_BUT_INCORRECT, "invalid task_id");

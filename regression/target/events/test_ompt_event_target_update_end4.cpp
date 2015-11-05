@@ -42,6 +42,6 @@ void update_end_test() {
         CHECK(host_ok, IMPLEMENTED_BUT_INCORRECT, "copy array from device to host not working correctly");
     }
 
-    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "copy array from device to host: number of update_begin events not as expected (expected %d, observed %d)", 1, number_begin_events);
+    CHECK(number_begin_events == 1, IMPLEMENTED_BUT_INCORRECT, "copy array from device to host: number of target_task_begin events with task_type = ompt_target_task_update not as expected (expected %d, observed %d)", 1, number_begin_events);
 
 }

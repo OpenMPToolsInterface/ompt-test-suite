@@ -27,6 +27,6 @@ void update_end_test() {
         sleep(2);
     }
 
-    CHECK(number_begin_events == 0, IMPLEMENTED_BUT_INCORRECT, "no update, nested target data region: number of update_begin events not as expected (expected %d, observed %d)", 0, number_begin_events);
+    CHECK(number_begin_events == 0, IMPLEMENTED_BUT_INCORRECT, "no update, nested target data region: number of target_task_begin events with task_type = ompt_target_task_update not as expected (expected %d, observed %d)", 0, number_begin_events);
 
 }

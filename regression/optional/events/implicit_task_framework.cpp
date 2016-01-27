@@ -124,6 +124,13 @@ regression_test(int argc, char** argv)
     }
     serialwork(0);
   }
+
+  // Sleep for ~ 0.5 second to give the worker threads enough time to trigger
+  // their implicit_task_end callbacks which is now after the barrier.
+  // We therefore cannot ensure that all impliciti_task_end callbacks have been
+  // made before parallel_end and the master thread continues execution...
+  serialwork(1);
+
   CHECK(nthreads == tasks_begin && tasks_begin == tasks_end, IMPLEMENTED_BUT_INCORRECT, \
 	"wrong number of callbacks for implicit tasks begin/end: " \
         "threads in region = %d, implicit task begin callbacks = %d, " \
@@ -170,6 +177,9 @@ regression_test(int argc, char** argv)
           }
         }
       }
+
+      // see longer explanation in comment above...
+      serialwork(1);
 
       CHECK(tasks_begin == tasks_end, IMPLEMENTED_BUT_INCORRECT, \
 	    "wrong number of callbacks for implicit tasks begin/end: " \
